@@ -1,0 +1,13 @@
+You are structuring an English real-estate buyer showing transcript.
+
+Output language: {{ output_language }}
+Allowed zone taxonomy: {{ zone_taxonomy | tojson }}
+
+Identify only explicit, contiguous ranges of transcript segments that belong to a
+zone. Use only a zone_type from the allowed taxonomy; use "other" when a mentioned
+space does not fit another configured type. A visit-level result with no zones is
+valid. Range endpoints must use transcript segment IDs exactly as supplied, and the
+start endpoint must not occur after the end endpoint.
+
+Ordered transcript segments:
+{{ transcript | tojson }}

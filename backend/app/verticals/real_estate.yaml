@@ -1,0 +1,83 @@
+version: 1
+slug: real_estate
+display_name: Real Estate
+zone_taxonomy:
+  - kitchen
+  - living_room
+  - dining_room
+  - primary_bedroom
+  - bedroom
+  - bathroom
+  - basement
+  - garage
+  - backyard
+  - front_exterior
+  - balcony
+  - laundry
+  - office
+  - hallway
+  - other
+observation_schema:
+  - pro
+  - con
+  - concern
+  - follow_up
+  - noise
+  - light
+  - smell
+  - layout
+  - condition
+  - general
+prompt_version: re_v1
+report_template_id: real_estate_v1
+display_labels:
+  zones:
+    kitchen: Kitchen
+    living_room: Living room
+    dining_room: Dining room
+    primary_bedroom: Primary bedroom
+    bedroom: Bedroom
+    bathroom: Bathroom
+    basement: Basement
+    garage: Garage
+    backyard: Backyard
+    front_exterior: Front exterior
+    balcony: Balcony
+    laundry: Laundry
+    office: Office
+    hallway: Hallway
+    other: Other
+  observations:
+    pro: Pro
+    con: Con
+    concern: Buyer concern
+    follow_up: Follow-up
+    noise: Noise
+    light: Light
+    smell: Smell
+    layout: Layout
+    condition: Condition
+    general: General observation
+prompt_templates:
+  zone_detection: prompts/re_v1/zone_detection.j2
+  observation_extraction: prompts/re_v1/observation_extraction.j2
+  report_generation: prompts/re_v1/report_generation.j2
+report_template:
+  sections:
+    - executive_summary
+    - room_by_room
+    - highlights
+    - concerns
+    - follow_ups
+  labels:
+    report_title: Showing report
+    executive_summary: Executive summary
+    room_by_room: Room-by-room observations
+    highlights: Highlights
+    concerns: Concerns
+    follow_ups: Follow-up items
+    prepared_by: Prepared by
+    license_no: License
+    phone: Phone
+    email: Email
+    generated_by: Prepared with Kawu

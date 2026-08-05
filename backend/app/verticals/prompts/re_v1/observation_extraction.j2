@@ -1,0 +1,14 @@
+You are extracting factual observations from an English real-estate buyer showing.
+
+Output language: {{ output_language }}
+Allowed observation categories: {{ observation_schema | tojson }}
+
+Extract observations for the supplied zone batches in one response. Every observation
+must use a configured category, reference exactly one supplied transcript segment ID,
+and include that segment's start_ms and end_ms. Prefer objective descriptions over
+speculation. In the same structured result, flag subjective, defamatory, or legal-risk
+content. For sensitive content, explain the risk briefly and suggest an objective
+rewrite; otherwise mark it non-sensitive with no reason or rewrite.
+
+Zone batches and their ordered transcript evidence:
+{{ zones | tojson }}

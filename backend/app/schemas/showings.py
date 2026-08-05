@@ -1,0 +1,159 @@
+import uuid
+from datetime import datetime
+from typing import Literal
+
+from pydantic import BaseModel, Field, model_validator
+
+from app.models import Observation, RawMedia, Report, TranscriptSegment, Visit, Zone
+from app.schemas.contacts import ContactResponse
+from app.schemas.properties import PropertyResponse
+
+ShowingStatus = Literal["draft", "confirmed", "sent_to_client"]
+MediaType = Literal["audio", "photo", "video"]
+
+
+class ShowingCreate(BaseModel):
+    subject_id: uuid.UUID | None = None
+    address: str | None = Field(default=None, min_length=1, max_length=1000)
+    contact_id: uuid.UUID | None = None
+
+    @model_validator(mode="after")
+    def validate_subject_source(self) -> "ShowingCreate":
+        if (self.subject_id is None) == (self.address is None):
+            raise ValueError("provide exactly one of subject_id or address")
+        return self
+
+
+class MediaPresignRequest(BaseModel):
+    type: MediaType
+    content_type: str = Field(min_length=1, max_length=200)
+    timestamp_offset_ms: float | None = Field(default=None, ge=0)
+
+
+class MediaPresignResponse(BaseModel):
+    media_id: uuid.UUID
+    upload_url: str
+    method: Literal["PUT"] = "PUT"
+    headers: dict[str, str]
+    expires_in: int
+    max_size_bytes: int
+
+
+class MediaResponse(BaseModel):
+    id: uuid.UUID
+    type: str
+    content_type: str
+    timestamp_offset_ms: float | None
+    status: str
+    size_bytes: int | None
+    created_at: datetime
+
+    @classmethod
+    def from_media(cls, media: RawMedia) -> "MediaResponse":
+        return cls.model_validate(media, from_attributes=True)
+
+
+class MediaDownloadResponse(BaseModel):
+    download_url: str
+    expires_in: int
+
+
+class ZoneResponse(BaseModel):
+    id: uuid.UUID
+    zone_type: str
+    position: int
+    start_transcript_segment_id: uuid.UUID | None
+    end_transcript_segment_id: uuid.UUID | None
+
+    @classmethod
+    def from_zone(cls, zone: Zone) -> "ZoneResponse":
+        return cls.model_validate(zone, from_attributes=True)
+
+
+class ObservationResponse(BaseModel):
+    id: uuid.UUID
+    zone_id: uuid.UUID | None
+    category: str
+    content: str
+    source_type: str
+    source_transcript_segment_id: uuid.UUID | None
+    source_media_id: uuid.UUID | None
+    timestamp_start: float | None
+    timestamp_end: float | None
+    ai_model: str | None
+    prompt_version: str | None
+    confidence: float | None
+    flags: dict[str, object]
+    review_status: str
+    reviewed_by: uuid.UUID | None
+    reviewed_at: datetime | None
+
+    @classmethod
+    def from_observation(cls, observation: Observation) -> "ObservationResponse":
+        return cls.model_validate(observation, from_attributes=True)
+
+
+class TranscriptSegmentResponse(BaseModel):
+    id: uuid.UUID
+    raw_media_id: uuid.UUID
+    text: str
+    original_text: str | None
+    timestamp_start: float | None
+    timestamp_end: float | None
+    confidence: float | None
+
+    @classmethod
+    def from_segment(cls, segment: TranscriptSegment) -> "TranscriptSegmentResponse":
+        return cls.model_validate(segment, from_attributes=True)
+
+
+class ReportResponse(BaseModel):
+    id: uuid.UUID
+    template_id: str
+    content: dict[str, object]
+    rendered_html: str | None
+    status: str
+
+    @classmethod
+    def from_report(cls, report: Report) -> "ReportResponse":
+        return cls.model_validate(report, from_attributes=True)
+
+
+class ShowingResponse(BaseModel):
+    id: uuid.UUID
+    status: ShowingStatus
+    processing_status: str
+    processing_failed_step: str | None
+    processing_error: str | None
+    started_at: datetime | None
+    ended_at: datetime | None
+    created_at: datetime
+    updated_at: datetime
+    property: PropertyResponse
+    contact: ContactResponse | None
+
+
+class ShowingDetailResponse(ShowingResponse):
+    media: list[MediaResponse]
+    zones: list[ZoneResponse]
+    observations: list[ObservationResponse]
+    transcript: list[TranscriptSegmentResponse]
+    report: ReportResponse | None
+
+
+class ShowingFinishResponse(BaseModel):
+    id: uuid.UUID
+    status: ShowingStatus
+    processing_status: str
+    processing_failed_step: str | None
+    processing_error: str | None
+    ended_at: datetime
+
+    @classmethod
+    def from_visit(cls, visit: Visit) -> "ShowingFinishResponse":
+        return cls.model_validate(visit, from_attributes=True)
+
+
+class ShowingListResponse(BaseModel):
+    items: list[ShowingResponse]
+    next_cursor: str | None

@@ -1,0 +1,17 @@
+Create an English buyer-facing draft showing report from the supplied AI observations.
+
+Output language: {{ output_language }}
+Configured display labels: {{ labels | tojson }}
+
+Return the configured sections: executive_summary, room_by_room, highlights, concerns,
+and follow_ups. Keep room_by_room ordered as supplied and key each entry to its zone.
+Every bullet must list one or more observation IDs from the supplied evidence that
+directly support it. Build highlights from "pro" observations, concerns from "con" and
+"concern" observations, and follow_ups from "follow_up" observations. Do not invent
+facts, zones, observations, or professional advice.
+
+Ordered zones:
+{{ zones | tojson }}
+
+Available observations:
+{{ observations | tojson }}

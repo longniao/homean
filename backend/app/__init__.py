@@ -1,0 +1,1 @@
+"""Kawu backend application."""

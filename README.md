@@ -1,0 +1,75 @@
+# Kawu
+
+Kawu is an AI showing-report tool for real-estate buyer's agents. This repository contains the FastAPI backend, Next.js dashboard, and local development infrastructure.
+
+## Prerequisites
+
+- Python 3.12
+- [uv](https://docs.astral.sh/uv/)
+- Node.js 22 and npm
+- Docker with Docker Compose
+
+## Local setup
+
+Create the local environment file:
+
+```sh
+cp .env.example .env
+```
+
+Start PostgreSQL, Redis, MinIO, the one-time `kawu-media` bucket initializer, and the
+Celery pipeline worker:
+
+```sh
+cd infra
+docker compose up -d
+cd ..
+```
+
+MinIO is available at `http://localhost:9000`; its console is at `http://localhost:9001`.
+
+## Backend
+
+```sh
+cd backend
+uv sync
+uv run alembic upgrade head
+uv run uvicorn app.main:app --reload
+```
+
+The API runs at `http://localhost:8000`; its health endpoint is `http://localhost:8000/health`.
+
+To run the Celery worker directly instead of through Docker Compose, open another
+terminal with the same environment and run:
+
+```sh
+cd backend
+uv run celery -A app.pipeline.celery_app:celery_app worker --loglevel=info
+```
+
+Run backend checks with:
+
+```sh
+uv run ruff check .
+uv run pytest
+```
+
+## Dashboard
+
+In a second terminal:
+
+```sh
+cd dashboard
+npm ci
+npm run dev
+```
+
+The dashboard runs at `http://localhost:3000`.
+
+Run dashboard checks with:
+
+```sh
+npm run typecheck
+npm run lint
+npm run build
+```

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ labels.report_title }}</title>
+  <style>
+    :root { --accent: {{ branding.accent_color }}; --ink: #17211d; --muted: #5f6d66; --line: #dce5e0; --paper: #ffffff; --wash: #f4f8f6; }
+    * { box-sizing: border-box; }
+    html { background: #eef3f0; color: var(--ink); font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; line-height: 1.5; }
+    body { margin: 0; }
+    .report { width: min(880px, 100%); margin: 0 auto; background: var(--paper); min-height: 100vh; padding: 52px 60px 44px; }
+    .header { border-top: 8px solid var(--accent); padding-top: 28px; display: flex; gap: 24px; justify-content: space-between; align-items: flex-start; }
+    .identity { display: flex; gap: 18px; align-items: center; }
+    .logo { width: 72px; height: 72px; object-fit: contain; border-radius: 12px; border: 1px solid var(--line); padding: 6px; }
+    .eyebrow { margin: 0 0 4px; color: var(--accent); font-size: 12px; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
+    h1 { margin: 0; font-size: 32px; line-height: 1.15; letter-spacing: -.025em; }
+    .agent { text-align: right; color: var(--muted); font-size: 13px; }
+    .agent strong { display: block; color: var(--ink); font-size: 15px; }
+    .agent div { margin-top: 3px; }
+    section { margin-top: 38px; break-inside: avoid; }
+    h2 { margin: 0 0 14px; font-size: 18px; letter-spacing: -.01em; padding-bottom: 9px; border-bottom: 2px solid var(--accent); }
+    .summary { margin: 0; padding: 20px 22px; background: var(--wash); border-left: 4px solid var(--accent); border-radius: 0 10px 10px 0; font-size: 16px; }
+    .room { margin-top: 18px; padding: 18px 20px; border: 1px solid var(--line); border-radius: 12px; break-inside: avoid; }
+    .room h3 { margin: 0 0 10px; font-size: 16px; }
+    ul { margin: 0; padding-left: 20px; }
+    li { margin: 7px 0; padding-left: 3px; }
+    .columns { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .empty { color: var(--muted); font-style: italic; }
+    footer { margin-top: 46px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; text-align: center; }
+    @page { size: Letter; margin: 16mm; @bottom-center { content: counter(page); color: #738079; font-size: 9pt; } }
+    @media print { html { background: white; } .report { width: auto; min-height: auto; margin: 0; padding: 0; } }
+    @media (max-width: 640px) { .report { padding: 28px 22px; } .header { flex-direction: column; } .agent { text-align: left; } .columns { grid-template-columns: 1fr; gap: 0; } h1 { font-size: 27px; } }
+  </style>
+</head>
+<body>
+  <main class="report">
+    <header class="header">
+      <div class="identity">
+        {% if branding.logo_data_uri %}<img class="logo" src="{{ branding.logo_data_uri }}" alt="">{% endif %}
+        <div>
+          <p class="eyebrow">{{ labels.report_title }}</p>
+          <h1>{{ branding.display_name or labels.report_title }}</h1>
+        </div>
+      </div>
+      {% if branding.display_name or branding.license_no or branding.phone or branding.email %}
+      <div class="agent">
+        {% if branding.display_name %}<strong>{{ labels.prepared_by }} {{ branding.display_name }}</strong>{% endif %}
+        {% if branding.license_no %}<div>{{ labels.license_no }}: {{ branding.license_no }}</div>{% endif %}
+        {% if branding.phone %}<div>{{ labels.phone }}: {{ branding.phone }}</div>{% endif %}
+        {% if branding.email %}<div>{{ labels.email }}: {{ branding.email }}</div>{% endif %}
+      </div>
+      {% endif %}
+    </header>
+
+    <section>
+      <h2>{{ labels.executive_summary }}</h2>
+      <p class="summary">{{ report.executive_summary }}</p>
+    </section>
+
+    <section>
+      <h2>{{ labels.room_by_room }}</h2>
+      {% for room in report.room_by_room %}
+      <article class="room">
+        <h3>{{ room.zone_label }}</h3>
+        {% if room.bullets %}<ul>{% for bullet in room.bullets %}<li>{{ bullet.text }}</li>{% endfor %}</ul>{% else %}<p class="empty">-</p>{% endif %}
+      </article>
+      {% endfor %}
+      {% if not report.room_by_room %}<p class="empty">-</p>{% endif %}
+    </section>
+
+    <div class="columns">
+      <section>
+        <h2>{{ labels.highlights }}</h2>
+        {% if report.highlights %}<ul>{% for bullet in report.highlights %}<li>{{ bullet.text }}</li>{% endfor %}</ul>{% else %}<p class="empty">-</p>{% endif %}
+      </section>
+      <section>
+        <h2>{{ labels.concerns }}</h2>
+        {% if report.concerns %}<ul>{% for bullet in report.concerns %}<li>{{ bullet.text }}</li>{% endfor %}</ul>{% else %}<p class="empty">-</p>{% endif %}
+      </section>
+    </div>
+
+    <section>
+      <h2>{{ labels.follow_ups }}</h2>
+      {% if report.follow_ups %}<ul>{% for bullet in report.follow_ups %}<li>{{ bullet.text }}</li>{% endfor %}</ul>{% else %}<p class="empty">-</p>{% endif %}
+    </section>
+
+    <footer>{{ labels.generated_by }}</footer>
+  </main>
+</body>
+</html>
