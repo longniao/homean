@@ -9,6 +9,11 @@ Kawu is an AI showing-report tool for real-estate buyer's agents. This repositor
 - Node.js 22 and npm
 - Docker with Docker Compose
 
+PDF rendering uses WeasyPrint. The backend container includes its native libraries. On
+macOS, install the local native dependencies with `brew install pango`; if Homebrew is
+under `/opt/homebrew`, export `DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib` when running
+the API or renderer tests locally.
+
 ## Local setup
 
 Create the local environment file:

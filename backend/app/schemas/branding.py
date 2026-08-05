@@ -10,9 +10,7 @@ class BrandingUpdate(BaseModel):
     phone: str | None = Field(default=None, max_length=50)
     email: EmailStr | None = None
     license_no: str | None = Field(default=None, max_length=100)
-    accent_color: str = Field(
-        default="#1F6F5B", pattern=r"^#[0-9A-Fa-f]{6}$"
-    )
+    accent_color: str = Field(default="#1F6F5B", pattern=r"^#[0-9A-Fa-f]{6}$")
 
 
 class BrandingResponse(BaseModel):

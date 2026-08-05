@@ -13,8 +13,16 @@ from sqlalchemy.engine import make_url
 from alembic import command
 from app.core.config import get_settings
 from app.core.database import dispose_database, get_session_factory
+from app.email import FakeEmailProvider
 from app.pipeline import FakePipelineEnqueuer
+from app.services.renderer import ReportRenderer
 from app.storage import FakeStorageProvider
+from app.verticals import VerticalConfigService
+
+
+class FakeReportRenderer(ReportRenderer):
+    async def render_pdf(self, html: str) -> bytes:
+        return b"%PDF-1.7\n" + html.encode("utf-8")[:100]
 
 
 def _render_url(url: str, database: str) -> str:
@@ -84,13 +92,23 @@ async def test_app(  # type: ignore[no-untyped-def]
     database_url: str,
     app_storage: FakeStorageProvider,
     app_pipeline: FakePipelineEnqueuer,
+    app_email: FakeEmailProvider,
 ):
     del database_url
-    from app.api.dependencies import get_pipeline_enqueuer, get_storage_provider
+    from app.api.dependencies import (
+        get_email_provider,
+        get_pipeline_enqueuer,
+        get_report_renderer,
+        get_storage_provider,
+    )
     from app.main import app
 
     app.dependency_overrides[get_storage_provider] = lambda: app_storage
     app.dependency_overrides[get_pipeline_enqueuer] = lambda: app_pipeline
+    app.dependency_overrides[get_email_provider] = lambda: app_email
+    app.dependency_overrides[get_report_renderer] = lambda: FakeReportRenderer(
+        app_storage, VerticalConfigService()
+    )
     try:
         async with app.router.lifespan_context(app):
             yield app
@@ -108,9 +126,15 @@ def app_pipeline() -> FakePipelineEnqueuer:
     return FakePipelineEnqueuer()
 
 
+@pytest.fixture(scope="session")
+def app_email() -> FakeEmailProvider:
+    return FakeEmailProvider()
+
+
 @pytest.fixture
 def storage(app_storage: FakeStorageProvider) -> FakeStorageProvider:
     app_storage.objects.clear()
+    app_storage.object_bodies.clear()
     app_storage.presigned_puts.clear()
     app_storage.presigned_gets.clear()
     return app_storage
@@ -120,6 +144,13 @@ def storage(app_storage: FakeStorageProvider) -> FakeStorageProvider:
 def pipeline(app_pipeline: FakePipelineEnqueuer) -> FakePipelineEnqueuer:
     app_pipeline.jobs.clear()
     return app_pipeline
+
+
+@pytest.fixture
+def email_provider(app_email: FakeEmailProvider) -> FakeEmailProvider:
+    app_email.messages.clear()
+    app_email.error = None
+    return app_email
 
 
 @pytest_asyncio.fixture

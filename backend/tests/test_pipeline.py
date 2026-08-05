@@ -1,3 +1,4 @@
+import json
 import re
 import uuid
 from collections.abc import Callable
@@ -154,6 +155,205 @@ def report_fixture(
     }
 
 
+def dangling_report_fixture(
+    prompt: str, output_format: type[object], model: str
+) -> dict[str, object]:
+    del output_format, model
+    observations = json.loads(prompt.split("Available observations:\n", maxsplit=1)[1])
+    valid_id = observations[0]["id"]
+    invalid_id = str(uuid.uuid4())
+    zone_match = re.search(rf'"id": "({UUID_PATTERN})"', prompt)
+    assert zone_match is not None
+    return {
+        "executive_summary": "A report with filtered evidence references.",
+        "room_by_room": [
+            {
+                "zone_id": zone_match.group(1),
+                "zone_type": "kitchen",
+                "bullets": [
+                    {
+                        "text": "Keep the supported portion.",
+                        "observation_ids": [valid_id, invalid_id],
+                    }
+                ],
+            },
+            {
+                "zone_id": None,
+                "zone_type": None,
+                "bullets": [
+                    {
+                        "text": "Drop this unsupported no-zone bullet.",
+                        "observation_ids": [invalid_id],
+                    }
+                ],
+            },
+        ],
+        "highlights": [{"text": "Supported highlight.", "observation_ids": [valid_id]}],
+        "concerns": [{"text": "Unsupported concern.", "observation_ids": [invalid_id]}],
+        "follow_ups": [],
+    }
+
+
+def descriptive_observation_fixture(
+    prompt: str, output_format: type[object], model: str
+) -> dict[str, object]:
+    del output_format, model
+    batches = json.loads(
+        prompt.split(
+            "Zone batches and their ordered transcript evidence:\n", maxsplit=1
+        )[1]
+    )
+    zoned = next(batch for batch in batches if batch["zone_id"] is not None)
+    light_source, noise_source = zoned["segments"][:2]
+    return {
+        "observations": [
+            {
+                "zone_id": zoned["zone_id"],
+                "category": "light",
+                "content": "The kitchen has strong natural light.",
+                "source_transcript_segment_id": light_source["id"],
+                "start_ms": light_source["start_ms"],
+                "end_ms": light_source["end_ms"],
+                "confidence": 0.94,
+                "flags": {"sensitive": False},
+            },
+            {
+                "zone_id": zoned["zone_id"],
+                "category": "noise",
+                "content": "Road noise is clearly audible in the kitchen.",
+                "source_transcript_segment_id": noise_source["id"],
+                "start_ms": noise_source["start_ms"],
+                "end_ms": noise_source["end_ms"],
+                "confidence": 0.91,
+                "flags": {"sensitive": False},
+            },
+        ]
+    }
+
+
+def descriptive_report_fixture(
+    prompt: str, output_format: type[object], model: str
+) -> dict[str, object]:
+    del output_format, model
+    assert "genuinely favorable descriptive observations" in prompt
+    assert "genuinely unfavorable descriptive" in prompt
+    observations = json.loads(prompt.split("Available observations:\n", maxsplit=1)[1])
+    light = next(item for item in observations if item["category"] == "light")
+    noise = next(item for item in observations if item["category"] == "noise")
+    return {
+        "executive_summary": "Strong daylight with noticeable road noise.",
+        "room_by_room": [
+            {
+                "zone_id": light["zone_id"],
+                "zone_type": "kitchen",
+                "bullets": [
+                    {
+                        "text": "Strong natural light.",
+                        "observation_ids": [light["id"]],
+                    },
+                    {
+                        "text": "Road noise is clearly audible.",
+                        "observation_ids": [noise["id"]],
+                    },
+                ],
+            }
+        ],
+        "highlights": [
+            {
+                "text": "Strong natural light.",
+                "observation_ids": [light["id"]],
+            }
+        ],
+        "concerns": [
+            {
+                "text": "Noticeable road noise.",
+                "observation_ids": [noise["id"]],
+            }
+        ],
+        "follow_ups": [],
+    }
+
+
+def partial_zone_fixture(
+    prompt: str, output_format: type[object], model: str
+) -> dict[str, object]:
+    del output_format, model
+    segments = json.loads(prompt.split("Ordered transcript segments:\n", maxsplit=1)[1])
+    assert len(segments) == 3
+    return {
+        "zones": [
+            {
+                "zone_type": "kitchen",
+                "start_segment_id": segments[1]["id"],
+                "end_segment_id": segments[1]["id"],
+            }
+        ]
+    }
+
+
+def no_zone_observation_fixture(
+    prompt: str, output_format: type[object], model: str
+) -> dict[str, object]:
+    del output_format, model
+    batches = json.loads(
+        prompt.split(
+            "Zone batches and their ordered transcript evidence:\n", maxsplit=1
+        )[1]
+    )
+    assert len(batches) == 2
+    no_zone = next(batch for batch in batches if batch["zone_id"] is None)
+    assert [segment["text"] for segment in no_zone["segments"]] == [
+        "Traffic is loud at the front entrance.",
+        "That concludes the showing.",
+    ]
+    source = no_zone["segments"][0]
+    return {
+        "observations": [
+            {
+                "zone_id": None,
+                "category": "noise",
+                "content": "Traffic noise is loud at the front entrance.",
+                "source_transcript_segment_id": source["id"],
+                "start_ms": source["start_ms"],
+                "end_ms": source["end_ms"],
+                "confidence": 0.93,
+                "flags": {"sensitive": False},
+            }
+        ]
+    }
+
+
+def no_zone_report_fixture(
+    prompt: str, output_format: type[object], model: str
+) -> dict[str, object]:
+    del output_format, model
+    observations = json.loads(prompt.split("Available observations:\n", maxsplit=1)[1])
+    no_zone = next(item for item in observations if item["zone_id"] is None)
+    return {
+        "executive_summary": "Traffic noise was noted at the entrance.",
+        "room_by_room": [
+            {
+                "zone_id": None,
+                "zone_type": None,
+                "bullets": [
+                    {
+                        "text": "Traffic noise is loud at the front entrance.",
+                        "observation_ids": [no_zone["id"]],
+                    }
+                ],
+            }
+        ],
+        "highlights": [],
+        "concerns": [
+            {
+                "text": "Loud traffic noise at the entrance.",
+                "observation_ids": [no_zone["id"]],
+            }
+        ],
+        "follow_ups": [],
+    }
+
+
 def pipeline_service(
     session: AsyncSession,
     storage: FakeStorageProvider,
@@ -260,6 +460,122 @@ async def test_fake_pipeline_builds_full_evidence_chain_and_is_idempotent(
     assert counts_after == counts_before
     assert len(llm.calls) == llm_call_count
     assert len(transcription.calls) == transcription_call_count
+
+
+async def test_report_drops_dangling_observation_references_and_logs_counts(
+    client: AsyncClient,
+    session: AsyncSession,
+    storage: FakeStorageProvider,
+) -> None:
+    _, workspace_id, visit_id = await create_finished_showing(
+        client, storage, "pipeline-report-integrity@example.com"
+    )
+    llm = FakeLLMClient([zone_fixture, observation_fixture, dangling_report_fixture])
+    service = pipeline_service(session, storage, FakeTranscriptionProvider(), llm)
+
+    assert await service.run_all(workspace_id, visit_id) is True
+    report = await session.scalar(select(Report).where(Report.visit_id == visit_id))
+    report_run = await session.scalar(
+        select(PipelineRun).where(
+            PipelineRun.visit_id == visit_id,
+            PipelineRun.step == PipelineStep.REPORT_GENERATION,
+        )
+    )
+
+    assert report is not None
+    assert len(report.content["room_by_room"]) == 1
+    assert len(report.content["room_by_room"][0]["bullets"]) == 1
+    real_id = report.content["highlights"][0]["observation_ids"][0]
+    assert report.content["room_by_room"][0]["bullets"][0]["observation_ids"] == [
+        real_id
+    ]
+    assert report.content["concerns"] == []
+    assert report_run is not None
+    assert report_run.status == "success"
+    assert report_run.error == ("report_integrity:dropped_bullets=2,dropped_refs=3")
+
+
+async def test_salient_descriptive_observations_are_promoted_with_real_references(
+    client: AsyncClient,
+    session: AsyncSession,
+    storage: FakeStorageProvider,
+) -> None:
+    _, workspace_id, visit_id = await create_finished_showing(
+        client, storage, "pipeline-descriptive-report@example.com"
+    )
+    llm = FakeLLMClient(
+        [zone_fixture, descriptive_observation_fixture, descriptive_report_fixture]
+    )
+    service = pipeline_service(session, storage, FakeTranscriptionProvider(), llm)
+
+    assert await service.run_all(workspace_id, visit_id) is True
+    observations = list(
+        await session.scalars(
+            select(Observation).where(Observation.visit_id == visit_id)
+        )
+    )
+    report = await session.scalar(select(Report).where(Report.visit_id == visit_id))
+
+    assert report is not None
+    assert {item.category for item in observations} == {"light", "noise"}
+    assert report.content["highlights"][0]["text"] == "Strong natural light."
+    assert report.content["concerns"][0]["text"] == "Noticeable road noise."
+    real_ids = {str(item.id) for item in observations}
+    promoted = report.content["highlights"] + report.content["concerns"]
+    assert all(set(bullet["observation_ids"]) <= real_ids for bullet in promoted)
+
+
+async def test_segments_outside_zones_persist_and_reach_the_report(
+    client: AsyncClient,
+    session: AsyncSession,
+    storage: FakeStorageProvider,
+) -> None:
+    _, workspace_id, visit_id = await create_finished_showing(
+        client, storage, "pipeline-no-zone@example.com"
+    )
+    transcription = FakeTranscriptionProvider(
+        [
+            {
+                "text": "Traffic is loud at the front entrance.",
+                "start_ms": 0,
+                "end_ms": 1500,
+                "confidence": 0.98,
+            },
+            {
+                "text": "The kitchen counters are quartz.",
+                "start_ms": 1600,
+                "end_ms": 3200,
+                "confidence": 0.97,
+            },
+            {
+                "text": "That concludes the showing.",
+                "start_ms": 3300,
+                "end_ms": 4300,
+                "confidence": 0.99,
+            },
+        ]
+    )
+    llm = FakeLLMClient(
+        [partial_zone_fixture, no_zone_observation_fixture, no_zone_report_fixture]
+    )
+    service = pipeline_service(session, storage, transcription, llm)
+
+    assert await service.run_all(workspace_id, visit_id) is True
+    observations = list(
+        await session.scalars(
+            select(Observation).where(Observation.visit_id == visit_id)
+        )
+    )
+    report = await session.scalar(select(Report).where(Report.visit_id == visit_id))
+
+    assert len(observations) == 1
+    assert observations[0].zone_id is None
+    assert report is not None
+    assert report.content["room_by_room"][0]["zone_id"] is None
+    assert report.content["room_by_room"][0]["bullets"][0]["observation_ids"] == [
+        str(observations[0].id)
+    ]
+    assert report.content["concerns"][0]["observation_ids"] == [str(observations[0].id)]
 
 
 async def test_failure_marks_visit_and_reprocess_recovers_from_failed_step(

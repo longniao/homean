@@ -6,9 +6,20 @@ Configured display labels: {{ labels | tojson }}
 Return the configured sections: executive_summary, room_by_room, highlights, concerns,
 and follow_ups. Keep room_by_room ordered as supplied and key each entry to its zone.
 Every bullet must list one or more observation IDs from the supplied evidence that
-directly support it. Build highlights from "pro" observations, concerns from "con" and
-"concern" observations, and follow_ups from "follow_up" observations. Do not invent
-facts, zones, observations, or professional advice.
+directly support it. Room_by_room must still include all observations for each zone,
+including observations whose zone_id is null in a null-zone section.
+
+Use judgment to promote only clearly salient observations into the summary sections:
+- highlights: "pro" observations plus genuinely favorable descriptive observations,
+  such as good natural light, an efficient layout, or updated condition;
+- concerns: "con" and "concern" observations plus genuinely unfavorable descriptive
+  observations, such as road or neighbor noise, odors, poor or dated condition, or an
+  awkward layout;
+- follow_ups: "follow_up" observations.
+
+Do not promote every descriptive observation. Every promoted bullet must cite the real
+observation ID it derives from. Do not invent facts, zones, observations, or professional
+advice.
 
 Ordered zones:
 {{ zones | tojson }}

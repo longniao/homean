@@ -42,6 +42,13 @@ class TimedLLMResponse:
     duration_ms: int
 
 
+@dataclass(frozen=True)
+class SanitizedReport:
+    content: RealEstateReportSchema
+    dropped_bullets: int
+    dropped_references: int
+
+
 class RealEstatePipelineService:
     def __init__(
         self,
@@ -221,12 +228,13 @@ class RealEstatePipelineService:
         if not segments:
             raise ValueError("observation extraction requires transcript segments")
         pack = self._verticals.get()
+        batches = self._zone_batches(zones, segments)
         prompt = self._prompts.render(
             pack,
             "observation_extraction",
             observation_schema=pack.observation_schema,
             output_language=self._config.output_language,
-            zones=self._zone_batches(zones, segments),
+            zones=batches,
         )
         invocation = await self._invoke_llm(
             visit_id=visit_id,
@@ -237,14 +245,22 @@ class RealEstatePipelineService:
             output_format=ObservationExtractionResult,
         )
         segments_by_id = {segment.id: segment for segment in segments}
-        zone_ids = {zone.id for zone in zones}
+        expected_zone_by_segment = {
+            uuid.UUID(str(segment["id"])): (
+                uuid.UUID(str(batch["zone_id"]))
+                if batch["zone_id"] is not None
+                else None
+            )
+            for batch in batches
+            for segment in batch["segments"]
+        }
         observations: list[Observation] = []
         for extracted in invocation.response.parsed.observations:
             source = segments_by_id.get(extracted.source_transcript_segment_id)
             if (
                 source is None
                 or extracted.category not in pack.observation_schema
-                or (extracted.zone_id is not None and extracted.zone_id not in zone_ids)
+                or extracted.zone_id != expected_zone_by_segment[source.id]
             ):
                 continue
             observations.append(
@@ -317,7 +333,7 @@ class RealEstatePipelineService:
             prompt=prompt,
             output_format=RealEstateReportSchema,
         )
-        report_content = self._sanitize_report(
+        sanitized = self._sanitize_report(
             invocation.response.parsed,
             {observation.id for observation in observations},
             {zone.id for zone in zones},
@@ -326,23 +342,27 @@ class RealEstatePipelineService:
         report = Report(
             visit_id=visit_id,
             template_id=pack.report_template_id,
-            content=report_content.model_dump(mode="json"),
+            content=sanitized.content.model_dump(mode="json"),
             rendered_html=None,
             status="pending_review",
         )
         visit.processing_status = "ready"
         visit.processing_failed_step = None
         visit.processing_error = None
-        self._repository.add(
-            report,
-            self._successful_run(
-                visit_id,
-                run_id,
-                PipelineStep.REPORT_GENERATION,
-                pack.prompt_version,
-                invocation,
-            ),
+        report_run = self._successful_run(
+            visit_id,
+            run_id,
+            PipelineStep.REPORT_GENERATION,
+            pack.prompt_version,
+            invocation,
         )
+        if sanitized.dropped_bullets or sanitized.dropped_references:
+            report_run.error = (
+                "report_integrity:"
+                f"dropped_bullets={sanitized.dropped_bullets},"
+                f"dropped_refs={sanitized.dropped_references}"
+            )
+        self._repository.add(report, report_run)
         await self._session.commit()
 
     async def mark_failed(
@@ -528,14 +548,12 @@ class RealEstatePipelineService:
                 }
             )
         unzoned = [segment for segment in segments if segment.id not in covered]
-        if unzoned or not batches:
+        if unzoned:
             batches.append(
                 {
                     "zone_id": None,
                     "zone_type": None,
-                    "segments": [
-                        self._segment_payload(item) for item in unzoned or segments
-                    ],
+                    "segments": [self._segment_payload(item) for item in unzoned],
                 }
             )
         return batches
@@ -565,8 +583,12 @@ class RealEstatePipelineService:
         report: RealEstateReportSchema,
         observation_ids: set[uuid.UUID],
         zone_ids: set[uuid.UUID],
-    ) -> RealEstateReportSchema:
+    ) -> SanitizedReport:
+        dropped_bullets = 0
+        dropped_references = 0
+
         def bullets(items: list[ReportBullet]) -> list[ReportBullet]:
+            nonlocal dropped_bullets, dropped_references
             sanitized: list[ReportBullet] = []
             for item in items:
                 valid_ids = [
@@ -574,25 +596,43 @@ class RealEstatePipelineService:
                     for observation_id in item.observation_ids
                     if observation_id in observation_ids
                 ]
+                dropped_references += len(item.observation_ids) - len(valid_ids)
                 if valid_ids:
                     sanitized.append(
                         ReportBullet(text=item.text, observation_ids=valid_ids)
                     )
+                else:
+                    dropped_bullets += 1
             return sanitized
 
-        room_by_room = [
-            RoomByRoomSection(
-                zone_id=section.zone_id,
-                zone_type=section.zone_type,
-                bullets=bullets(section.bullets),
+        room_by_room: list[RoomByRoomSection] = []
+        for section in report.room_by_room:
+            sanitized_bullets = bullets(section.bullets)
+            valid_zone_reference = (
+                section.zone_id is not None and section.zone_id in zone_ids
             )
-            for section in report.room_by_room
-            if section.zone_id is None or section.zone_id in zone_ids
-        ]
-        return RealEstateReportSchema(
+            if section.zone_id is not None and not valid_zone_reference:
+                dropped_bullets += len(sanitized_bullets)
+                continue
+            if not sanitized_bullets and not valid_zone_reference:
+                continue
+            room_by_room.append(
+                RoomByRoomSection(
+                    zone_id=section.zone_id,
+                    zone_type=section.zone_type,
+                    bullets=sanitized_bullets,
+                )
+            )
+
+        content = RealEstateReportSchema(
             executive_summary=report.executive_summary,
             room_by_room=room_by_room,
             highlights=bullets(report.highlights),
             concerns=bullets(report.concerns),
             follow_ups=bullets(report.follow_ups),
+        )
+        return SanitizedReport(
+            content=content,
+            dropped_bullets=dropped_bullets,
+            dropped_references=dropped_references,
         )

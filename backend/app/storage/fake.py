@@ -33,9 +33,7 @@ class FakeStorageProvider(StorageProvider):
             size_bytes=size_bytes, content_type=content_type
         )
 
-    def put_object_bytes(
-        self, object_key: str, content_type: str, data: bytes
-    ) -> None:
+    def put_object_bytes(self, object_key: str, content_type: str, data: bytes) -> None:
         self.put_object(object_key, content_type, len(data))
         self.object_bodies[object_key] = StoredObjectBody(
             data=data, content_type=content_type

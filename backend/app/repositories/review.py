@@ -119,9 +119,7 @@ class ReviewRepository:
         )
         return list(result)
 
-    async def get_branding(
-        self, workspace_id: uuid.UUID
-    ) -> WorkspaceBranding | None:
+    async def get_branding(self, workspace_id: uuid.UUID) -> WorkspaceBranding | None:
         return await self.session.scalar(
             select(WorkspaceBranding).where(
                 WorkspaceBranding.workspace_id == workspace_id

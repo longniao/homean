@@ -5,6 +5,7 @@ import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from email.message import EmailMessage
+from email.utils import make_msgid
 
 from app.core.config import Settings
 
@@ -68,6 +69,7 @@ class SMTPEmailProvider(EmailProvider):
         email["To"] = message.to_email
         email["From"] = f"{self._from_name} <{self._from_email}>"
         email["Subject"] = message.subject
+        email["Message-ID"] = make_msgid(domain=self._from_email.rpartition("@")[2])
         email.set_content("Your Kawu showing report is available in the attached link.")
         email.add_alternative(message.html_body, subtype="html")
         if message.attachment is not None:

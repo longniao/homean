@@ -296,6 +296,29 @@ reprocess recovers.
 
 ------------------------------------------------------------------------
 
+## M3.5 — Pipeline quality/integrity pass (post-M3 review findings)
+
+**Why**: a review of the M3 prompt templates + `RealEstateReportSchema` surfaced three issues
+that affect report quality (H2) and evidence-chain integrity, all fixable without touching the
+schema contract M4/M5 depend on. Run after a real-recording smoke test confirms them; skip any
+that the smoke test shows aren't actually problems.
+
+**Deliverables**:
+1. Server-side validation that report bullet `observation_ids` reference real observations
+   (drop dangling refs, drop empty bullets) — mirrors the extraction step's segment-ref guard.
+2. Report generation promotes *salient* descriptive observations (noise/light/smell/layout/
+   condition) into highlights/concerns by judgment, not just pro/con/concern — so those
+   sections aren't thin while room-by-room is rich.
+3. A visit-level "no-zone" extraction batch so segments outside any detected zone
+   (entry/exit/exterior/transition comments) still produce observations (`zone_id = null`).
+
+**Acceptance**: fake-LLM fixtures prove dangling report refs are stripped, salient descriptive
+observations surface in highlights/concerns with real citations, and no-zone segments reach the
+report. Full suite green; schema and dashboard untouched. (Full Codex prompt kept alongside this
+plan — issued after the M3 smoke test.)
+
+------------------------------------------------------------------------
+
 ## M4 — Review, report finalization, delivery (share link + PDF + email)
 
 **Deliverables**: editing APIs for observations/transcript/report; confirm flow; branded HTML

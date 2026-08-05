@@ -47,9 +47,7 @@ async def revoke_share_link(
     context: Annotated[CurrentContext, Depends(get_current_context)],
     service: Annotated[RealEstateDeliveryService, Depends(get_delivery_service)],
 ) -> ShareLinkResponse:
-    return _share_response(
-        await service.revoke_share_link(context, visit_id, link_id)
-    )
+    return _share_response(await service.revoke_share_link(context, visit_id, link_id))
 
 
 @router.post("/{visit_id}/send", response_model=SendReportResponse)

@@ -26,7 +26,7 @@ async def get_public_report_pdf(
     user_agent: Annotated[str | None, Header()] = None,
 ) -> Response:
     result = await service.get_public_report(token, user_agent, "pdf")
-    pdf = await service._renderer.render_pdf(result.report.rendered_html or "")
+    pdf = await service.render_public_pdf(result.report)
     return Response(
         content=pdf,
         media_type="application/pdf",

@@ -364,8 +364,12 @@ class ReportShareLink(UUIDTimestampMixin, Base):
         index=True,
     )
     token: Mapped[str] = mapped_column(Text, nullable=False, unique=True, index=True)
-    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
-    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
+    expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), index=True
+    )
+    revoked_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), index=True
+    )
 
 
 class ReportShareView(UUIDTimestampMixin, Base):

@@ -77,9 +77,7 @@ class RealEstateDeliveryService:
         visit_id: uuid.UUID,
         link_id: uuid.UUID,
     ) -> ShareLinkResult:
-        link = await self._repository.get_link(
-            context.workspace.id, visit_id, link_id
-        )
+        link = await self._repository.get_link(context.workspace.id, visit_id, link_id)
         if link is None:
             raise ResourceNotFoundError
         if link.revoked_at is None:
@@ -112,6 +110,9 @@ class RealEstateDeliveryService:
         )
         await self._repository.flush()
         return PublicReport(link=link, report=report)
+
+    async def render_public_pdf(self, report: Report) -> bytes:
+        return await self._renderer.render_pdf(report.rendered_html or "")
 
     async def send_report(
         self,
@@ -198,7 +199,9 @@ class RealEstateDeliveryService:
         if row is None:
             raise ResourceNotFoundError
         visit, report = row
-        allowed_statuses = {"confirmed", "sent_to_client"} if allow_sent else {"confirmed"}
+        allowed_statuses = (
+            {"confirmed", "sent_to_client"} if allow_sent else {"confirmed"}
+        )
         if visit.status not in allowed_statuses or report.status != "confirmed":
             raise ResourceConflictError("showing must be confirmed before delivery")
         if not report.rendered_html:

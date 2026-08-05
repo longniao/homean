@@ -175,7 +175,9 @@ class RealEstateReviewService:
         if sensitive:
             raise SensitiveReviewRequiredError([str(item.id) for item in sensitive])
         branding = await self._repository.get_branding(context.workspace.id)
-        report.rendered_html = await self._renderer.render_html(report.content, branding)
+        report.rendered_html = await self._renderer.render_html(
+            report.content, branding
+        )
         report.status = "confirmed"
         visit.status = "confirmed"
         await self._repository.flush()
@@ -207,9 +209,10 @@ class RealEstateReviewService:
         visit_id: uuid.UUID,
         zone_id: uuid.UUID | None,
     ) -> None:
-        if zone_id is not None and await self._repository.get_zone(
-            workspace_id, visit_id, zone_id
-        ) is None:
+        if (
+            zone_id is not None
+            and await self._repository.get_zone(workspace_id, visit_id, zone_id) is None
+        ):
             raise ResourceNotFoundError
 
     def _validate_category(self, category: str) -> None:

@@ -1,9 +1,9 @@
 import asyncio
 import base64
+import re
 from dataclasses import dataclass
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
-from weasyprint import HTML
 
 from app.models import WorkspaceBranding
 from app.pipeline.schemas import RealEstateReportSchema
@@ -46,7 +46,7 @@ class ReportRenderer:
             phone=branding.phone if branding else None,
             email=branding.email if branding else None,
             license_no=branding.license_no if branding else None,
-            accent_color=branding.accent_color if branding else "#1F6F5B",
+            accent_color=self._accent_color(branding),
             logo_data_uri=logo_data_uri,
         )
         report_data = report.model_dump(mode="json")
@@ -67,11 +67,16 @@ class ReportRenderer:
         )
 
     async def render_pdf(self, html: str) -> bytes:
-        return await asyncio.to_thread(HTML(string=html).write_pdf)
+        return await asyncio.to_thread(self._render_pdf_sync, html)
 
-    async def _logo_data_uri(
-        self, branding: WorkspaceBranding | None
-    ) -> str | None:
+    @staticmethod
+    def _render_pdf_sync(html: str) -> bytes:
+        # Keep the native WeasyPrint stack out of API processes that only render HTML.
+        from weasyprint import HTML
+
+        return HTML(string=html).write_pdf()
+
+    async def _logo_data_uri(self, branding: WorkspaceBranding | None) -> str | None:
         if branding is None or not branding.logo_key:
             return None
         stored = await self._storage.get_object_bytes(branding.logo_key)
@@ -80,3 +85,8 @@ class ReportRenderer:
         content_type = stored.content_type or branding.logo_content_type or "image/png"
         encoded = base64.b64encode(stored.data).decode("ascii")
         return f"data:{content_type};base64,{encoded}"
+
+    @staticmethod
+    def _accent_color(branding: WorkspaceBranding | None) -> str:
+        value = branding.accent_color if branding else "#1F6F5B"
+        return value if re.fullmatch(r"#[0-9A-Fa-f]{6}", value) else "#1F6F5B"

@@ -10,12 +10,16 @@ EXPECTED_TABLES = {
     "professional_profiles",
     "raw_media",
     "reports",
+    "report_sends",
+    "report_share_links",
+    "report_share_views",
     "subjects",
     "transcript_segments",
     "users",
     "verticals",
     "visits",
     "workspaces",
+    "workspace_branding",
     "zones",
 }
 
@@ -32,7 +36,7 @@ async def test_migration_up_from_empty_database(database_url: str) -> None:
         await engine.dispose()
 
     assert schema["tables"] == EXPECTED_TABLES
-    assert revision == "20260804_0003"
+    assert revision == "20260804_0004"
     for table in EXPECTED_TABLES - {"alembic_version"}:
         assert {"id", "created_at", "updated_at"} <= schema["columns"][table]
     assert {
@@ -61,6 +65,7 @@ async def test_migration_up_from_empty_database(database_url: str) -> None:
         "status",
         "error",
     } <= schema["columns"]["pipeline_runs"]
+    assert "original_text" in schema["columns"]["transcript_segments"]
     assert "ix_memberships_workspace_id" in schema["indexes"]["memberships"]
     assert "ix_contacts_workspace_id" in schema["indexes"]["contacts"]
     assert "ix_visits_workspace_id" in schema["indexes"]["visits"]

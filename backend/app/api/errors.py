@@ -2,8 +2,8 @@ from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
 from app.services.exceptions import (
-    DomainValidationError,
     DeliveryUnavailableError,
+    DomainValidationError,
     PipelineUnavailableError,
     ResourceConflictError,
     ResourceNotFoundError,

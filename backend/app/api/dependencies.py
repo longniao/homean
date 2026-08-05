@@ -13,8 +13,8 @@ from app.repositories import AuthRepository
 from app.services import (
     AuthService,
     CurrentContext,
-    RealEstateContactService,
     RealEstateBrandingService,
+    RealEstateContactService,
     RealEstateDeliveryService,
     RealEstatePropertyService,
     RealEstateReviewService,
@@ -77,9 +77,7 @@ def get_review_service(
     session: Annotated[AsyncSession, Depends(get_session)],
     renderer: Annotated[ReportRenderer, Depends(get_report_renderer)],
 ) -> RealEstateReviewService:
-    return RealEstateReviewService(
-        session, get_vertical_config_service(), renderer
-    )
+    return RealEstateReviewService(session, get_vertical_config_service(), renderer)
 
 
 def get_branding_service(

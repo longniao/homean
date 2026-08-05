@@ -102,9 +102,7 @@ async def update_report(
     )
 
 
-@router.post(
-    "/showings/{visit_id}/confirm", response_model=ShowingConfirmationResponse
-)
+@router.post("/showings/{visit_id}/confirm", response_model=ShowingConfirmationResponse)
 async def confirm_showing(
     visit_id: uuid.UUID,
     context: Annotated[CurrentContext, Depends(get_current_context)],
