@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+from httpx import AsyncClient
 from pydantic import ValidationError
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -38,6 +39,30 @@ EXPECTED_OBSERVATIONS = [
     "condition",
     "general",
 ]
+
+
+async def test_vertical_config_endpoint_returns_english_labels(
+    client: AsyncClient,
+) -> None:
+    signup = await client.post(
+        "/auth/signup",
+        json={
+            "email": "vertical-endpoint@example.com",
+            "password": "correct-horse-battery-staple",
+        },
+    )
+    headers = {"Authorization": f"Bearer {signup.json()['access_token']}"}
+
+    response = await client.get("/vertical-config", headers=headers)
+
+    assert response.status_code == 200, response.text
+    assert response.json()["zone_taxonomy"] == EXPECTED_ZONES
+    assert response.json()["observation_schema"] == EXPECTED_OBSERVATIONS
+    assert response.json()["display_labels"]["zones"]["living_room"] == ("Living room")
+    assert response.json()["display_labels"]["observations"]["follow_up"] == (
+        "Follow-up"
+    )
+    assert (await client.get("/vertical-config")).status_code == 401
 
 
 async def test_real_estate_vertical_pack_loads_and_seeds_idempotently(

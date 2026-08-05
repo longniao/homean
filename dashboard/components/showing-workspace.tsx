@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
   ArrowLeft,
+  Building2,
   Check,
   CircleDot,
   Clock3,
@@ -163,7 +164,7 @@ function ObservationCard({
   return (
     <article className={cn("rounded-2xl border bg-white p-4", sensitive && "border-amber-300 bg-amber-50/50", observation.review_status === "dismissed" && "opacity-55")}>
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <span className="rounded-full bg-stone-100 px-2 py-1 text-xs font-semibold text-stone-700">{categoryLabels[observation.category] ?? observation.category}</span>
+        <span className="rounded-full bg-stone-100 px-2 py-1 text-xs font-semibold text-stone-700">{categoryLabels[observation.category]}</span>
         <span className="rounded-full border px-2 py-1 text-xs font-medium text-stone-500">{t(`review.${observation.review_status}` as never)}</span>
         {sensitive && <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-900"><ShieldAlert className="size-3" /> {t("sensitive")}</span>}
       </div>
@@ -172,11 +173,11 @@ function ObservationCard({
           <textarea className="field-area" onChange={(event) => setContent(event.target.value)} value={content} />
           <div className="grid gap-2 sm:grid-cols-2">
             <select className="field" onChange={(event) => setCategory(event.target.value)} value={category}>
-              {categories.map((item) => <option key={item} value={item}>{categoryLabels[item] ?? item}</option>)}
+              {categories.map((item) => <option key={item} value={item}>{categoryLabels[item]}</option>)}
             </select>
             <select className="field" onChange={(event) => setZoneId(event.target.value)} value={zoneId}>
               <option value="">{t("visitLevel")}</option>
-              {showing.zones.map((zone) => <option key={zone.id} value={zone.id}>{zoneLabels[zone.zone_type] ?? zone.zone_type}</option>)}
+              {showing.zones.map((zone) => <option key={zone.id} value={zone.id}>{zoneLabels[zone.zone_type]}</option>)}
             </select>
           </div>
           <div className="flex gap-2">
@@ -257,11 +258,10 @@ function ObservationsTab({
             </select>
             <select className="field" onChange={(event) => setZoneId(event.target.value)} value={zoneId}>
               <option value="">{t("visitLevel")}</option>
-              {showing.zones.map((zone) => <option key={zone.id} value={zone.id}>{zoneLabels[zone.zone_type] ?? zone.zone_type}</option>)}
+              {showing.zones.map((zone) => <option key={zone.id} value={zone.id}>{zoneLabels[zone.zone_type]}</option>)}
             </select>
             <Button disabled={add.isPending || !categories.length} type="submit"><Plus /> {t("add")}</Button>
           </div>
-          {!categories.length && <p className="mt-3 text-xs text-amber-800">{t("configUnavailable")}</p>}
         </form>
       )}
       {groups.map(([zoneIdKey, items]) => {
@@ -269,7 +269,7 @@ function ObservationsTab({
         return (
           <section key={zoneIdKey}>
             <div className="mb-3 flex items-center gap-2">
-              <h3 className="font-serif text-xl font-semibold">{zone ? zoneLabels[zone.zone_type] ?? zone.zone_type : t("visitLevel")}</h3>
+              <h3 className="font-serif text-xl font-semibold">{zone ? zoneLabels[zone.zone_type] : t("visitLevel")}</h3>
               <span className="rounded-full bg-stone-200 px-2 py-0.5 text-xs font-semibold">{items.length}</span>
             </div>
             <div className="grid gap-3 xl:grid-cols-2">
@@ -361,30 +361,40 @@ function TranscriptTab({
   );
 }
 
-function SendPanel({ showing }: { showing: ShowingDetail }) {
+export function DeliveryPanel({ showing }: { showing: ShowingDetail }) {
   const t = useTranslations("Delivery");
   const toast = useToast();
   const queryClient = useQueryClient();
   const [email, setEmail] = useState(showing.contact?.email ?? "");
-  const [history, setHistory] = useState<Array<{ channel: string; url: string; email?: string }>>([]);
+  const delivery = useQuery({
+    queryKey: ["delivery", showing.id],
+    queryFn: () => api.showings.delivery(showing.id),
+  });
   const link = useMutation({
     mutationFn: () => api.showings.createShareLink(showing.id),
     onSuccess: async (item) => {
       await navigator.clipboard.writeText(item.url);
-      setHistory((current) => [{ channel: "link", url: item.url }, ...current]);
+      await queryClient.invalidateQueries({ queryKey: ["delivery", showing.id] });
       toast.success(t("linkCopied"));
     },
     onError: (error) => toast.error(error.message),
   });
   const send = useMutation({
     mutationFn: () => api.showings.send(showing.id, { channel: "email", to_email: email }),
-    onSuccess: (item) => {
-      setHistory((current) => [{ channel: "email", url: item.share_url, email: item.to_email ?? undefined }, ...current]);
+    onSuccess: async () => {
       toast.success(t("emailSent"));
-      queryClient.invalidateQueries({ queryKey: ["showing", showing.id] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["showing", showing.id] }),
+        queryClient.invalidateQueries({ queryKey: ["delivery", showing.id] }),
+      ]);
     },
     onError: (error) => toast.error(error.message),
   });
+  const openCount = delivery.data?.share_links.reduce((total, item) => total + item.open_count, 0) ?? 0;
+  const history = [
+    ...(delivery.data?.share_links.map((item) => ({ kind: "link" as const, at: item.created_at, item })) ?? []),
+    ...(delivery.data?.sends.map((item) => ({ kind: "send" as const, at: item.sent_at, item })) ?? []),
+  ].sort((left, right) => right.at.localeCompare(left.at));
   return (
     <section className="panel mt-7 overflow-hidden border-emerald-200">
       <div className="border-b bg-emerald-50 p-5 sm:p-6">
@@ -407,14 +417,73 @@ function SendPanel({ showing }: { showing: ShowingDetail }) {
       <div className="border-t px-5 py-4 sm:px-6">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-sm font-semibold">{t("history")}</h3>
-          <span className="text-xs text-stone-400">{t("opens")}: —</span>
+          <span className="text-xs text-stone-400">{t("opens", { count: openCount })}</span>
         </div>
-        {history.length === 0 ? <p className="text-sm text-stone-400">{t("noHistory")}</p> : history.map((item, index) => (
-          <div className="flex items-center justify-between border-t py-2 text-sm first:border-0" key={`${item.url}-${index}`}>
-            <span>{item.channel === "email" ? t("sentTo", { email: item.email ?? "" }) : t("linkCreated")}</span>
-            <a aria-label={t("openLink")} className="text-[#1f6f5b]" href={item.url} rel="noreferrer" target="_blank"><ExternalLink className="size-4" /></a>
+        {delivery.isLoading ? <p className="text-sm text-stone-400">{t("loadingHistory")}</p> : delivery.isError ? <p className="text-sm text-red-700">{t("historyError")}</p> : history.length === 0 ? <p className="text-sm text-stone-400">{t("noHistory")}</p> : history.map((entry, index) => (
+          <div className="flex items-center justify-between gap-3 border-t py-2 text-sm first:border-0" key={`${entry.kind}-${entry.at}-${index}`}>
+            <div>
+              <span>{entry.kind === "send" ? entry.item.channel === "email" ? t("sentTo", { email: entry.item.to_email ?? "" }) : t("linkDelivered") : t("linkCreatedWithOpens", { count: entry.item.open_count })}</span>
+              {entry.kind === "link" && entry.item.revoked && <span className="ml-2 rounded-full bg-stone-100 px-2 py-0.5 text-xs text-stone-500">{t("revoked")}</span>}
+              <span className="ml-2 text-xs text-stone-400">{new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(new Date(entry.at))}</span>
+            </div>
+            {entry.kind === "link" && <a aria-label={t("openLink")} className="text-[#1f6f5b]" href={entry.item.url} rel="noreferrer" target="_blank"><ExternalLink className="size-4" /></a>}
           </div>
         ))}
+      </div>
+    </section>
+  );
+}
+
+function AttachPropertyPanel({
+  showing,
+  onAttached,
+}: {
+  showing: ShowingDetail;
+  onAttached: () => void;
+}) {
+  const t = useTranslations("Showing");
+  const toast = useToast();
+  const queryClient = useQueryClient();
+  const [subjectId, setSubjectId] = useState("");
+  const [address, setAddress] = useState("");
+  const properties = useQuery({ queryKey: ["properties"], queryFn: api.properties.list });
+  const attach = useMutation({
+    mutationFn: () =>
+      subjectId
+        ? api.showings.attachProperty(showing.id, { subject_id: subjectId })
+        : api.showings.attachProperty(showing.id, { address: address.trim() }),
+    onSuccess: (updated) => {
+      queryClient.setQueryData<ShowingDetail>(["showing", showing.id], (current) =>
+        current ? { ...current, property: updated.property, updated_at: updated.updated_at } : current,
+      );
+      onAttached();
+      toast.success(t("propertyAttached"));
+    },
+    onError: (error) => toast.error(error.message),
+  });
+  return (
+    <section className="mb-6 rounded-2xl border border-amber-300 bg-amber-50 p-5" data-testid="attach-property-panel">
+      <div className="mb-4 flex items-start gap-3">
+        <div className="rounded-xl bg-amber-100 p-2 text-amber-800"><Building2 className="size-5" /></div>
+        <div>
+          <h2 className="font-serif text-xl font-semibold">{t("attachPropertyTitle")}</h2>
+          <p className="mt-1 text-sm text-stone-600">{t("attachPropertyBody")}</p>
+        </div>
+      </div>
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_auto] lg:items-end">
+        <label>
+          <span className="mb-1.5 block text-xs font-semibold text-stone-600">{t("existingProperty")}</span>
+          <select className="field" onChange={(event) => { setSubjectId(event.target.value); if (event.target.value) setAddress(""); }} value={subjectId}>
+            <option value="">{t("chooseProperty")}</option>
+            {properties.data?.map((property) => <option key={property.id} value={property.id}>{property.display_name} · {property.address}</option>)}
+          </select>
+        </label>
+        <span className="pb-3 text-center text-xs font-semibold uppercase tracking-wide text-stone-400">{t("orAddress")}</span>
+        <label>
+          <span className="mb-1.5 block text-xs font-semibold text-stone-600">{t("orAddress")}</span>
+          <input className="field" onChange={(event) => { setAddress(event.target.value); if (event.target.value) setSubjectId(""); }} placeholder={t("addressPlaceholder")} value={address} />
+        </label>
+        <Button disabled={attach.isPending || (!subjectId && !address.trim())} onClick={() => attach.mutate()}><Building2 /> {t("attach")}</Button>
       </div>
     </section>
   );
@@ -439,7 +508,7 @@ export function ShowingWorkspace({ id }: { id: string }) {
       return data && !["ready", "failed", "not_started"].includes(data.processing_status) ? 3000 : false;
     },
   });
-  const vertical = useQuery({ queryKey: ["vertical", "real_estate"], queryFn: api.vertical, retry: false });
+  const vertical = useQuery({ queryKey: ["vertical", "real_estate"], queryFn: api.vertical });
   const audio = detail.data?.media.find((item) => item.type === "audio");
   const audioDownload = useQuery({
     queryKey: ["media", id, audio?.id],
@@ -456,12 +525,13 @@ export function ShowingWorkspace({ id }: { id: string }) {
   }, [detail.data?.report, loadedReportId]);
 
   const showing = detail.data;
-  const categories = vertical.data?.observation_schema ?? Array.from(new Set(showing?.observations.map((item) => item.category) ?? []));
+  const categories = vertical.data?.observation_schema ?? [];
   const categoryLabels = vertical.data?.display_labels.observations ?? {};
   const zoneLabels = vertical.data?.display_labels.zones ?? {};
   const pendingSensitive = showing?.observations.filter((item) => item.flags.sensitive === true && item.review_status === "pending") ?? [];
   const reviewed = showing?.observations.some((item) => ["confirmed", "edited"].includes(item.review_status)) ?? false;
   const confirmReasons = [
+    ...(!showing?.property ? [reportT("guardProperty")] : []),
     ...(!reviewed ? [reportT("guardReview")] : []),
     ...(pendingSensitive.length ? [reportT("guardSensitive", { count: pendingSensitive.length })] : []),
     ...(confirmError ? [confirmError] : []),
@@ -490,8 +560,8 @@ export function ShowingWorkspace({ id }: { id: string }) {
     },
     onError: (error) => {
       if (error instanceof ApiError && error.status === 422) {
-        const payload = error.payload as { detail?: string; offending_observation_ids?: string[] };
-        setConfirmError(payload.detail ?? error.message);
+        const payload = error.payload as { code?: string; detail?: string; offending_observation_ids?: string[] };
+        setConfirmError(payload.code === "property_required" ? reportT("guardProperty") : payload.detail ?? error.message);
       }
       toast.error(error.message);
     },
@@ -511,8 +581,8 @@ export function ShowingWorkspace({ id }: { id: string }) {
     setTab("transcript");
   };
 
-  if (detail.isLoading) return <LoadingState />;
-  if (!showing || detail.isError) return <ErrorState retry={() => detail.refetch()} />;
+  if (detail.isLoading || vertical.isLoading) return <LoadingState />;
+  if (!showing || detail.isError || !vertical.data || vertical.isError) return <ErrorState retry={() => { detail.refetch(); vertical.refetch(); }} />;
   const photos = showing.media.filter((item) => item.type === "photo");
   const tabs: Array<{ key: Tab; label: string; count?: number }> = [
     { key: "report", label: t("report") },
@@ -526,12 +596,13 @@ export function ShowingWorkspace({ id }: { id: string }) {
       <div className="mb-7 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
         <div className="min-w-0">
           <div className="mb-3 flex flex-wrap items-center gap-3"><StatusBadge showing={showing} /><span className="text-xs text-stone-400">{new Intl.DateTimeFormat(undefined, { dateStyle: "long" }).format(new Date(showing.created_at))}</span></div>
-          <h1 className="page-title truncate">{showing.property.display_name}</h1>
-          <p className="mt-2 text-stone-500">{showing.property.address}{showing.contact ? ` · ${showing.contact.name}` : ""}</p>
+          <h1 className="page-title truncate">{showing.property?.display_name ?? t("unassignedTitle")}</h1>
+          <p className="mt-2 text-stone-500">{showing.property?.address ?? t("unassignedBody")}{showing.contact ? ` · ${showing.contact.name}` : ""}</p>
         </div>
         <div className="flex items-center gap-2 text-sm text-stone-500"><Clock3 className="size-4" /> {showing.ended_at ? t("completed") : t("inProgress")}</div>
       </div>
 
+      {!showing.property && showing.status !== "sent_to_client" && <AttachPropertyPanel onAttached={() => setConfirmError("")} showing={showing} />}
       <ProcessingBanner showing={showing} />
       {photos.length > 0 && <section className="mb-6"><div className="mb-3 flex items-center gap-2 text-sm font-semibold"><ImageIcon className="size-4" /> {t("photos", { count: photos.length })}</div><div className="flex gap-3 overflow-x-auto pb-2">{photos.map((media) => <div key={media.id}><PhotoThumb mediaId={media.id} visitId={id} /><p className="mt-1 text-xs text-stone-400">{media.timestamp_offset_ms === null ? t("noTimestamp") : `${Math.round(media.timestamp_offset_ms / 1000)}s`}</p></div>)}</div></section>}
 
@@ -557,7 +628,7 @@ export function ShowingWorkspace({ id }: { id: string }) {
       ) : <div className="panel flex min-h-64 flex-col items-center justify-center p-8 text-center"><CircleDot className="mb-3 size-7 text-stone-300" /><h2 className="font-serif text-xl font-semibold">{t("reportPendingTitle")}</h2><p className="mt-2 text-sm text-stone-500">{t("reportPendingBody")}</p></div>)}
       {tab === "observations" && <ObservationsTab categories={categories} categoryLabels={categoryLabels} onEvidence={showEvidence} showing={showing} zoneLabels={zoneLabels} />}
       {tab === "transcript" && <TranscriptTab audioRef={audioRef} audioUrl={audioDownload.data?.download_url} showing={showing} targetSegmentId={targetSegmentId} />}
-      {["confirmed", "sent_to_client"].includes(showing.status) && <SendPanel showing={showing} />}
+      {["confirmed", "sent_to_client"].includes(showing.status) && <DeliveryPanel showing={showing} />}
     </div>
   );
 }

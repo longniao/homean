@@ -26,3 +26,10 @@ class MeService:
             return None
         profile, vertical = profile_context
         return MeResult(context=context, profile=profile, vertical=vertical)
+
+    async def update(
+        self, context: CurrentContext, name: str | None
+    ) -> MeResult | None:
+        context.user.name = name
+        await self._repository.flush()
+        return await self.get(context)

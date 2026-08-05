@@ -45,6 +45,19 @@ class SendResult:
     share_url: str
 
 
+@dataclass(frozen=True)
+class DeliveryShareLink:
+    link: ReportShareLink
+    url: str
+    open_count: int
+
+
+@dataclass(frozen=True)
+class DeliverySummary:
+    share_links: list[DeliveryShareLink]
+    sends: list[ReportSend]
+
+
 class RealEstateDeliveryService:
     def __init__(
         self,
@@ -70,6 +83,27 @@ class RealEstateDeliveryService:
         )
         del visit
         return await self._new_share_link(context, report, expires_at)
+
+    async def get_delivery(
+        self, context: CurrentContext, visit_id: uuid.UUID
+    ) -> DeliverySummary:
+        if await self._repository.get_visit(context.workspace.id, visit_id) is None:
+            raise ResourceNotFoundError
+        links = await self._repository.list_share_links_with_open_counts(
+            context.workspace.id, visit_id
+        )
+        sends = await self._repository.list_sends(context.workspace.id, visit_id)
+        return DeliverySummary(
+            share_links=[
+                DeliveryShareLink(
+                    link=link,
+                    url=self._share_url(link.token),
+                    open_count=open_count,
+                )
+                for link, open_count in links
+            ],
+            sends=sends,
+        )
 
     async def revoke_share_link(
         self,

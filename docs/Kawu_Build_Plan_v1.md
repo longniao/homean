@@ -430,6 +430,26 @@ share link flow, with the backend running its fake providers.
 
 ------------------------------------------------------------------------
 
+## M5.5 — Dashboard backend endpoint backfill (post-M5 findings)
+
+**Why**: building M5 surfaced read/update endpoints the earlier backend milestones never
+exposed; the dashboard stubbed them with fallbacks. Backfilled without schema changes.
+
+**Deliverables**:
+1. `GET /vertical-config` — zone taxonomy, observation schema, English display labels from
+   `VerticalConfigService` (powers category/zone label pickers; drops the raw-enum fallback).
+2. `GET /showings/{id}/delivery` — share links + sends + real `open_count` from
+   `report_share_views`. **This is the North Star instrumentation surface** — without it the
+   agent can't see Client Reports Delivered / opens.
+3. `PATCH /me` — editable profile name.
+4. `GET /branding/preview` — real `ReportRenderer` HTML for the settings preview iframe.
+Plus dashboard rewiring to consume all four.
+
+**Acceptance**: workspace-isolated endpoints with tests; delivery panel shows real open
+counts; category pickers show labels; Playwright still green. Done (5 vitest + suite green).
+
+------------------------------------------------------------------------
+
 ## M6 — Mobile capture app (Expo)
 
 **Deliverables**: iOS/Android capture app per Roadmap v1.2 — capture-first, offline-first,
@@ -471,6 +491,43 @@ TypeScript). Scope is CAPTURE ONLY per Roadmap v1.2 - editing lives in the dashb
    tests for the recording state machine. Document the manual airplane-mode test script
    in mobile/README.md.
 ```
+
+------------------------------------------------------------------------
+
+## M6.5 — Property optional to capture, required to send (post-M6 finding)
+
+**Why**: M6 let agents skip the property, but `visits.subject_id` was `NOT NULL`, so
+property-free captures couldn't sync — trapping recordings on-device (breaks the offline-first
+"never lose data" promise) and reintroducing capture friction. Fix: capture/sync/process
+freely without a property; require one before confirm/send.
+
+**Deliverables**:
+1. Migration making `visits.subject_id` nullable (real schema change).
+2. `POST /showings` accepts no subject; new `PATCH /showings/{id}` attaches a subject later.
+3. Confirm guard requires `subject_id` (422 "attach a property first"), alongside the
+   existing observation-reviewed and sensitive-flag gates.
+4. Mobile syncs subject-less showings through the normal flow (drops the local-only trap);
+   read-only report view surfaces the attach guard via the "review on desktop" nudge.
+5. Dashboard: "Unassigned" filter/badge + "Attach property" action; Confirm surfaces the 422.
+
+**Acceptance**: no-subject visit creates→syncs→processes→blocked-at-confirm→attach→confirm;
+workspace-isolated; all suites green. (Full Codex prompt issued alongside this plan.)
+
+------------------------------------------------------------------------
+
+## Deferred backlog (do, but not blocking Phase-1 validation)
+
+Small items found during the build, parked deliberately. Revisit during M7 hardening or the
+first post-validation iteration — none block putting the product in front of trial agents.
+
+- **Voice-tag marker sync** (from M6): markers are durable *local* metadata only — no backend
+  endpoint persists them. Acceptable for MVP because the spoken "note: …" is already captured
+  in audio and transcribed; the marker is a redundant future-use signal. Add a marker field +
+  sync if you later want to weight or jump to those moments.
+- **Migration formatting nit** in `20260804_0004_review_delivery.py` (flagged M3.5) — cosmetic,
+  sweep up in hardening.
+- **`og.png` social-card copy** is Codex-invented English marketing text; align with the real
+  positioning before any public use (and it'll need i18n coverage later).
 
 ------------------------------------------------------------------------
 

@@ -66,6 +66,9 @@
     "confirmed": "Confirmed",
     "sent": "Sent",
     "allClients": "All clients",
+    "allProperties": "All property assignments",
+    "unassignedProperty": "Unassigned property",
+    "unassignedBadge": "Unassigned",
     "dateFrom": "Starting date",
     "dateTo": "Ending date",
     "unassignedClient": "No client assigned",
@@ -113,7 +116,18 @@
     "photoAlt": "Showing photo",
     "noTimestamp": "No timestamp",
     "reportPendingTitle": "The report is not ready yet",
-    "reportPendingBody": "Keep this page open or return later. The draft will appear when processing finishes."
+    "reportPendingBody": "Keep this page open or return later. The draft will appear when processing finishes.",
+    "unassignedTitle": "Unassigned showing",
+    "unassignedBody": "This capture has no property yet. Attach one before confirming the report.",
+    "attachProperty": "Attach property",
+    "attachPropertyTitle": "Attach a property",
+    "attachPropertyBody": "Choose a saved property or create one from an address.",
+    "existingProperty": "Saved property",
+    "chooseProperty": "Choose a property",
+    "orAddress": "Or enter an address",
+    "addressPlaceholder": "123 Main Street",
+    "attach": "Attach property",
+    "propertyAttached": "Property attached to this showing."
   },
   "ReportEditor": {
     "summary": "Executive summary",
@@ -132,6 +146,7 @@
     "readyToConfirm": "Review requirements are satisfied.",
     "guardReview": "Confirm or edit at least one observation before confirming the report.",
     "guardSensitive": "Review {count, plural, one {# sensitive observation} other {# sensitive observations}} before confirming.",
+    "guardProperty": "Attach a property before confirming the report.",
     "missingReport": "There is no report to save.",
     "saved": "Report draft saved.",
     "confirmed": "Report confirmed and ready to send.",
@@ -152,7 +167,6 @@
     "addTitle": "Add an observation",
     "contentPlaceholder": "Write an objective observation",
     "add": "Add",
-    "configUnavailable": "Observation categories are unavailable until the vertical configuration endpoint responds.",
     "review": {
       "pending": "Pending review",
       "confirmed": "Confirmed",
@@ -184,11 +198,15 @@
     "copyLink": "Create and copy link",
     "linkCopied": "Private report link copied.",
     "emailSent": "Report sent by email.",
-    "history": "Delivery activity this session",
-    "opens": "Recorded opens",
-    "noHistory": "No delivery activity in this session.",
+    "history": "Delivery activity",
+    "opens": "Recorded opens: {count}",
+    "noHistory": "No delivery activity yet.",
+    "loadingHistory": "Loading delivery activity…",
+    "historyError": "Delivery activity could not be loaded.",
     "sentTo": "Email sent to {email}",
-    "linkCreated": "Private link created",
+    "linkDelivered": "Share link delivered",
+    "linkCreatedWithOpens": "Private link · {count, plural, one {# open} other {# opens}}",
+    "revoked": "Revoked",
     "openLink": "Open shared report"
   },
   "Clients": {
@@ -222,7 +240,8 @@
     "eyebrow": "Client record",
     "compare": "Compare showings",
     "showings": "Showing history ({count})",
-    "empty": "No showings are linked to this client yet."
+    "empty": "No showings are linked to this client yet.",
+    "unassignedProperty": "Unassigned property"
   },
   "Compare": {
     "back": "Back to client",
@@ -234,7 +253,8 @@
     "highlights": "Highlight count",
     "concerns": "Concern count",
     "keyObservations": "Key observations",
-    "none": "—"
+    "none": "—",
+    "unassignedProperty": "Unassigned property"
   },
   "Properties": {
     "eyebrow": "Property library",
@@ -286,7 +306,8 @@
     "accountEmail": "Account email",
     "workspace": "Workspace",
     "role": "Professional role",
-    "profileReadOnly": "Profile editing will become available when the account update endpoint is enabled.",
+    "saveProfile": "Save profile",
+    "profileSaved": "Profile saved.",
     "brandingTitle": "Report branding",
     "brandingBody": "These details appear on confirmed client reports.",
     "uploadLogo": "Upload logo",
@@ -303,12 +324,8 @@
     "logoUploaded": "Logo uploaded.",
     "logoFailed": "The logo could not be uploaded.",
     "previewLabel": "Live preview",
-    "sampleReport": "Showing report",
-    "sampleAgent": "Your name",
-    "sampleSummary": "Executive summary",
-    "sampleBody": "A clear, evidence-backed summary of the property showing appears here for your client.",
-    "sampleHighlights": "Highlights",
-    "sampleConcerns": "Concerns",
-    "previewNote": "This preview mirrors the backend report style. Confirmed reports are rendered and snapshotted by the backend."
+    "previewTitle": "Branded report preview",
+    "previewLoading": "Rendering your report preview…",
+    "previewError": "The report preview could not be loaded."
   }
 }

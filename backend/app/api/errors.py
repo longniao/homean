@@ -5,6 +5,7 @@ from app.services.exceptions import (
     DeliveryUnavailableError,
     DomainValidationError,
     PipelineUnavailableError,
+    PropertyRequiredError,
     ResourceConflictError,
     ResourceNotFoundError,
     SensitiveReviewRequiredError,
@@ -13,6 +14,16 @@ from app.services.exceptions import (
 
 
 def register_exception_handlers(app: FastAPI) -> None:
+    @app.exception_handler(PropertyRequiredError)
+    async def property_required(
+        request: Request, exception: PropertyRequiredError
+    ) -> JSONResponse:
+        del request
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            content={"detail": str(exception), "code": exception.code},
+        )
+
     @app.exception_handler(SensitiveReviewRequiredError)
     async def sensitive_review_required(
         request: Request, exception: SensitiveReviewRequiredError

@@ -39,7 +39,7 @@ export const showingSchema = z.object({
   ended_at: nullableString,
   created_at: dateString,
   updated_at: dateString,
-  property: propertySchema,
+  property: propertySchema.nullable(),
   contact: contactSchema.nullable(),
 });
 
@@ -151,13 +151,32 @@ export const brandingSchema = z.object({
 });
 
 export const verticalConfigSchema = z.object({
-  slug: z.string(),
   zone_taxonomy: z.array(z.string()),
   observation_schema: z.array(z.string()),
   display_labels: z.object({
     zones: z.record(z.string(), z.string()),
     observations: z.record(z.string(), z.string()),
   }),
+});
+
+export const deliverySchema = z.object({
+  share_links: z.array(
+    z.object({
+      token: z.string(),
+      url: z.string(),
+      created_at: dateString,
+      expires_at: nullableString,
+      revoked: z.boolean(),
+      open_count: z.number().int().nonnegative(),
+    }),
+  ),
+  sends: z.array(
+    z.object({
+      channel: z.string(),
+      to_email: nullableString,
+      sent_at: dateString,
+    }),
+  ),
 });
 
 export type Contact = z.infer<typeof contactSchema>;
@@ -170,6 +189,7 @@ export type ReportContent = z.infer<typeof reportContentSchema>;
 export type ReportBullet = z.infer<typeof reportBulletSchema>;
 export type Branding = z.infer<typeof brandingSchema>;
 export type VerticalConfig = z.infer<typeof verticalConfigSchema>;
+export type Delivery = z.infer<typeof deliverySchema>;
 
 export class ApiError extends Error {
   constructor(
@@ -204,6 +224,15 @@ async function request<T>(
   return schema.parse(payload);
 }
 
+async function requestText(path: string): Promise<string> {
+  const response = await fetch(`/api/backend${path}`);
+  const payload = await response.text();
+  if (!response.ok) {
+    throw new ApiError(response.status, `Request failed (${response.status})`, payload);
+  }
+  return payload;
+}
+
 function json(method: string, body?: unknown): RequestInit {
   return { method, body: body === undefined ? undefined : JSON.stringify(body) };
 }
@@ -214,12 +243,14 @@ export type ShowingFilters = {
   dateTo?: string;
   contactId?: string;
   subjectId?: string;
+  unassigned?: boolean;
   query?: string;
   limit?: number;
 };
 
 export const api = {
   me: () => request("/me", meSchema),
+  updateMe: (body: { name: string | null }) => request("/me", meSchema, json("PATCH", body)),
   contacts: {
     list: () => request("/contacts", z.array(contactSchema)),
     get: (id: string) => request(`/contacts/${id}`, contactSchema),
@@ -246,6 +277,7 @@ export const api = {
       if (filters.dateTo) params.set("date_to", filters.dateTo);
       if (filters.contactId) params.set("contact_id", filters.contactId);
       if (filters.subjectId) params.set("subject_id", filters.subjectId);
+      if (filters.unassigned !== undefined) params.set("unassigned", String(filters.unassigned));
       if (filters.query) params.set("q", filters.query);
       params.set("limit", String(filters.limit ?? 100));
       return request(`/showings?${params}`, showingListSchema);
@@ -253,6 +285,8 @@ export const api = {
     get: (id: string) => request(`/showings/${id}`, showingDetailSchema),
     create: (body: { subject_id?: string; address?: string; contact_id?: string | null }) =>
       request("/showings", showingSchema, json("POST", body)),
+    attachProperty: (id: string, body: { subject_id: string } | { address: string }) =>
+      request(`/showings/${id}`, showingSchema, json("PATCH", body)),
     finish: (id: string) => request(`/showings/${id}/finish`, z.unknown(), json("POST")),
     reprocess: (id: string) => request(`/showings/${id}/reprocess`, z.unknown(), json("POST")),
     presign: (id: string, body: { type: string; content_type: string; timestamp_offset_ms?: number }) =>
@@ -310,6 +344,7 @@ export const api = {
         }),
         json("POST", body),
       ),
+    delivery: (id: string) => request(`/showings/${id}/delivery`, deliverySchema),
   },
   observations: {
     update: (id: string, body: Partial<{ content: string; category: string; zone_id: string | null }>) =>
@@ -343,8 +378,9 @@ export const api = {
         }),
         json("POST", { content_type: contentType }),
       ),
+    preview: () => requestText("/branding/preview"),
   },
-  vertical: () => request("/verticals/real_estate", verticalConfigSchema),
+  vertical: () => request("/vertical-config", verticalConfigSchema),
 };
 
 export function uploadWithProgress(

@@ -204,7 +204,7 @@ export function ReportEditor({
               }}
               onEvidence={onEvidence}
               readOnly={readOnly}
-              title={room.zone_type ? zoneLabels[room.zone_type] ?? room.zone_type : t("visitLevel")}
+              title={room.zone_type ? zoneLabels[room.zone_type] : t("visitLevel")}
             />
           );
         })}

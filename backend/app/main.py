@@ -14,6 +14,7 @@ from app.api.routers import (
     public_reports_router,
     review_router,
     showings_router,
+    vertical_router,
 )
 from app.core.database import dispose_database, get_session_factory
 from app.verticals import get_vertical_config_service, seed_verticals
@@ -41,6 +42,7 @@ app.include_router(review_router)
 app.include_router(branding_router)
 app.include_router(delivery_router)
 app.include_router(public_reports_router)
+app.include_router(vertical_router)
 
 
 @app.get("/health", tags=["system"])

@@ -9,6 +9,7 @@ from app.schemas.review import ObservationCreate, ObservationUpdate
 from app.services.context import CurrentContext
 from app.services.exceptions import (
     DomainValidationError,
+    PropertyRequiredError,
     ResourceConflictError,
     ResourceNotFoundError,
     SensitiveReviewRequiredError,
@@ -162,6 +163,8 @@ class RealEstateReviewService:
         report = await self._repository.get_visit_report(context.workspace.id, visit.id)
         if report is None:
             raise ResourceConflictError("showing has no report to confirm")
+        if visit.subject_id is None:
+            raise PropertyRequiredError
         reviewed = await self._repository.reviewed_observations(
             context.workspace.id, visit.id
         )

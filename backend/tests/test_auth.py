@@ -92,6 +92,23 @@ async def test_login_and_refresh_round_trip(client: AsyncClient) -> None:
     assert refreshed_me.status_code == 200
 
 
+async def test_patch_me_updates_name_and_returns_account_graph(
+    client: AsyncClient,
+) -> None:
+    tokens = await signup(client, "profile-update@example.com")
+    headers = {"Authorization": f"Bearer {tokens['access_token']}"}
+
+    updated = await client.patch("/me", headers=headers, json={"name": "Riley Chen"})
+
+    assert updated.status_code == 200, updated.text
+    assert updated.json()["user"]["name"] == "Riley Chen"
+    assert updated.json()["user"]["email"] == "profile-update@example.com"
+    assert updated.json()["workspace"]["language"] == "en"
+    assert updated.json()["profile"]["vertical"] == "real_estate"
+    fetched = await client.get("/me", headers=headers)
+    assert fetched.json()["user"]["name"] == "Riley Chen"
+
+
 async def test_cross_workspace_context_returns_not_found(client: AsyncClient) -> None:
     first_tokens = await signup(client, "first@example.com")
     second_tokens = await signup(client, "second@example.com")
@@ -118,3 +135,9 @@ async def test_cross_workspace_context_returns_not_found(client: AsyncClient) ->
     )
 
     assert response.status_code == 404
+    update_response = await client.patch(
+        "/me",
+        headers={"Authorization": f"Bearer {cross_workspace_token}"},
+        json={"name": "Cross workspace"},
+    )
+    assert update_response.status_code == 404

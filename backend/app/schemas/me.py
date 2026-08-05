@@ -1,6 +1,6 @@
 import uuid
 
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from app.services.me import MeResult
 
@@ -44,3 +44,7 @@ class MeResponse(BaseModel):
                 vertical=result.vertical.slug,
             ),
         )
+
+
+class MeUpdate(BaseModel):
+    name: str | None = Field(default=None, max_length=200)

@@ -16,6 +16,7 @@ from app.schemas.showings import (
     ShowingFinishResponse,
     ShowingListResponse,
     ShowingResponse,
+    ShowingUpdate,
 )
 
 __all__ = [
@@ -37,6 +38,7 @@ __all__ = [
     "ShowingFinishResponse",
     "ShowingListResponse",
     "ShowingResponse",
+    "ShowingUpdate",
     "SignupRequest",
     "TokenResponse",
 ]

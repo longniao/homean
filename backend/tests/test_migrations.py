@@ -36,7 +36,7 @@ async def test_migration_up_from_empty_database(database_url: str) -> None:
         await engine.dispose()
 
     assert schema["tables"] == EXPECTED_TABLES
-    assert revision == "20260804_0004"
+    assert revision == "20260805_0005"
     for table in EXPECTED_TABLES - {"alembic_version"}:
         assert {"id", "created_at", "updated_at"} <= schema["columns"][table]
     assert {
@@ -70,6 +70,7 @@ async def test_migration_up_from_empty_database(database_url: str) -> None:
     assert "ix_contacts_workspace_id" in schema["indexes"]["contacts"]
     assert "ix_visits_workspace_id" in schema["indexes"]["visits"]
     assert "ix_visits_subject_id" in schema["indexes"]["visits"]
+    assert schema["nullable"]["visits"]["subject_id"] is True
     assert "ix_visits_contact_id" in schema["indexes"]["visits"]
     assert "ix_subjects_workspace_id" in schema["indexes"]["subjects"]
     assert "ix_raw_media_status" in schema["indexes"]["raw_media"]
@@ -87,6 +88,13 @@ def inspect_schema(sync_connection):  # type: ignore[no-untyped-def]
         "tables": tables,
         "columns": {
             table: {column["name"] for column in inspector.get_columns(table)}
+            for table in inspected_tables
+        },
+        "nullable": {
+            table: {
+                column["name"]: column["nullable"]
+                for column in inspector.get_columns(table)
+            }
             for table in inspected_tables
         },
         "indexes": {

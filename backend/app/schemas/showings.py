@@ -19,6 +19,17 @@ class ShowingCreate(BaseModel):
 
     @model_validator(mode="after")
     def validate_subject_source(self) -> "ShowingCreate":
+        if self.subject_id is not None and self.address is not None:
+            raise ValueError("provide at most one of subject_id or address")
+        return self
+
+
+class ShowingUpdate(BaseModel):
+    subject_id: uuid.UUID | None = None
+    address: str | None = Field(default=None, min_length=1, max_length=1000)
+
+    @model_validator(mode="after")
+    def validate_subject_source(self) -> "ShowingUpdate":
         if (self.subject_id is None) == (self.address is None):
             raise ValueError("provide exactly one of subject_id or address")
         return self
@@ -129,7 +140,7 @@ class ShowingResponse(BaseModel):
     ended_at: datetime | None
     created_at: datetime
     updated_at: datetime
-    property: PropertyResponse
+    property: PropertyResponse | None
     contact: ContactResponse | None
 
 

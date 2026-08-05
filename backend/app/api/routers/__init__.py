@@ -7,6 +7,7 @@ from app.api.routers.properties import router as properties_router
 from app.api.routers.public_reports import router as public_reports_router
 from app.api.routers.review import router as review_router
 from app.api.routers.showings import router as showings_router
+from app.api.routers.vertical import router as vertical_router
 
 __all__ = [
     "auth_router",
@@ -18,4 +19,5 @@ __all__ = [
     "public_reports_router",
     "review_router",
     "showings_router",
+    "vertical_router",
 ]

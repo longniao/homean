@@ -22,16 +22,18 @@ export function ShowingsDashboard() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [contactId, setContactId] = useState("");
+  const [propertyAssignment, setPropertyAssignment] = useState("");
   const [query, setQuery] = useState("");
   const contacts = useQuery({ queryKey: ["contacts"], queryFn: api.contacts.list });
   const showings = useQuery({
-    queryKey: ["showings", status, dateFrom, dateTo, contactId, query],
+    queryKey: ["showings", status, dateFrom, dateTo, contactId, propertyAssignment, query],
     queryFn: () =>
       api.showings.list({
         status: status || undefined,
         dateFrom: dateFrom ? new Date(`${dateFrom}T00:00:00`).toISOString() : undefined,
         dateTo: dateTo ? new Date(`${dateTo}T23:59:59`).toISOString() : undefined,
         contactId: contactId || undefined,
+        unassigned: propertyAssignment === "unassigned" ? true : undefined,
         query: query || undefined,
       }),
   });
@@ -40,11 +42,11 @@ export function ShowingsDashboard() {
     const result = new Map<string, { label: string; items: Showing[] }>();
     for (const showing of showings.data?.items ?? []) {
       const id =
-        view === "client" ? showing.contact?.id ?? "unassigned" : showing.property.id;
+        view === "client" ? showing.contact?.id ?? "unassigned-client" : showing.property?.id ?? "unassigned-property";
       const label =
         view === "client"
           ? showing.contact?.name ?? t("unassignedClient")
-          : showing.property.display_name;
+          : showing.property?.display_name ?? t("unassignedProperty");
       const current = result.get(id) ?? { label, items: [] };
       current.items.push(showing);
       result.set(id, current);
@@ -87,7 +89,7 @@ export function ShowingsDashboard() {
             <ListFilter className="size-4" /> {t("filterHint")}
           </span>
         </div>
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
           <label className="relative xl:col-span-2">
             <span className="sr-only">{t("search")}</span>
             <Search className="pointer-events-none absolute left-3 top-3.5 size-4 text-stone-400" />
@@ -109,6 +111,10 @@ export function ShowingsDashboard() {
             {contacts.data?.map((contact) => (
               <option key={contact.id} value={contact.id}>{contact.name}</option>
             ))}
+          </select>
+          <select aria-label={t("allProperties")} className="field" onChange={(event) => setPropertyAssignment(event.target.value)} value={propertyAssignment}>
+            <option value="">{t("allProperties")}</option>
+            <option value="unassigned">{t("unassignedProperty")}</option>
           </select>
           <div className="grid grid-cols-2 gap-2 xl:col-span-1">
             <input aria-label={t("dateFrom")} className="field px-2 text-xs" onChange={(e) => setDateFrom(e.target.value)} type="date" value={dateFrom} />
@@ -155,11 +161,12 @@ export function ShowingsDashboard() {
                     <div className="min-w-0 flex-1">
                       <div className="mb-1 flex flex-wrap items-center gap-2">
                         <h3 className="truncate font-semibold group-hover:text-[#1f6f5b]">
-                          {showing.property.display_name}
+                          {showing.property?.display_name ?? t("unassignedProperty")}
                         </h3>
+                        {!showing.property && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">{t("unassignedBadge")}</span>}
                         <StatusBadge showing={showing} />
                       </div>
-                      <p className="truncate text-sm text-stone-500">{showing.property.address}</p>
+                      <p className="truncate text-sm text-stone-500">{showing.property?.address ?? t("unassignedProperty")}</p>
                       <p className="mt-1 text-xs text-stone-400">
                         {showing.contact?.name ?? t("unassignedClient")} · {new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(showing.created_at))}
                       </p>

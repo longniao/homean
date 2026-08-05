@@ -185,6 +185,63 @@ async def test_full_capture_happy_path(
     assert detail["report"] is None
 
 
+async def test_subjectless_showing_can_be_created_listed_and_attached(
+    client: AsyncClient,
+) -> None:
+    owner_headers = await auth_headers(client, "subjectless-owner@example.com")
+    other_headers = await auth_headers(client, "subjectless-other@example.com")
+
+    created = await client.post("/showings", headers=owner_headers, json={})
+    assert created.status_code == 201, created.text
+    visit_id = created.json()["id"]
+    assert created.json()["property"] is None
+
+    unassigned = await client.get(
+        "/showings", headers=owner_headers, params={"unassigned": "true"}
+    )
+    assert [item["id"] for item in unassigned.json()["items"]] == [visit_id]
+
+    other_property = await create_property(
+        client, other_headers, "Other Workspace Home", "10 Private Street"
+    )
+    cross_tenant_subject = await client.patch(
+        f"/showings/{visit_id}",
+        headers=owner_headers,
+        json={"subject_id": other_property["id"]},
+    )
+    cross_tenant_visit = await client.patch(
+        f"/showings/{visit_id}",
+        headers=other_headers,
+        json={"address": "11 Leaked Street"},
+    )
+    assert cross_tenant_subject.status_code == 404
+    assert cross_tenant_visit.status_code == 404
+
+    owner_property = await create_property(
+        client, owner_headers, "Owner Workspace Home", "54 Attached Avenue"
+    )
+    attached_existing = await client.patch(
+        f"/showings/{visit_id}",
+        headers=owner_headers,
+        json={"subject_id": owner_property["id"]},
+    )
+    assert attached_existing.status_code == 200, attached_existing.text
+    assert attached_existing.json()["property"]["id"] == owner_property["id"]
+
+    attached_inline = await client.patch(
+        f"/showings/{visit_id}",
+        headers=owner_headers,
+        json={"address": "55 Attached Avenue"},
+    )
+    assert attached_inline.status_code == 200, attached_inline.text
+    assert attached_inline.json()["property"]["address"] == "55 Attached Avenue"
+
+    assigned_only = await client.get(
+        "/showings", headers=owner_headers, params={"unassigned": "true"}
+    )
+    assert assigned_only.json()["items"] == []
+
+
 @pytest.mark.parametrize("visit_status", ["confirmed", "sent_to_client"])
 async def test_capture_guards_non_draft_showings(
     client: AsyncClient,
@@ -223,9 +280,17 @@ async def test_capture_guards_non_draft_showings(
         f"/showings/{visit_id}/media/{media_id}/complete", headers=headers
     )
     finish_response = await client.post(f"/showings/{visit_id}/finish", headers=headers)
+    property_update = await client.patch(
+        f"/showings/{visit_id}",
+        headers=headers,
+        json={"address": f"2 Updated {visit_status.title()} Way"},
+    )
     assert attach_response.status_code == 409
     assert complete_response.status_code == 409
     assert finish_response.status_code == 409
+    assert property_update.status_code == (
+        409 if visit_status == "sent_to_client" else 200
+    )
 
 
 async def test_media_validation_and_size_limit(

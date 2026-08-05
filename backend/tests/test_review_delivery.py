@@ -36,7 +36,10 @@ class ReviewScenario:
 
 
 async def _scenario(
-    client: AsyncClient, session: AsyncSession, email: str
+    client: AsyncClient,
+    session: AsyncSession,
+    email: str,
+    address: str | None = "88 Review Crescent",
 ) -> ReviewScenario:
     signup = await client.post(
         "/auth/signup", json={"email": email, "password": PASSWORD}
@@ -46,7 +49,9 @@ async def _scenario(
     me = (await client.get("/me", headers=headers)).json()
     workspace_id = uuid.UUID(me["workspace"]["id"])
     showing = await client.post(
-        "/showings", headers=headers, json={"address": "88 Review Crescent"}
+        "/showings",
+        headers=headers,
+        json={"address": address} if address is not None else {},
     )
     assert showing.status_code == 201, showing.text
     visit_id = uuid.UUID(showing.json()["id"])
@@ -184,6 +189,51 @@ async def _confirm_scenario(client: AsyncClient, scenario: ReviewScenario) -> No
         f"/showings/{scenario.visit_id}/confirm", headers=scenario.headers
     )
     assert confirmation.status_code == 200, confirmation.text
+
+
+async def test_confirmation_requires_property_then_succeeds_after_attachment(
+    client: AsyncClient,
+    session: AsyncSession,
+) -> None:
+    scenario = await _scenario(
+        client,
+        session,
+        "review-subjectless@example.com",
+        address=None,
+    )
+    ordinary = await client.post(
+        f"/observations/{scenario.ordinary_id}/confirm", headers=scenario.headers
+    )
+    sensitive = await client.patch(
+        f"/observations/{scenario.sensitive_id}",
+        headers=scenario.headers,
+        json={"content": "Cabinet damage is visible beside the sink."},
+    )
+    assert ordinary.status_code == 200
+    assert sensitive.status_code == 200
+
+    blocked = await client.post(
+        f"/showings/{scenario.visit_id}/confirm", headers=scenario.headers
+    )
+    assert blocked.status_code == 422
+    assert blocked.json() == {
+        "detail": "attach a property before confirming",
+        "code": "property_required",
+    }
+
+    attached = await client.patch(
+        f"/showings/{scenario.visit_id}",
+        headers=scenario.headers,
+        json={"address": "77 Confirmation Court"},
+    )
+    assert attached.status_code == 200, attached.text
+    assert attached.json()["property"]["address"] == "77 Confirmation Court"
+
+    confirmed = await client.post(
+        f"/showings/{scenario.visit_id}/confirm", headers=scenario.headers
+    )
+    assert confirmed.status_code == 200, confirmed.text
+    assert confirmed.json()["visit_status"] == "confirmed"
 
 
 async def test_review_editing_and_confirmation_gates(
@@ -342,6 +392,11 @@ async def test_branding_and_private_logo_upload(
     assert branding is not None
     await session.refresh(branding)
     assert branding.logo_key == presign.json()["logo_key"]
+    preview = await client.get("/branding/preview", headers=scenario.headers)
+    assert preview.status_code == 200, preview.text
+    assert preview.headers["content-type"].startswith("text/html")
+    assert "Riley Chen, PREC" in preview.text
+    assert "Large windows provide consistent natural light." in preview.text
 
 
 async def test_share_links_public_views_revocation_and_expiry(
@@ -427,6 +482,31 @@ async def test_email_and_link_delivery_transitions_and_sent_edit_guards(
     await session.refresh(report_send)
     assert report_send.status == "sent"
     assert report_send.provider_message_id == "fake-1"
+
+    token = sent.json()["share_url"].rsplit("/", 1)[-1]
+    assert (await client.get(f"/r/{token}")).status_code == 200
+    assert (await client.get(f"/r/{token}/pdf")).status_code == 200
+    delivery = await client.get(
+        f"/showings/{scenario.visit_id}/delivery", headers=scenario.headers
+    )
+    assert delivery.status_code == 200, delivery.text
+    assert delivery.json()["share_links"] == [
+        {
+            "token": token,
+            "url": sent.json()["share_url"],
+            "created_at": delivery.json()["share_links"][0]["created_at"],
+            "expires_at": None,
+            "revoked": False,
+            "open_count": 2,
+        }
+    ]
+    assert delivery.json()["sends"] == [
+        {
+            "channel": "email",
+            "to_email": "buyer@example.com",
+            "sent_at": delivery.json()["sends"][0]["sent_at"],
+        }
+    ]
 
     sent_guards = [
         await client.patch(
@@ -524,5 +604,6 @@ async def test_review_and_delivery_workspace_isolation(
             headers=other.headers,
             json={"channel": "link_only"},
         ),
+        await client.get(f"/showings/{owner.visit_id}/delivery", headers=other.headers),
     ]
     assert {response.status_code for response in attempts} == {404}

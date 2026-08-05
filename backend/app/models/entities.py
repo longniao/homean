@@ -175,10 +175,9 @@ class Visit(UUIDTimestampMixin, Base):
         nullable=False,
         index=True,
     )
-    subject_id: Mapped[uuid.UUID] = mapped_column(
+    subject_id: Mapped[uuid.UUID | None] = mapped_column(
         PGUUID(as_uuid=True),
         ForeignKey("subjects.id", ondelete="RESTRICT"),
-        nullable=False,
         index=True,
     )
     created_by: Mapped[uuid.UUID] = mapped_column(

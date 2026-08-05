@@ -23,7 +23,7 @@ export function CompareTable({ showings }: { showings: ShowingDetail[] }) {
   return (
     <div className="overflow-x-auto rounded-2xl border bg-white">
       <table className="min-w-[900px] w-full border-collapse text-left text-sm">
-        <thead><tr className="bg-[#ecece4]"><th className="sticky left-0 z-10 w-48 bg-[#ecece4] p-4 font-semibold">{t("category")}</th>{showings.map((showing) => <th className="min-w-64 border-l p-4" key={showing.id}><span className="block font-serif text-lg font-semibold">{showing.property.display_name}</span><span className="mt-1 block text-xs font-normal text-stone-500">{showing.property.address}</span></th>)}</tr></thead>
+        <thead><tr className="bg-[#ecece4]"><th className="sticky left-0 z-10 w-48 bg-[#ecece4] p-4 font-semibold">{t("category")}</th>{showings.map((showing) => <th className="min-w-64 border-l p-4" key={showing.id}><span className="block font-serif text-lg font-semibold">{showing.property?.display_name ?? t("unassignedProperty")}</span><span className="mt-1 block text-xs font-normal text-stone-500">{showing.property?.address ?? t("unassignedProperty")}</span></th>)}</tr></thead>
         <tbody>{rows.map((row) => <tr className="border-t align-top" key={row.key}><th className="sticky left-0 bg-white p-4 font-semibold capitalize">{row.label}</th>{showings.map((showing) => <td className="border-l p-4 leading-6 text-stone-600" key={showing.id}>{row.render(showing)}</td>)}</tr>)}</tbody>
       </table>
     </div>

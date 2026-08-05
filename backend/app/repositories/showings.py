@@ -76,6 +76,7 @@ class ShowingRepository:
         *,
         contact_id: uuid.UUID | None,
         subject_id: uuid.UUID | None,
+        unassigned: bool | None,
         status: str | None,
         date_from: datetime | None,
         date_to: datetime | None,
@@ -83,10 +84,10 @@ class ShowingRepository:
         cursor_created_at: datetime | None,
         cursor_id: uuid.UUID | None,
         limit: int,
-    ) -> list[tuple[Visit, Subject, Contact | None]]:
+    ) -> list[tuple[Visit, Subject | None, Contact | None]]:
         statement = (
             select(Visit, Subject, Contact)
-            .join(
+            .outerjoin(
                 Subject,
                 and_(
                     Subject.id == Visit.subject_id,
@@ -106,6 +107,8 @@ class ShowingRepository:
             statement = statement.where(Visit.contact_id == contact_id)
         if subject_id is not None:
             statement = statement.where(Visit.subject_id == subject_id)
+        if unassigned is True:
+            statement = statement.where(Visit.subject_id.is_(None))
         if status is not None:
             statement = statement.where(Visit.status == status)
         if date_from is not None:

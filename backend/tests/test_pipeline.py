@@ -27,6 +27,7 @@ async def create_finished_showing(
     client: AsyncClient,
     storage: FakeStorageProvider,
     email: str,
+    address: str | None = "42 Pipeline Avenue",
 ) -> tuple[dict[str, str], uuid.UUID, uuid.UUID]:
     signup = await client.post(
         "/auth/signup", json={"email": email, "password": PASSWORD}
@@ -36,8 +37,12 @@ async def create_finished_showing(
         (await client.get("/me", headers=headers)).json()["workspace"]["id"]
     )
     showing = await client.post(
-        "/showings", headers=headers, json={"address": "42 Pipeline Avenue"}
+        "/showings",
+        headers=headers,
+        json={"address": address} if address is not None else {},
     )
+    assert showing.status_code == 201, showing.text
+    assert (showing.json()["property"] is None) is (address is None)
     visit_id = uuid.UUID(showing.json()["id"])
     presign = await client.post(
         f"/showings/{visit_id}/media/presign",
@@ -460,6 +465,33 @@ async def test_fake_pipeline_builds_full_evidence_chain_and_is_idempotent(
     assert counts_after == counts_before
     assert len(llm.calls) == llm_call_count
     assert len(transcription.calls) == transcription_call_count
+
+
+async def test_subjectless_showing_processes_to_a_ready_draft(
+    client: AsyncClient,
+    session: AsyncSession,
+    storage: FakeStorageProvider,
+) -> None:
+    headers, workspace_id, visit_id = await create_finished_showing(
+        client,
+        storage,
+        "pipeline-subjectless@example.com",
+        address=None,
+    )
+    service = pipeline_service(
+        session,
+        storage,
+        FakeTranscriptionProvider(),
+        FakeLLMClient([zone_fixture, observation_fixture, report_fixture]),
+    )
+
+    assert await service.run_all(workspace_id, visit_id) is True
+    detail = await client.get(f"/showings/{visit_id}", headers=headers)
+    assert detail.status_code == 200, detail.text
+    assert detail.json()["property"] is None
+    assert detail.json()["status"] == "draft"
+    assert detail.json()["processing_status"] == "ready"
+    assert detail.json()["report"]["status"] == "pending_review"
 
 
 async def test_report_drops_dangling_observation_references_and_logs_counts(

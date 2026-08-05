@@ -26,7 +26,7 @@ from app.repositories import (
     PropertyRepository,
     ShowingRepository,
 )
-from app.schemas.showings import MediaPresignRequest, ShowingCreate
+from app.schemas.showings import MediaPresignRequest, ShowingCreate, ShowingUpdate
 from app.services.context import CurrentContext
 from app.services.exceptions import (
     DomainValidationError,
@@ -65,7 +65,7 @@ MEDIA_RULES: dict[str, dict[str, tuple[str, int]]] = {
 @dataclass(frozen=True)
 class ShowingRecord:
     visit: Visit
-    subject: Subject
+    subject: Subject | None
     contact: Contact | None
 
 
@@ -120,15 +120,16 @@ class RealEstateShowingService:
         self, context: CurrentContext, payload: ShowingCreate
     ) -> ShowingRecord:
         contact = await self._optional_contact(context.workspace.id, payload.contact_id)
+        subject = None
         if payload.subject_id is not None:
             subject = await self._properties.get(
                 context.workspace.id, payload.subject_id
             )
             if subject is None:
                 raise ResourceNotFoundError
-        else:
+        elif payload.address is not None:
             subject = await self._create_inline_subject(
-                context.workspace.id, payload.address or ""
+                context.workspace.id, payload.address
             )
 
         profile_context = await self._auth.get_profile(
@@ -139,7 +140,7 @@ class RealEstateShowingService:
         profile, _ = profile_context
         visit = Visit(
             workspace_id=context.workspace.id,
-            subject_id=subject.id,
+            subject_id=subject.id if subject else None,
             created_by=context.user.id,
             contact_id=contact.id if contact else None,
             professional_profile_id=profile.id,
@@ -149,6 +150,33 @@ class RealEstateShowingService:
         )
         self._repository.add(visit)
         await self._repository.flush()
+        return ShowingRecord(visit=visit, subject=subject, contact=contact)
+
+    async def update_showing(
+        self,
+        context: CurrentContext,
+        visit_id: uuid.UUID,
+        payload: ShowingUpdate,
+    ) -> ShowingRecord:
+        visit = await self._repository.get_visit(context.workspace.id, visit_id)
+        if visit is None:
+            raise ResourceNotFoundError
+        if visit.status == "sent_to_client":
+            raise ResourceConflictError("sent showings cannot be changed")
+        if payload.subject_id is not None:
+            subject = await self._properties.get(
+                context.workspace.id, payload.subject_id
+            )
+            if subject is None:
+                raise ResourceNotFoundError
+        else:
+            subject = await self._create_inline_subject(
+                context.workspace.id, payload.address or ""
+            )
+        visit.subject_id = subject.id
+        contact = await self._optional_contact(context.workspace.id, visit.contact_id)
+        await self._repository.flush()
+        await self._repository.session.refresh(visit)
         return ShowingRecord(visit=visit, subject=subject, contact=contact)
 
     async def presign_media(
@@ -299,9 +327,11 @@ class RealEstateShowingService:
         visit = await self._repository.get_visit(context.workspace.id, visit_id)
         if visit is None:
             raise ResourceNotFoundError
-        subject = await self._properties.get(context.workspace.id, visit.subject_id)
-        if subject is None:
-            raise ResourceNotFoundError
+        subject = None
+        if visit.subject_id is not None:
+            subject = await self._properties.get(context.workspace.id, visit.subject_id)
+            if subject is None:
+                raise ResourceNotFoundError
         contact = await self._optional_contact(context.workspace.id, visit.contact_id)
         return ShowingDetail(
             record=ShowingRecord(visit=visit, subject=subject, contact=contact),
@@ -322,6 +352,7 @@ class RealEstateShowingService:
         *,
         contact_id: uuid.UUID | None,
         subject_id: uuid.UUID | None,
+        unassigned: bool | None,
         status: str | None,
         date_from: datetime | None,
         date_to: datetime | None,
@@ -336,6 +367,7 @@ class RealEstateShowingService:
             context.workspace.id,
             contact_id=contact_id,
             subject_id=subject_id,
+            unassigned=unassigned,
             status=status,
             date_from=date_from,
             date_to=date_to,

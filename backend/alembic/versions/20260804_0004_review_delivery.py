@@ -58,9 +58,7 @@ def upgrade() -> None:
         sa.Column("phone", sa.Text(), nullable=True),
         sa.Column("email", sa.Text(), nullable=True),
         sa.Column("license_no", sa.Text(), nullable=True),
-        sa.Column(
-            "accent_color", sa.Text(), server_default="#1F6F5B", nullable=False
-        ),
+        sa.Column("accent_color", sa.Text(), server_default="#1F6F5B", nullable=False),
         sa.ForeignKeyConstraint(
             ["workspace_id"],
             ["workspaces.id"],
@@ -68,9 +66,7 @@ def upgrade() -> None:
             ondelete="CASCADE",
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_workspace_branding")),
-        sa.UniqueConstraint(
-            "workspace_id", name="uq_workspace_branding_workspace_id"
-        ),
+        sa.UniqueConstraint("workspace_id", name="uq_workspace_branding_workspace_id"),
     )
     op.create_index(
         "ix_workspace_branding_workspace_id",
@@ -229,9 +225,7 @@ def downgrade() -> None:
     op.drop_index("ix_report_share_links_workspace_id", table_name="report_share_links")
     op.drop_table("report_share_links")
 
-    op.drop_index(
-        "ix_workspace_branding_workspace_id", table_name="workspace_branding"
-    )
+    op.drop_index("ix_workspace_branding_workspace_id", table_name="workspace_branding")
     op.drop_table("workspace_branding")
 
     op.drop_column("transcript_segments", "original_text")

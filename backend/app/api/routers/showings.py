@@ -14,6 +14,7 @@ from app.schemas import (
     ShowingFinishResponse,
     ShowingListResponse,
     ShowingResponse,
+    ShowingUpdate,
 )
 from app.schemas.contacts import ContactResponse
 from app.schemas.properties import PropertyResponse
@@ -42,7 +43,9 @@ def showing_response(record: ShowingRecord) -> ShowingResponse:
         ended_at=visit.ended_at,
         created_at=visit.created_at,
         updated_at=visit.updated_at,
-        property=PropertyResponse.from_subject(record.subject),
+        property=(
+            PropertyResponse.from_subject(record.subject) if record.subject else None
+        ),
         contact=(
             ContactResponse.model_validate(record.contact) if record.contact else None
         ),
@@ -74,12 +77,23 @@ async def create_showing(
     return showing_response(await service.create_showing(context, payload))
 
 
+@router.patch("/{visit_id}", response_model=ShowingResponse)
+async def update_showing(
+    visit_id: uuid.UUID,
+    payload: ShowingUpdate,
+    context: Annotated[CurrentContext, Depends(get_current_context)],
+    service: Annotated[RealEstateShowingService, Depends(get_showing_service)],
+) -> ShowingResponse:
+    return showing_response(await service.update_showing(context, visit_id, payload))
+
+
 @router.get("", response_model=ShowingListResponse)
 async def list_showings(
     context: Annotated[CurrentContext, Depends(get_current_context)],
     service: Annotated[RealEstateShowingService, Depends(get_showing_service)],
     contact_id: uuid.UUID | None = None,
     subject_id: uuid.UUID | None = None,
+    unassigned: bool | None = None,
     showing_status: Annotated[
         Literal["draft", "confirmed", "sent_to_client"] | None,
         Query(alias="status"),
@@ -94,6 +108,7 @@ async def list_showings(
         context,
         contact_id=contact_id,
         subject_id=subject_id,
+        unassigned=unassigned,
         status=showing_status,
         date_from=date_from,
         date_to=date_to,

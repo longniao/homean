@@ -38,5 +38,14 @@ class SensitiveReviewRequiredError(DomainValidationError):
         self.observation_ids = observation_ids
 
 
+class PropertyRequiredError(DomainValidationError):
+    """A showing must be attached to a subject before confirmation."""
+
+    code = "property_required"
+
+    def __init__(self) -> None:
+        super().__init__("attach a property before confirming")
+
+
 class DeliveryUnavailableError(RuntimeError):
     """A report delivery provider failed after the send was recorded."""

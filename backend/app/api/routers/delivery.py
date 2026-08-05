@@ -5,6 +5,9 @@ from fastapi import APIRouter, Depends
 
 from app.api.dependencies import get_current_context, get_delivery_service
 from app.schemas.delivery import (
+    DeliverySendResponse,
+    DeliveryShareLinkResponse,
+    DeliverySummaryResponse,
     SendReportRequest,
     SendReportResponse,
     ShareLinkCreate,
@@ -23,6 +26,36 @@ def _share_response(result: ShareLinkResult) -> ShareLinkResponse:
         url=result.url,
         expires_at=result.link.expires_at,
         revoked_at=result.link.revoked_at,
+    )
+
+
+@router.get("/{visit_id}/delivery", response_model=DeliverySummaryResponse)
+async def get_delivery(
+    visit_id: uuid.UUID,
+    context: Annotated[CurrentContext, Depends(get_current_context)],
+    service: Annotated[RealEstateDeliveryService, Depends(get_delivery_service)],
+) -> DeliverySummaryResponse:
+    result = await service.get_delivery(context, visit_id)
+    return DeliverySummaryResponse(
+        share_links=[
+            DeliveryShareLinkResponse(
+                token=item.link.token,
+                url=item.url,
+                created_at=item.link.created_at,
+                expires_at=item.link.expires_at,
+                revoked=item.link.revoked_at is not None,
+                open_count=item.open_count,
+            )
+            for item in result.share_links
+        ],
+        sends=[
+            DeliverySendResponse(
+                channel=item.channel,
+                to_email=item.to_email,
+                sent_at=item.created_at,
+            )
+            for item in result.sends
+        ],
     )
 
 

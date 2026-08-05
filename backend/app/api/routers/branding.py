@@ -1,6 +1,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
+from fastapi.responses import HTMLResponse
 
 from app.api.dependencies import get_branding_service, get_current_context
 from app.models import WorkspaceBranding
@@ -36,6 +37,14 @@ async def get_branding(
     service: Annotated[RealEstateBrandingService, Depends(get_branding_service)],
 ) -> BrandingResponse:
     return _branding_response(await service.get(context))
+
+
+@router.get("/preview", response_class=HTMLResponse)
+async def get_branding_preview(
+    context: Annotated[CurrentContext, Depends(get_current_context)],
+    service: Annotated[RealEstateBrandingService, Depends(get_branding_service)],
+) -> HTMLResponse:
+    return HTMLResponse(await service.render_preview(context))
 
 
 @router.put("", response_model=BrandingResponse)

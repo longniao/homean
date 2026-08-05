@@ -84,8 +84,9 @@ def get_branding_service(
     session: Annotated[AsyncSession, Depends(get_session)],
     settings: Annotated[Settings, Depends(get_settings)],
     storage: Annotated[StorageProvider, Depends(get_storage_provider)],
+    renderer: Annotated[ReportRenderer, Depends(get_report_renderer)],
 ) -> RealEstateBrandingService:
-    return RealEstateBrandingService(session, storage, settings)
+    return RealEstateBrandingService(session, storage, settings, renderer)
 
 
 @lru_cache

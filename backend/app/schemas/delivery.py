@@ -43,3 +43,23 @@ class SendReportResponse(BaseModel):
     channel: str
     share_url: str
     to_email: EmailStr | None
+
+
+class DeliveryShareLinkResponse(BaseModel):
+    token: str
+    url: str
+    created_at: datetime
+    expires_at: datetime | None
+    revoked: bool
+    open_count: int
+
+
+class DeliverySendResponse(BaseModel):
+    channel: str
+    to_email: EmailStr | None
+    sent_at: datetime
+
+
+class DeliverySummaryResponse(BaseModel):
+    share_links: list[DeliveryShareLinkResponse]
+    sends: list[DeliverySendResponse]
