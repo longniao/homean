@@ -1,12 +1,35 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { NextIntlClientProvider } from "next-intl";
-import { getLocale, getMessages } from "next-intl/server";
+import { getLocale, getMessages, getTranslations } from "next-intl/server";
+import { AppProviders } from "./providers";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: "Kawu",
-  description: "AI showing reports for real-estate buyer's agents",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const [requestHeaders, t] = await Promise.all([
+    headers(),
+    getTranslations("Metadata"),
+  ]);
+  const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host");
+  const protocol = requestHeaders.get("x-forwarded-proto") ?? "http";
+  const metadataBase = new URL(host ? `${protocol}://${host}` : "http://localhost:3000");
+  return {
+    metadataBase,
+    title: t("title"),
+    description: t("description"),
+    openGraph: {
+      title: t("title"),
+      description: t("description"),
+      images: [{ url: "/og.png", width: 1731, height: 909, alt: t("imageAlt") }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: t("title"),
+      description: t("description"),
+      images: ["/og.png"],
+    },
+  };
+}
 
 export default async function RootLayout({
   children,
@@ -19,7 +42,7 @@ export default async function RootLayout({
     <html lang={locale}>
       <body className="antialiased">
         <NextIntlClientProvider messages={messages}>
-          {children}
+          <AppProviders>{children}</AppProviders>
         </NextIntlClientProvider>
       </body>
     </html>

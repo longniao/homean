@@ -1,0 +1,374 @@
+import { z } from "zod";
+
+const nullableString = z.string().nullable();
+const dateString = z.string();
+
+export const contactSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  email: nullableString,
+  phone: nullableString,
+  notes: nullableString,
+  created_at: dateString,
+  updated_at: dateString,
+});
+
+export const propertySchema = z.object({
+  id: z.string().uuid(),
+  display_name: z.string(),
+  address: z.string(),
+  attributes: z.object({
+    beds: z.number().int().nullable().optional(),
+    baths: z.number().nullable().optional(),
+    sqft: z.number().int().nullable().optional(),
+    listing_price: z.number().nullable().optional(),
+    mls_id: nullableString.optional(),
+  }),
+  created_at: dateString,
+  updated_at: dateString,
+});
+
+const showingStatusSchema = z.enum(["draft", "confirmed", "sent_to_client"]);
+export const showingSchema = z.object({
+  id: z.string().uuid(),
+  status: showingStatusSchema,
+  processing_status: z.string(),
+  processing_failed_step: nullableString,
+  processing_error: nullableString,
+  started_at: nullableString,
+  ended_at: nullableString,
+  created_at: dateString,
+  updated_at: dateString,
+  property: propertySchema,
+  contact: contactSchema.nullable(),
+});
+
+export const mediaSchema = z.object({
+  id: z.string().uuid(),
+  type: z.string(),
+  content_type: z.string(),
+  timestamp_offset_ms: z.number().nullable(),
+  status: z.string(),
+  size_bytes: z.number().nullable(),
+  created_at: dateString,
+});
+
+export const zoneSchema = z.object({
+  id: z.string().uuid(),
+  zone_type: z.string(),
+  position: z.number().int(),
+  start_transcript_segment_id: nullableString,
+  end_transcript_segment_id: nullableString,
+});
+
+export const observationSchema = z.object({
+  id: z.string().uuid(),
+  zone_id: nullableString,
+  category: z.string(),
+  content: z.string(),
+  source_type: z.string(),
+  source_transcript_segment_id: nullableString,
+  source_media_id: nullableString,
+  timestamp_start: z.number().nullable(),
+  timestamp_end: z.number().nullable(),
+  ai_model: nullableString,
+  prompt_version: nullableString,
+  confidence: z.number().nullable(),
+  flags: z.record(z.string(), z.unknown()),
+  review_status: z.string(),
+  reviewed_by: nullableString,
+  reviewed_at: nullableString,
+});
+
+export const transcriptSchema = z.object({
+  id: z.string().uuid(),
+  raw_media_id: z.string().uuid(),
+  text: z.string(),
+  original_text: nullableString,
+  timestamp_start: z.number().nullable(),
+  timestamp_end: z.number().nullable(),
+  confidence: z.number().nullable(),
+});
+
+export const reportBulletSchema = z.object({
+  text: z.string().min(1),
+  observation_ids: z.array(z.string().uuid()).min(1),
+});
+export const reportContentSchema = z.object({
+  executive_summary: z.string(),
+  room_by_room: z.array(
+    z.object({
+      zone_id: nullableString,
+      zone_type: nullableString,
+      bullets: z.array(reportBulletSchema),
+    }),
+  ),
+  highlights: z.array(reportBulletSchema),
+  concerns: z.array(reportBulletSchema),
+  follow_ups: z.array(reportBulletSchema),
+});
+export const reportSchema = z.object({
+  id: z.string().uuid(),
+  template_id: z.string(),
+  content: reportContentSchema,
+  rendered_html: nullableString,
+  status: z.string(),
+});
+
+export const showingDetailSchema = showingSchema.extend({
+  media: z.array(mediaSchema),
+  zones: z.array(zoneSchema),
+  observations: z.array(observationSchema),
+  transcript: z.array(transcriptSchema),
+  report: reportSchema.nullable(),
+});
+
+export const showingListSchema = z.object({
+  items: z.array(showingSchema),
+  next_cursor: nullableString,
+});
+
+export const meSchema = z.object({
+  user: z.object({
+    id: z.string().uuid(),
+    email: z.string().email(),
+    name: nullableString,
+    phone: nullableString,
+  }),
+  workspace: z.object({ id: z.string().uuid(), name: z.string(), language: z.string() }),
+  profile: z.object({ id: z.string().uuid(), role: z.string(), vertical: z.string() }),
+});
+
+export const brandingSchema = z.object({
+  id: nullableString,
+  logo_key: nullableString,
+  display_name: nullableString,
+  phone: nullableString,
+  email: nullableString,
+  license_no: nullableString,
+  accent_color: z.string(),
+  updated_at: nullableString,
+});
+
+export const verticalConfigSchema = z.object({
+  slug: z.string(),
+  zone_taxonomy: z.array(z.string()),
+  observation_schema: z.array(z.string()),
+  display_labels: z.object({
+    zones: z.record(z.string(), z.string()),
+    observations: z.record(z.string(), z.string()),
+  }),
+});
+
+export type Contact = z.infer<typeof contactSchema>;
+export type Property = z.infer<typeof propertySchema>;
+export type Showing = z.infer<typeof showingSchema>;
+export type ShowingDetail = z.infer<typeof showingDetailSchema>;
+export type Observation = z.infer<typeof observationSchema>;
+export type TranscriptSegment = z.infer<typeof transcriptSchema>;
+export type ReportContent = z.infer<typeof reportContentSchema>;
+export type ReportBullet = z.infer<typeof reportBulletSchema>;
+export type Branding = z.infer<typeof brandingSchema>;
+export type VerticalConfig = z.infer<typeof verticalConfigSchema>;
+
+export class ApiError extends Error {
+  constructor(
+    public status: number,
+    message: string,
+    public payload: unknown,
+  ) {
+    super(message);
+  }
+}
+
+async function request<T>(
+  path: string,
+  schema: z.ZodType<T>,
+  options: RequestInit = {},
+): Promise<T> {
+  const response = await fetch(`/api/backend${path}`, {
+    ...options,
+    headers: {
+      ...(options.body ? { "Content-Type": "application/json" } : {}),
+      ...options.headers,
+    },
+  });
+  const payload = response.status === 204 ? null : await response.json();
+  if (!response.ok) {
+    const message =
+      typeof payload === "object" && payload && "detail" in payload
+        ? String(payload.detail)
+        : `Request failed (${response.status})`;
+    throw new ApiError(response.status, message, payload);
+  }
+  return schema.parse(payload);
+}
+
+function json(method: string, body?: unknown): RequestInit {
+  return { method, body: body === undefined ? undefined : JSON.stringify(body) };
+}
+
+export type ShowingFilters = {
+  status?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  contactId?: string;
+  subjectId?: string;
+  query?: string;
+  limit?: number;
+};
+
+export const api = {
+  me: () => request("/me", meSchema),
+  contacts: {
+    list: () => request("/contacts", z.array(contactSchema)),
+    get: (id: string) => request(`/contacts/${id}`, contactSchema),
+    create: (body: Pick<Contact, "name" | "email" | "phone" | "notes">) =>
+      request("/contacts", contactSchema, json("POST", body)),
+    update: (id: string, body: Partial<Pick<Contact, "name" | "email" | "phone" | "notes">>) =>
+      request(`/contacts/${id}`, contactSchema, json("PATCH", body)),
+    remove: (id: string) => request(`/contacts/${id}`, z.null(), json("DELETE")),
+  },
+  properties: {
+    list: () => request("/properties", z.array(propertySchema)),
+    get: (id: string) => request(`/properties/${id}`, propertySchema),
+    create: (body: { display_name: string; address: string; attributes?: Record<string, unknown> }) =>
+      request("/properties", propertySchema, json("POST", body)),
+    update: (id: string, body: Partial<{ display_name: string; address: string; attributes: Record<string, unknown> }>) =>
+      request(`/properties/${id}`, propertySchema, json("PATCH", body)),
+    remove: (id: string) => request(`/properties/${id}`, z.null(), json("DELETE")),
+  },
+  showings: {
+    list: (filters: ShowingFilters = {}) => {
+      const params = new URLSearchParams();
+      if (filters.status) params.set("status", filters.status);
+      if (filters.dateFrom) params.set("date_from", filters.dateFrom);
+      if (filters.dateTo) params.set("date_to", filters.dateTo);
+      if (filters.contactId) params.set("contact_id", filters.contactId);
+      if (filters.subjectId) params.set("subject_id", filters.subjectId);
+      if (filters.query) params.set("q", filters.query);
+      params.set("limit", String(filters.limit ?? 100));
+      return request(`/showings?${params}`, showingListSchema);
+    },
+    get: (id: string) => request(`/showings/${id}`, showingDetailSchema),
+    create: (body: { subject_id?: string; address?: string; contact_id?: string | null }) =>
+      request("/showings", showingSchema, json("POST", body)),
+    finish: (id: string) => request(`/showings/${id}/finish`, z.unknown(), json("POST")),
+    reprocess: (id: string) => request(`/showings/${id}/reprocess`, z.unknown(), json("POST")),
+    presign: (id: string, body: { type: string; content_type: string; timestamp_offset_ms?: number }) =>
+      request(
+        `/showings/${id}/media/presign`,
+        z.object({
+          media_id: z.string().uuid(),
+          upload_url: z.string(),
+          method: z.literal("PUT"),
+          headers: z.record(z.string(), z.string()),
+          expires_in: z.number(),
+          max_size_bytes: z.number(),
+        }),
+        json("POST", body),
+      ),
+    complete: (visitId: string, mediaId: string) =>
+      request(`/showings/${visitId}/media/${mediaId}/complete`, mediaSchema, json("POST")),
+    mediaDownload: (visitId: string, mediaId: string) =>
+      request(
+        `/showings/${visitId}/media/${mediaId}/download`,
+        z.object({ download_url: z.string(), expires_in: z.number() }),
+      ),
+    confirm: (id: string) =>
+      request(
+        `/showings/${id}/confirm`,
+        z.object({
+          visit_id: z.string().uuid(),
+          report_id: z.string().uuid(),
+          visit_status: z.string(),
+          report_status: z.string(),
+        }),
+        json("POST"),
+      ),
+    createShareLink: (id: string) =>
+      request(
+        `/showings/${id}/share-links`,
+        z.object({
+          id: z.string().uuid(),
+          token: z.string(),
+          url: z.string(),
+          expires_at: nullableString,
+          revoked_at: nullableString,
+        }),
+        json("POST", {}),
+      ),
+    send: (id: string, body: { channel: "email" | "link_only"; to_email?: string }) =>
+      request(
+        `/showings/${id}/send`,
+        z.object({
+          send_id: z.string().uuid(),
+          visit_status: z.string(),
+          channel: z.string(),
+          share_url: z.string(),
+          to_email: nullableString,
+        }),
+        json("POST", body),
+      ),
+  },
+  observations: {
+    update: (id: string, body: Partial<{ content: string; category: string; zone_id: string | null }>) =>
+      request(`/observations/${id}`, observationSchema, json("PATCH", body)),
+    confirm: (id: string) => request(`/observations/${id}/confirm`, observationSchema, json("POST")),
+    dismiss: (id: string) => request(`/observations/${id}/dismiss`, observationSchema, json("POST")),
+    create: (body: { visit_id: string; content: string; category: string; zone_id: string | null; source_transcript_segment_id?: string | null }) =>
+      request("/observations", observationSchema, json("POST", body)),
+  },
+  transcript: {
+    update: (id: string, text: string) =>
+      request(`/transcript-segments/${id}`, transcriptSchema, json("PATCH", { text })),
+  },
+  reports: {
+    update: (id: string, content: ReportContent) =>
+      request(`/reports/${id}`, reportSchema, json("PATCH", { content })),
+  },
+  branding: {
+    get: () => request("/branding", brandingSchema),
+    update: (body: Omit<Branding, "id" | "logo_key" | "updated_at">) =>
+      request("/branding", brandingSchema, json("PUT", body)),
+    presignLogo: (contentType: string) =>
+      request(
+        "/branding/logo/presign",
+        z.object({
+          logo_key: z.string(),
+          upload_url: z.string(),
+          method: z.literal("PUT"),
+          headers: z.record(z.string(), z.string()),
+          expires_in: z.number(),
+        }),
+        json("POST", { content_type: contentType }),
+      ),
+  },
+  vertical: () => request("/verticals/real_estate", verticalConfigSchema),
+};
+
+export function uploadWithProgress(
+  url: string,
+  file: File,
+  headers: Record<string, string>,
+  onProgress: (percent: number) => void,
+) {
+  return new Promise<void>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("PUT", url);
+    Object.entries(headers).forEach(([key, value]) => xhr.setRequestHeader(key, value));
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) onProgress(Math.round((event.loaded / event.total) * 100));
+    };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        onProgress(100);
+        resolve();
+      } else {
+        reject(new Error(`Upload failed (${xhr.status})`));
+      }
+    };
+    xhr.onerror = () => reject(new Error("Upload failed"));
+    xhr.send(file);
+  });
+}
