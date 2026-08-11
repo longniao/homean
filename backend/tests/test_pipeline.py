@@ -345,18 +345,7 @@ def no_zone_report_fixture(
     no_zone = next(item for item in observations if item["zone_id"] is None)
     return {
         "executive_summary": "Traffic noise was noted at the entrance.",
-        "room_by_room": [
-            {
-                "zone_id": None,
-                "zone_type": None,
-                "bullets": [
-                    {
-                        "text": "Traffic noise is loud at the front entrance.",
-                        "observation_ids": [no_zone["id"]],
-                    }
-                ],
-            }
-        ],
+        "room_by_room": [],
         "highlights": [],
         "concerns": [
             {
@@ -620,10 +609,7 @@ async def test_segments_outside_zones_persist_and_reach_the_report(
     assert len(observations) == 1
     assert observations[0].zone_id is None
     assert report is not None
-    assert report.content["room_by_room"][0]["zone_id"] is None
-    assert report.content["room_by_room"][0]["bullets"][0]["observation_ids"] == [
-        str(observations[0].id)
-    ]
+    assert report.content["room_by_room"] == []
     assert report.content["concerns"][0]["observation_ids"] == [str(observations[0].id)]
 
 

@@ -19,6 +19,8 @@ from app.schemas import (
 from app.schemas.contacts import ContactResponse
 from app.schemas.properties import PropertyResponse
 from app.schemas.showings import (
+    MarkerCreate,
+    MarkerResponse,
     MediaResponse,
     ObservationResponse,
     ReportResponse,
@@ -145,6 +147,7 @@ async def presign_media(
         upload_url=result.upload_url,
         headers={"Content-Type": result.media.content_type},
         expires_in=result.expires_in,
+        expires_at=result.expires_at,
         max_size_bytes=result.max_size_bytes,
     )
 
@@ -159,6 +162,34 @@ async def complete_media(
     return MediaResponse.from_media(
         await service.complete_media(context, visit_id, media_id)
     )
+
+
+@router.post(
+    "/{visit_id}/markers",
+    response_model=MarkerResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_marker(
+    visit_id: uuid.UUID,
+    payload: MarkerCreate,
+    context: Annotated[CurrentContext, Depends(get_current_context)],
+    service: Annotated[RealEstateShowingService, Depends(get_showing_service)],
+) -> MarkerResponse:
+    return MarkerResponse.from_marker(
+        await service.create_marker(context, visit_id, payload)
+    )
+
+
+@router.get("/{visit_id}/markers", response_model=list[MarkerResponse])
+async def list_markers(
+    visit_id: uuid.UUID,
+    context: Annotated[CurrentContext, Depends(get_current_context)],
+    service: Annotated[RealEstateShowingService, Depends(get_showing_service)],
+) -> list[MarkerResponse]:
+    return [
+        MarkerResponse.from_marker(marker)
+        for marker in await service.list_markers(context, visit_id)
+    ]
 
 
 @router.get(

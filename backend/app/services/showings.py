@@ -1,9 +1,11 @@
 import base64
+import binascii
 import json
 import uuid
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
@@ -16,6 +18,7 @@ from app.models import (
     Subject,
     TranscriptSegment,
     Visit,
+    VisitMarker,
     Zone,
 )
 from app.pipeline import PipelineEnqueuer
@@ -26,7 +29,12 @@ from app.repositories import (
     PropertyRepository,
     ShowingRepository,
 )
-from app.schemas.showings import MediaPresignRequest, ShowingCreate, ShowingUpdate
+from app.schemas.showings import (
+    MarkerCreate,
+    MediaPresignRequest,
+    ShowingCreate,
+    ShowingUpdate,
+)
 from app.services.billing import BillingService
 from app.services.context import CurrentContext
 from app.services.exceptions import (
@@ -91,6 +99,7 @@ class PresignedUpload:
     media: RawMedia
     upload_url: str
     expires_in: int
+    expires_at: datetime
     max_size_bytes: int
 
 
@@ -123,6 +132,35 @@ class RealEstateShowingService:
         self, context: CurrentContext, payload: ShowingCreate
     ) -> ShowingRecord:
         await self._billing.require_active(context)
+
+        # A mobile showing carries its durable local UUID as a per-workspace
+        # capture key.  The first request may have committed remotely while
+        # its response was lost, so retries must return the original visit
+        # instead of creating a second visit (or inline subject).
+        if payload.capture_client_id is not None:
+            workspace_id = context.workspace.id
+            existing = await self._repository.get_visit_by_capture_client_id(
+                workspace_id, payload.capture_client_id
+            )
+            if existing is not None:
+                if not await self._capture_payload_matches(
+                    workspace_id, existing, payload
+                ):
+                    raise ResourceConflictError(
+                        "capture_client_id is already used with different showing data"
+                    )
+                subject = None
+                if existing.subject_id is not None:
+                    subject = await self._properties.get(
+                        workspace_id, existing.subject_id
+                    )
+                    if subject is None:
+                        raise ResourceNotFoundError
+                contact = await self._optional_contact(
+                    workspace_id, existing.contact_id
+                )
+                return ShowingRecord(visit=existing, subject=subject, contact=contact)
+
         contact = await self._optional_contact(context.workspace.id, payload.contact_id)
         subject = None
         if payload.subject_id is not None:
@@ -152,9 +190,36 @@ class RealEstateShowingService:
             status="draft",
             processing_status="not_started",
             consent_ack=payload.consent_ack,
+            capture_client_id=payload.capture_client_id,
         )
         self._repository.add(visit)
-        await self._repository.flush()
+        try:
+            await self._repository.flush()
+        except IntegrityError:
+            # A concurrent request can pass the preflight lookup and win the
+            # unique workspace/capture key first.  Roll back this failed
+            # insert, then use the same idempotent path to validate and return
+            # the committed visit instead of leaking a 500 or duplicate row.
+            if payload.capture_client_id is None:
+                raise
+            workspace_id = context.workspace.id
+            await self._repository.session.rollback()
+            existing = await self._repository.get_visit_by_capture_client_id(
+                workspace_id, payload.capture_client_id
+            )
+            if existing is None:
+                raise
+            if not await self._capture_payload_matches(workspace_id, existing, payload):
+                raise ResourceConflictError(
+                    "capture_client_id is already used with different showing data"
+                ) from None
+            subject = None
+            if existing.subject_id is not None:
+                subject = await self._properties.get(workspace_id, existing.subject_id)
+                if subject is None:
+                    raise ResourceNotFoundError from None
+            contact = await self._optional_contact(workspace_id, existing.contact_id)
+            return ShowingRecord(visit=existing, subject=subject, contact=contact)
         return ShowingRecord(visit=visit, subject=subject, contact=contact)
 
     async def update_showing(
@@ -190,31 +255,162 @@ class RealEstateShowingService:
         visit_id: uuid.UUID,
         payload: MediaPresignRequest,
     ) -> PresignedUpload:
+        workspace_id = context.workspace.id
         content_type = payload.content_type.strip().lower()
         extension, max_size = self._media_rule(payload.type, content_type)
-        media_id = uuid.uuid4()
-        object_key = f"{context.workspace.id}/{visit_id}/{media_id}.{extension}"
-        visit = await self._require_mutable_visit(context.workspace.id, visit_id)
-        media = RawMedia(
-            id=media_id,
-            visit_id=visit.id,
-            type=payload.type,
-            object_key=object_key,
+        visit = await self._require_mutable_visit(workspace_id, visit_id)
+        # These values must remain usable after a failed flush.  A session
+        # rollback expires ORM state, including ``visit`` and any loaded media.
+        visit_id = visit.id
+        client_id = payload.client_id
+        media_id = payload.media_id
+        media_by_id = None
+        if media_id is not None:
+            media_by_id = await self._repository.get_media(
+                workspace_id, visit_id, media_id
+            )
+            if media_by_id is None:
+                raise ResourceNotFoundError
+
+        media_by_client_id = None
+        if client_id is not None:
+            media_by_client_id = await self._repository.get_media_by_client_id(
+                workspace_id, visit_id, client_id
+            )
+
+        if (
+            media_by_id is not None
+            and media_by_client_id is not None
+            and media_by_id.id != media_by_client_id.id
+        ):
+            raise ResourceConflictError(
+                "media_id and client_id identify different media rows"
+            )
+        media = media_by_id or media_by_client_id
+        if media is None:
+            media_id = uuid.uuid4()
+            object_key = f"{workspace_id}/{visit_id}/{media_id}.{extension}"
+            media = RawMedia(
+                id=media_id,
+                visit_id=visit_id,
+                client_id=client_id,
+                type=payload.type,
+                object_key=object_key,
+                content_type=content_type,
+                timestamp_offset_ms=payload.timestamp_offset_ms,
+                status="pending",
+            )
+            self._repository.add(media)
+            try:
+                await self._repository.flush()
+            except IntegrityError:
+                # A concurrent retry can pass the lookup above and commit the
+                # same client identity first.  Reconcile to that row rather
+                # than leaking an error or creating another storage object.
+                if client_id is None:
+                    raise
+                await self._repository.session.rollback()
+                media = await self._repository.get_media_by_client_id(
+                    workspace_id, visit_id, client_id
+                )
+                if media is None:
+                    raise ResourceConflictError(
+                        "media client_id could not be reconciled"
+                    ) from None
+
+        if client_id is not None:
+            if media.client_id is not None and media.client_id != client_id:
+                raise ResourceConflictError(
+                    "media_id is already used with a different client_id"
+                )
+            if media.client_id is None:
+                # A legacy row has no client identity.  Lock and refresh it
+                # before assigning one so concurrent assignments cannot
+                # overwrite each other nondeterministically.
+                legacy_media_id = media.id
+                media = await self._repository.get_media_for_update(
+                    workspace_id, visit_id, legacy_media_id
+                )
+                if media is None:
+                    raise ResourceNotFoundError
+                if media.client_id is not None:
+                    if media.client_id != client_id:
+                        raise ResourceConflictError(
+                            "media_id is already used with a different client_id"
+                        )
+                else:
+                    media.client_id = client_id
+                    try:
+                        await self._repository.flush()
+                    except IntegrityError:
+                        # Another request may have claimed this client_id in a
+                        # different row while this legacy row was being
+                        # reconciled.  Roll back first, then resolve both
+                        # identities from fresh workspace-scoped queries.
+                        await self._repository.session.rollback()
+                        media = await self._repository.get_media(
+                            workspace_id, visit_id, legacy_media_id
+                        )
+                        owner = await self._repository.get_media_by_client_id(
+                            workspace_id, visit_id, client_id
+                        )
+                        if media is None:
+                            raise ResourceNotFoundError from None
+                        if owner is not None and owner.id != legacy_media_id:
+                            raise ResourceConflictError(
+                                "media_id and client_id identify different media rows"
+                            ) from None
+                        if media.client_id != client_id:
+                            raise ResourceConflictError(
+                                "media client_id could not be reconciled"
+                            ) from None
+
+        self._validate_media_identity(
+            media,
+            media_type=payload.type,
             content_type=content_type,
             timestamp_offset_ms=payload.timestamp_offset_ms,
-            status="pending",
         )
-        self._repository.add(media)
-        await self._repository.flush()
+        if media.status == "uploaded":
+            raise ResourceConflictError("media upload is already complete")
+        # The durable object key is intentionally reused.  A refresh must
+        # never create an orphan RawMedia row or a second object.
+
+        expires_in = self._settings.presigned_upload_seconds
+        expires_at = datetime.now(UTC) + timedelta(seconds=expires_in)
         upload_url = await self._storage.presign_put(
-            object_key, content_type, self._settings.presigned_upload_seconds
+            media.object_key, media.content_type, expires_in
         )
+        media.upload_url_expires_at = expires_at
+        await self._repository.flush()
+        await self._repository.session.refresh(media)
         return PresignedUpload(
             media=media,
             upload_url=upload_url,
-            expires_in=self._settings.presigned_upload_seconds,
+            expires_in=expires_in,
+            expires_at=expires_at,
             max_size_bytes=max_size,
         )
+
+    @staticmethod
+    def _validate_media_identity(
+        media: RawMedia,
+        *,
+        media_type: str,
+        content_type: str,
+        timestamp_offset_ms: float | None,
+    ) -> None:
+        if (
+            media.type != media_type
+            or media.content_type != content_type
+            or (
+                timestamp_offset_ms is not None
+                and media.timestamp_offset_ms != timestamp_offset_ms
+            )
+        ):
+            raise ResourceConflictError(
+                "media identity is already used with different capture data"
+            )
 
     async def complete_media(
         self,
@@ -245,11 +441,57 @@ class RealEstateShowingService:
         await self._repository.session.refresh(media)
         return media
 
+    async def create_marker(
+        self,
+        context: CurrentContext,
+        visit_id: uuid.UUID,
+        payload: MarkerCreate,
+    ) -> VisitMarker:
+        visit = await self._require_mutable_visit(context.workspace.id, visit_id)
+        marker = VisitMarker(
+            visit_id=visit.id,
+            client_id=payload.client_id,
+            created_by=context.user.id,
+            marker_type=payload.marker_type,
+            timestamp_offset_ms=payload.timestamp_offset_ms,
+        )
+        existing = await self._repository.get_marker(visit.id, payload.client_id)
+        if existing is not None:
+            if (
+                existing.marker_type != payload.marker_type
+                or existing.timestamp_offset_ms != payload.timestamp_offset_ms
+            ):
+                raise ResourceConflictError(
+                    "marker client_id is already used with different capture data"
+                )
+            return existing
+        marker = await self._repository.insert_marker(marker)
+        if (
+            marker.marker_type != payload.marker_type
+            or marker.timestamp_offset_ms != payload.timestamp_offset_ms
+        ):
+            raise ResourceConflictError(
+                "marker client_id is already used with different capture data"
+            )
+        return marker
+
+    async def list_markers(
+        self, context: CurrentContext, visit_id: uuid.UUID
+    ) -> list[VisitMarker]:
+        visit = await self._repository.get_visit(context.workspace.id, visit_id)
+        if visit is None:
+            raise ResourceNotFoundError
+        return await self._repository.list_markers(context.workspace.id, visit_id)
+
     async def finish_showing(
         self, context: CurrentContext, visit_id: uuid.UUID
     ) -> Visit:
         should_enqueue = False
         visit = await self._require_mutable_visit(context.workspace.id, visit_id)
+        if not await self._repository.has_completed_audio(
+            context.workspace.id, visit_id
+        ):
+            raise ResourceConflictError("missing_audio")
         if visit.ended_at is None:
             visit.ended_at = datetime.now(UTC)
         if (
@@ -277,6 +519,29 @@ class RealEstateShowingService:
                 await self._repository.session.commit()
                 raise PipelineUnavailableError from exc
         return visit
+
+    async def _capture_payload_matches(
+        self,
+        workspace_id: uuid.UUID,
+        visit: Visit,
+        payload: ShowingCreate,
+    ) -> bool:
+        if visit.contact_id != payload.contact_id:
+            return False
+        if visit.consent_ack != payload.consent_ack:
+            return False
+        if payload.subject_id is not None:
+            return visit.subject_id == payload.subject_id
+        if payload.address is not None:
+            if visit.subject_id is None:
+                return False
+            subject = await self._properties.get(workspace_id, visit.subject_id)
+            return subject is not None and subject.location == payload.address.strip()
+        # A dashboard user may attach a subject after the mobile create
+        # response was lost.  The original subjectless payload remains
+        # compatible with that visit; a supplied subject/address is checked
+        # above as an immutable capture field.
+        return True
 
     async def reprocess_showing(
         self, context: CurrentContext, visit_id: uuid.UUID
@@ -474,9 +739,27 @@ class RealEstateShowingService:
             return None, None
         try:
             padding = "=" * (-len(cursor) % 4)
-            payload = json.loads(base64.urlsafe_b64decode(cursor + padding).decode())
-            return datetime.fromisoformat(payload["created_at"]), uuid.UUID(
-                payload["id"]
+            encoded_payload = (cursor + padding).encode("ascii")
+            payload = json.loads(
+                base64.b64decode(encoded_payload, altchars=b"-_", validate=True).decode(
+                    "utf-8"
+                )
             )
-        except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        except (
+            binascii.Error,
+            UnicodeDecodeError,
+            UnicodeEncodeError,
+            json.JSONDecodeError,
+        ) as exc:
+            raise DomainValidationError("invalid cursor") from exc
+
+        if not isinstance(payload, dict):
+            raise DomainValidationError("invalid cursor")
+        try:
+            created_at = payload["created_at"]
+            visit_id = payload["id"]
+            if not isinstance(created_at, str) or not isinstance(visit_id, str):
+                raise TypeError("cursor fields must be strings")
+            return datetime.fromisoformat(created_at), uuid.UUID(visit_id)
+        except (KeyError, TypeError, ValueError) as exc:
             raise DomainValidationError("invalid cursor") from exc

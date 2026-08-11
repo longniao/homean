@@ -6,7 +6,7 @@ import { CompareTable } from "@/components/compare-table";
 import type { ShowingDetail } from "@/lib/api";
 import messages from "@/messages/en.json";
 
-function showing(id: string, name: string, highlights: number, concerns: number): ShowingDetail {
+function showing(id: string, name: string, highlights: number, concerns: number, zoneType = "kitchen"): ShowingDetail {
   const observationId = `${id.slice(0, 8)}-1111-4111-8111-111111111111`;
   const zoneId = `${id.slice(0, 8)}-2222-4222-8222-222222222222`;
   return {
@@ -29,7 +29,7 @@ function showing(id: string, name: string, highlights: number, concerns: number)
     },
     contact: null,
     media: [],
-    zones: [{ id: zoneId, zone_type: "kitchen", position: 0, start_transcript_segment_id: null, end_transcript_segment_id: null }],
+    zones: [{ id: zoneId, zone_type: zoneType, position: 0, start_transcript_segment_id: null, end_transcript_segment_id: null }],
     observations: [{
       id: observationId,
       zone_id: zoneId,
@@ -74,6 +74,7 @@ describe("CompareTable", () => {
             showing("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", "Oak House", 2, 1),
             showing("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", "Pine House", 1, 3),
           ]}
+          zoneLabels={{ kitchen: "Kitchen", other: "Other" }}
         />
       </NextIntlClientProvider>,
     );
@@ -85,5 +86,33 @@ describe("CompareTable", () => {
     expect(within(highlightRow!).getByText("1")).toBeInTheDocument();
     expect(screen.getAllByText("Oak House has good light")).toHaveLength(2);
     expect(screen.getAllByText("Pine House has good light")).toHaveLength(2);
+  });
+
+  it("renders the configured zone label exactly", () => {
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <CompareTable
+          showings={[showing("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", "Oak House", 2, 1)]}
+          zoneLabels={{ kitchen: "chef's kitchen", other: "Other" }}
+        />
+      </NextIntlClientProvider>,
+    );
+
+    expect(screen.getByRole("columnheader", { name: "chef's kitchen" })).toBeInTheDocument();
+    expect(screen.queryByRole("columnheader", { name: "kitchen" })).not.toBeInTheDocument();
+  });
+
+  it("uses the configured other label for unknown or missing zone keys", () => {
+    render(
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <CompareTable
+          showings={[showing("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", "Oak House", 2, 1, "unconfigured_zone")]}
+          zoneLabels={{ other: "Other" }}
+        />
+      </NextIntlClientProvider>,
+    );
+
+    expect(screen.getByRole("columnheader", { name: "Other" })).toBeInTheDocument();
+    expect(screen.queryByRole("columnheader", { name: "unconfigured_zone" })).not.toBeInTheDocument();
   });
 });

@@ -14,6 +14,8 @@ from app.schemas.properties import (
     RealEstateSubjectAttributes,
 )
 from app.schemas.showings import (
+    MarkerCreate,
+    MarkerResponse,
     MediaDownloadResponse,
     MediaPresignRequest,
     MediaPresignResponse,
@@ -36,6 +38,8 @@ __all__ = [
     "MediaDownloadResponse",
     "MediaPresignRequest",
     "MediaPresignResponse",
+    "MarkerCreate",
+    "MarkerResponse",
     "MeResponse",
     "PropertyCreate",
     "PropertyResponse",

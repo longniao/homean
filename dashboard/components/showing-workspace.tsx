@@ -8,7 +8,9 @@ import {
   Check,
   CircleDot,
   Clock3,
+  Copy,
   ExternalLink,
+  FileDown,
   ImageIcon,
   Link2,
   LoaderCircle,
@@ -34,13 +36,31 @@ import { Button } from "@/components/ui/button";
 import {
   ApiError,
   api,
+  getPublicReportPdfUrl,
+  type Delivery,
   type Observation,
   type ReportContent,
   type ShowingDetail,
 } from "@/lib/api";
+import { copyTextToClipboard } from "@/lib/clipboard";
 import { cn } from "@/lib/utils";
 
 type Tab = "report" | "observations" | "transcript";
+type ShareLink = Delivery["share_links"][number];
+
+const MAX_EXPIRY_TIMER_MS = 60_000;
+
+function isActiveShareLink(link: ShareLink, now: number) {
+  return (
+    !link.revoked &&
+    (link.expires_at === null || new Date(link.expires_at).getTime() > now)
+  );
+}
+
+function shareLinkStatus(link: ShareLink, now: number) {
+  if (link.revoked) return "revoked" as const;
+  return isActiveShareLink(link, now) ? "active" as const : "expired" as const;
+}
 
 function cacheObservation(
   detail: ShowingDetail | undefined,
@@ -366,21 +386,84 @@ export function DeliveryPanel({ showing }: { showing: ShowingDetail }) {
   const toast = useToast();
   const queryClient = useQueryClient();
   const [email, setEmail] = useState(showing.contact?.email ?? "");
+  const [now, setNow] = useState(() => Date.now());
+  const [createdLinkUrl, setCreatedLinkUrl] = useState<string | null>(null);
   const delivery = useQuery({
     queryKey: ["delivery", showing.id],
     queryFn: () => api.showings.delivery(showing.id),
   });
-  const link = useMutation({
-    mutationFn: () => api.showings.createShareLink(showing.id),
-    onSuccess: async (item) => {
-      await navigator.clipboard.writeText(item.url);
-      await queryClient.invalidateQueries({ queryKey: ["delivery", showing.id] });
+
+  useEffect(() => {
+    const links = delivery.data?.share_links ?? [];
+    const nextExpiry = links.reduce<number | null>((soonest, link) => {
+      if (link.revoked || link.expires_at === null) return soonest;
+      const expiresAt = new Date(link.expires_at).getTime();
+      if (!Number.isFinite(expiresAt) || expiresAt <= now) return soonest;
+      return soonest === null ? expiresAt : Math.min(soonest, expiresAt);
+    }, null);
+    if (nextExpiry === null) return;
+
+    const delay = Math.max(
+      1,
+      Math.min(nextExpiry - now, MAX_EXPIRY_TIMER_MS),
+    );
+    const timer = window.setTimeout(() => setNow(Date.now()), delay);
+    return () => window.clearTimeout(timer);
+  }, [delivery.data?.share_links, now]);
+
+  const refreshDelivery = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["showing", showing.id] }),
+      queryClient.invalidateQueries({ queryKey: ["delivery", showing.id] }),
+      queryClient.invalidateQueries({ queryKey: ["showings"] }),
+    ]);
+  };
+
+  const copyLink = async (url: string) => {
+    let copied = false;
+    try {
+      copied = await copyTextToClipboard(url);
+    } catch {
+      copied = false;
+    }
+    if (copied) {
       toast.success(t("linkCopied"));
-    },
+    } else {
+      toast.error(t("linkCopyFailed"));
+    }
+    return copied;
+  };
+
+  const handleCreatedLink = (url: string) => {
+    setCreatedLinkUrl(url);
+    toast.success(t("linkCreated"));
+    void refreshDelivery().catch(() => undefined);
+  };
+
+  const link = useMutation({
+    mutationFn: () => api.showings.send(showing.id, { channel: "link_only" }),
+    onSuccess: (item) => handleCreatedLink(item.share_url),
     onError: (error) => {
       const payload = error instanceof ApiError ? error.payload as { code?: string } : null;
       toast.error(payload?.code === "subscription_required" ? t("subscriptionRequired") : error.message);
     },
+  });
+  const replacementLink = useMutation({
+    mutationFn: () => api.showings.createShareLink(showing.id),
+    onSuccess: (item) => handleCreatedLink(item.url),
+    onError: (error) => {
+      const payload = error instanceof ApiError ? error.payload as { code?: string } : null;
+      toast.error(payload?.code === "subscription_required" ? t("subscriptionRequired") : error.message);
+    },
+  });
+  const revoke = useMutation({
+    mutationFn: (linkId: string) => api.showings.revokeShareLink(showing.id, linkId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["delivery", showing.id] });
+      setCreatedLinkUrl(null);
+      toast.success(t("linkRevoked"));
+    },
+    onError: (error) => toast.error(error.message),
   });
   const send = useMutation({
     mutationFn: () => api.showings.send(showing.id, { channel: "email", to_email: email }),
@@ -389,18 +472,40 @@ export function DeliveryPanel({ showing }: { showing: ShowingDetail }) {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["showing", showing.id] }),
         queryClient.invalidateQueries({ queryKey: ["delivery", showing.id] }),
+        queryClient.invalidateQueries({ queryKey: ["showings"] }),
       ]);
     },
-    onError: (error) => {
+    onError: async (error) => {
+      await queryClient.invalidateQueries({ queryKey: ["delivery", showing.id] });
       const payload = error instanceof ApiError ? error.payload as { code?: string } : null;
-      toast.error(payload?.code === "subscription_required" ? t("subscriptionRequired") : error.message);
+      toast.error(
+        payload?.code === "subscription_required"
+          ? t("subscriptionRequired")
+          : payload?.code === "email_delivery_outcome_unknown"
+            ? t("emailOutcomeUnknown")
+            : payload?.code === "email_delivery_in_progress"
+              ? t("emailInProgress")
+            : error.message,
+      );
     },
   });
+  const emailDelivery = delivery.data?.sends.find((item) => item.channel === "email");
+  const emailRetryBlocked =
+    emailDelivery?.status === "pending" || emailDelivery?.status === "outcome_unknown";
   const openCount = delivery.data?.share_links.reduce((total, item) => total + item.open_count, 0) ?? 0;
   const history = [
     ...(delivery.data?.share_links.map((item) => ({ kind: "link" as const, at: item.created_at, item })) ?? []),
     ...(delivery.data?.sends.map((item) => ({ kind: "send" as const, at: item.sent_at, item })) ?? []),
   ].sort((left, right) => right.at.localeCompare(left.at));
+  const activeShareLink = delivery.data?.share_links.find(
+    (item) => isActiveShareLink(item, now),
+  );
+  const activePdfUrl = activeShareLink
+    ? getPublicReportPdfUrl(activeShareLink.url)
+    : null;
+  const canCreateReplacement =
+    showing.status === "sent_to_client" && delivery.isSuccess && !activeShareLink;
+  const linkPending = link.isPending || replacementLink.isPending;
   return (
     <section className="panel mt-7 overflow-hidden border-emerald-200">
       <div className="border-b bg-emerald-50 p-5 sm:p-6">
@@ -412,12 +517,45 @@ export function DeliveryPanel({ showing }: { showing: ShowingDetail }) {
         <form className="rounded-xl border p-4" onSubmit={(event) => { event.preventDefault(); send.mutate(); }}>
           <div className="mb-3 flex items-center gap-2 font-semibold"><Mail className="size-4 text-[#1f6f5b]" /> {t("emailTitle")}</div>
           <input className="field" onChange={(event) => setEmail(event.target.value)} placeholder={t("emailPlaceholder")} required type="email" value={email} />
-          <Button className="mt-3 w-full" disabled={send.isPending} type="submit"><Send /> {t("sendEmail")}</Button>
+          <Button className="mt-3 w-full" disabled={send.isPending || emailRetryBlocked || showing.status !== "confirmed"} type="submit"><Send /> {t("sendEmail")}</Button>
+          {emailDelivery?.status === "outcome_unknown" && <p className="mt-2 text-xs leading-5 text-amber-700">{t("emailOutcomeUnknown")}</p>}
+          {emailDelivery?.status === "pending" && <p className="mt-2 text-xs leading-5 text-stone-500">{t("emailInProgress")}</p>}
         </form>
         <div className="rounded-xl border p-4">
           <div className="mb-3 flex items-center gap-2 font-semibold"><Link2 className="size-4 text-[#1f6f5b]" /> {t("linkTitle")}</div>
           <p className="mb-3 text-sm leading-6 text-stone-500">{t("linkBody")}</p>
-          <Button className="w-full" disabled={link.isPending} onClick={() => link.mutate()} variant="outline"><Link2 /> {t("copyLink")}</Button>
+          {showing.status === "confirmed" && <Button className="w-full" disabled={linkPending} onClick={() => link.mutate()} variant="outline"><Link2 /> {t("copyLink")}</Button>}
+          {canCreateReplacement && <Button className="w-full" disabled={linkPending} onClick={() => replacementLink.mutate()} variant="outline"><Link2 /> {t("createReplacementLink")}</Button>}
+          {activeShareLink && (
+            <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50/60 p-3">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-emerald-800">{t("activeLink")}</p>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <label className="sr-only" htmlFor={`active-share-link-${activeShareLink.id}`}>{t("manualUrl")}</label>
+                <input
+                  aria-label={t("manualUrl")}
+                  className="field min-w-0 flex-1 bg-white text-xs"
+                  id={`active-share-link-${activeShareLink.id}`}
+                  onClick={(event) => event.currentTarget.select()}
+                  onFocus={(event) => event.currentTarget.select()}
+                  readOnly
+                  value={activeShareLink.url}
+                />
+                <Button aria-label={t("copyLinkAction")} disabled={!isActiveShareLink(activeShareLink, Date.now())} onClick={() => { if (isActiveShareLink(activeShareLink, Date.now())) void copyLink(activeShareLink.url); }} variant="outline"><Copy /> {t("copyLinkAction")}</Button>
+              </div>
+              {activePdfUrl && <a className="mt-3 inline-flex min-h-9 w-full items-center justify-center gap-2 rounded-lg border border-[#1f6f5b] px-3 text-sm font-semibold text-[#1f6f5b] transition hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[#1f6f5b]/30" href={activePdfUrl} onClick={(event) => { if (!isActiveShareLink(activeShareLink, Date.now())) event.preventDefault(); }} rel="noreferrer" target="_blank"><FileDown className="size-4" /> {t("openPdf")}</a>}
+            </div>
+          )}
+          {createdLinkUrl && createdLinkUrl !== activeShareLink?.url && (
+            <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
+              <p className="mb-2 text-xs leading-5 text-amber-900">{t("linkCreated")}</p>
+              <label className="sr-only" htmlFor="created-share-link-recovery">{t("manualUrl")}</label>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <input aria-label={t("manualUrl")} className="field min-w-0 flex-1 bg-white text-xs" id="created-share-link-recovery" onClick={(event) => event.currentTarget.select()} onFocus={(event) => event.currentTarget.select()} readOnly value={createdLinkUrl} />
+                <Button aria-label={t("copyLinkAction")} onClick={() => void copyLink(createdLinkUrl)} variant="outline"><Copy /> {t("copyLinkAction")}</Button>
+              </div>
+            </div>
+          )}
+          {showing.status === "sent_to_client" && !activeShareLink && <p className="mt-2 text-xs leading-5 text-stone-400">{t("alreadyDelivered")}</p>}
         </div>
       </div>
       <div className="border-t px-5 py-4 sm:px-6">
@@ -428,11 +566,21 @@ export function DeliveryPanel({ showing }: { showing: ShowingDetail }) {
         {delivery.isLoading ? <p className="text-sm text-stone-400">{t("loadingHistory")}</p> : delivery.isError ? <p className="text-sm text-red-700">{t("historyError")}</p> : history.length === 0 ? <p className="text-sm text-stone-400">{t("noHistory")}</p> : history.map((entry, index) => (
           <div className="flex items-center justify-between gap-3 border-t py-2 text-sm first:border-0" key={`${entry.kind}-${entry.at}-${index}`}>
             <div>
-              <span>{entry.kind === "send" ? entry.item.channel === "email" ? t("sentTo", { email: entry.item.to_email ?? "" }) : t("linkDelivered") : t("linkCreatedWithOpens", { count: entry.item.open_count })}</span>
-              {entry.kind === "link" && entry.item.revoked && <span className="ml-2 rounded-full bg-stone-100 px-2 py-0.5 text-xs text-stone-500">{t("revoked")}</span>}
+              <span>{entry.kind === "send" ? entry.item.channel === "email" ? entry.item.status === "outcome_unknown" ? t("emailOutcomeUnknown") : entry.item.status === "failed" ? t("emailFailed") : entry.item.status === "pending" ? t("emailInProgress") : t("sentTo", { email: entry.item.to_email ?? "" }) : t("linkDelivered") : t("linkCreatedWithOpens", { count: entry.item.open_count })}</span>
+              {entry.kind === "link" && <span className={cn("ml-2 rounded-full px-2 py-0.5 text-xs", shareLinkStatus(entry.item, now) === "active" ? "bg-emerald-100 text-emerald-800" : "bg-stone-100 text-stone-500")}>{t(shareLinkStatus(entry.item, now))}</span>}
               <span className="ml-2 text-xs text-stone-400">{new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(new Date(entry.at))}</span>
             </div>
-            {entry.kind === "link" && <a aria-label={t("openLink")} className="text-[#1f6f5b]" href={entry.item.url} rel="noreferrer" target="_blank"><ExternalLink className="size-4" /></a>}
+            {entry.kind === "link" && (
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                {isActiveShareLink(entry.item, now) && <>
+                  <label className="sr-only" htmlFor={`history-share-link-${entry.item.id}`}>{t("manualUrl")}</label>
+                  <input aria-label={t("manualUrl")} className="field h-8 w-48 bg-white text-xs" id={`history-share-link-${entry.item.id}`} onClick={(event) => event.currentTarget.select()} onFocus={(event) => event.currentTarget.select()} readOnly value={entry.item.url} />
+                  <Button aria-label={t("copyLinkAction")} disabled={revoke.isPending} onClick={() => { if (isActiveShareLink(entry.item, Date.now())) void copyLink(entry.item.url); }} size="sm" variant="outline"><Copy /> {t("copyLinkAction")}</Button>
+                  <Button aria-label={t("revokeLink")} disabled={revoke.isPending} onClick={() => { if (isActiveShareLink(entry.item, Date.now()) && window.confirm(t("revokeConfirm"))) revoke.mutate(entry.item.id); }} size="sm" variant="destructive"><Trash2 /> {t("revokeLink")}</Button>
+                  <a aria-label={t("openLink")} className="text-[#1f6f5b]" href={entry.item.url} onClick={(event) => { if (!isActiveShareLink(entry.item, Date.now())) event.preventDefault(); }} rel="noreferrer" target="_blank"><ExternalLink className="size-4" /></a>
+                </>}
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -562,7 +710,10 @@ export function ShowingWorkspace({ id }: { id: string }) {
     onSuccess: () => {
       setConfirmError("");
       toast.success(reportT("confirmed"));
-      queryClient.invalidateQueries({ queryKey: ["showing", id] });
+      void Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["showing", id] }),
+        queryClient.invalidateQueries({ queryKey: ["showings"] }),
+      ]);
     },
     onError: (error) => {
       if (error instanceof ApiError && error.status === 422) {

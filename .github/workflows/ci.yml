@@ -80,6 +80,7 @@ jobs:
       - run: npm test
       - run: npm run typecheck
       - run: npm run lint
+      - run: npx expo-doctor
 
   e2e:
     name: End-to-end
@@ -122,3 +123,18 @@ jobs:
         working-directory: dashboard
       - run: npm run test:e2e
         working-directory: dashboard
+
+  release-preflight:
+    name: Release preflight
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+      - run: uv python install 3.12
+      - run: uv sync --frozen
+        working-directory: backend
+      - name: Run credential-free release preflight
+        run: bash scripts/release_preflight.sh

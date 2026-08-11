@@ -62,7 +62,7 @@ export default function App() {
       id: `remote-${item.id}`, remoteId: item.id, contactId: item.contact?.id ?? null, subjectId: item.property?.id ?? null, address: null, consentAck: item.consentAck,
       title: item.property?.displayName ?? i18n.t('home.untitled'), startedAt: new Date(item.createdAt).getTime(), endedAt: null, elapsedMs: 0,
       syncState: syncStateFromProcessing(item.processingStatus, 'synced'),
-      processingStatus: item.processingStatus, finishRequested: false, lastError: null, updatedAt: new Date(item.createdAt).getTime(),
+      processingStatus: item.processingStatus, finishRequested: false, lastError: null, updatedAt: new Date(item.createdAt).getTime(), generation: 0,
     }));
     return [...localShowings, ...remoteOnly].sort((a, b) => b.startedAt - a.startedAt).slice(0, 50);
   }, [localShowings, remoteShowings]);

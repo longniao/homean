@@ -2,7 +2,7 @@ import { File } from 'expo-file-system';
 import { fetch as expoFetch } from 'expo/fetch';
 import { z } from 'zod';
 import { clearTokens, getTokens, setTokens } from '../auth/tokenStore';
-import type { Contact, Property, ReportContent, ShowingDetail, ShowingSummary, TokenPair } from '../types';
+import type { Contact, MediaKind, Property, ReportContent, ShowingDetail, ShowingSummary, TokenPair, VerticalConfig } from '../types';
 
 const API_URL = (process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000').replace(/\/$/, '');
 
@@ -27,12 +27,24 @@ const reportContentSchema = z.object({
   highlights: z.array(bulletSchema), concerns: z.array(bulletSchema), follow_ups: z.array(bulletSchema),
 });
 const reportSchema = z.object({ id: z.string(), content: reportContentSchema, status: z.string() });
+export const verticalConfigSchema = z.object({
+  zone_taxonomy: z.array(z.string()),
+  observation_schema: z.array(z.string()),
+  display_labels: z.object({
+    zones: z.record(z.string(), z.string()),
+    observations: z.record(z.string(), z.string()),
+  }),
+});
 const showingSchema = z.object({
   id: z.string(), status: z.string(), processing_status: z.string(), created_at: z.string(),
   property: propertySchema.nullable(), contact: contactSchema.nullable(),
   consent_ack: z.boolean().optional().default(false),
 });
 const showingDetailSchema = showingSchema.extend({ observations: z.array(observationSchema), report: reportSchema.nullable() });
+const markerSchema = z.object({
+  id: z.string(), client_id: z.string(), marker_type: z.literal('voice_tag'),
+  timestamp_offset_ms: z.number(), created_at: z.string(),
+});
 
 function tokensFromWire(value: z.infer<typeof tokenSchema>): TokenPair {
   return { accessToken: value.access_token, refreshToken: value.refresh_token, expiresAt: Date.now() + value.expires_in * 1000 };
@@ -45,6 +57,9 @@ function propertyFromWire(value: z.infer<typeof propertySchema>): Property {
 }
 function showingFromWire(value: z.infer<typeof showingSchema>): ShowingSummary {
   return { id: value.id, status: value.status, processingStatus: value.processing_status, createdAt: value.created_at, property: value.property ? propertyFromWire(value.property) : null, contact: value.contact ? contactFromWire(value.contact) : null, consentAck: value.consent_ack };
+}
+function verticalConfigFromWire(value: z.infer<typeof verticalConfigSchema>): VerticalConfig {
+  return { zoneTaxonomy: value.zone_taxonomy, observationSchema: value.observation_schema, displayLabels: value.display_labels };
 }
 
 async function responseDetail(response: Response): Promise<string> {
@@ -107,13 +122,17 @@ export class ApiClient {
   async listProperties(): Promise<Property[]> {
     return z.array(propertySchema).parse(await (await this.request('/properties')).json()).map(propertyFromWire);
   }
+  async getVerticalConfig(): Promise<VerticalConfig> {
+    return verticalConfigFromWire(verticalConfigSchema.parse(await (await this.request('/vertical-config')).json()));
+  }
   async listShowings(): Promise<ShowingSummary[]> {
     const body = z.object({ items: z.array(showingSchema) }).parse(await (await this.request('/showings?limit=50')).json());
     return body.items.map(showingFromWire);
   }
-  async createShowing(input: { subjectId: string | null; address: string | null; contactId: string | null; consentAck?: boolean }): Promise<ShowingSummary> {
-    const payload: { subject_id?: string; address?: string; contact_id: string | null; consent_ack?: boolean } = { contact_id: input.contactId };
+  async createShowing(input: { subjectId: string | null; address: string | null; contactId: string | null; consentAck?: boolean; captureClientId?: string }): Promise<ShowingSummary> {
+    const payload: { subject_id?: string; address?: string; contact_id: string | null; consent_ack?: boolean; capture_client_id?: string } = { contact_id: input.contactId };
     if (input.consentAck !== undefined) payload.consent_ack = input.consentAck;
+    if (input.captureClientId !== undefined) payload.capture_client_id = input.captureClientId;
     if (input.subjectId) payload.subject_id = input.subjectId;
     else if (input.address) payload.address = input.address;
     const body = showingSchema.parse(await (await this.request('/showings', { method: 'POST', body: JSON.stringify(payload) })).json());
@@ -131,10 +150,11 @@ export class ApiClient {
       report: value.report ? { id: value.report.id, content: value.report.content, status: value.report.status } : null,
     };
   }
-  async presignMedia(visitId: string, media: { kind: 'audio' | 'photo'; contentType: string; timestampOffsetMs: number }) {
-    return z.object({ media_id: z.string(), upload_url: z.string(), headers: z.record(z.string(), z.string()) }).parse(
-      await (await this.request(`/showings/${visitId}/media/presign`, { method: 'POST', body: JSON.stringify({ type: media.kind, content_type: media.contentType, timestamp_offset_ms: media.timestampOffsetMs }) })).json(),
+  async presignMedia(visitId: string, media: { clientId: string; mediaId?: string; kind: MediaKind; contentType: string; timestampOffsetMs: number }) {
+    const body = z.object({ media_id: z.string(), upload_url: z.string(), headers: z.record(z.string(), z.string()), expires_at: z.string(), expires_in: z.number() }).parse(
+      await (await this.request(`/showings/${visitId}/media/presign`, { method: 'POST', body: JSON.stringify({ client_id: media.clientId, ...(media.mediaId ? { media_id: media.mediaId } : {}), type: media.kind, content_type: media.contentType, timestamp_offset_ms: media.timestampOffsetMs }) })).json(),
     );
+    return body;
   }
   async uploadFile(url: string, headers: Record<string, string>, fileUri: string): Promise<void> {
     const response = await expoFetch(url, { method: 'PUT', headers, body: new File(fileUri) });
@@ -142,6 +162,12 @@ export class ApiClient {
   }
   async completeMedia(visitId: string, mediaId: string): Promise<void> {
     await this.request(`/showings/${visitId}/media/${mediaId}/complete`, { method: 'POST' });
+  }
+  async createMarker(visitId: string, marker: { clientId: string; markerType: 'voice_tag'; timestampOffsetMs: number }): Promise<{ id: string; client_id: string }> {
+    return markerSchema.parse(await (await this.request(`/showings/${visitId}/markers`, {
+      method: 'POST',
+      body: JSON.stringify({ client_id: marker.clientId, marker_type: marker.markerType, timestamp_offset_ms: marker.timestampOffsetMs }),
+    })).json());
   }
   async finishShowing(visitId: string): Promise<void> {
     await this.request(`/showings/${visitId}/finish`, { method: 'POST' });

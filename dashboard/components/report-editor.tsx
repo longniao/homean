@@ -27,6 +27,7 @@ type BulletSectionProps = {
   title: string;
   bullets: ReportBullet[];
   observations: Observation[];
+  emptyEvidenceMessage?: string;
   readOnly: boolean;
   onChange: (bullets: ReportBullet[]) => void;
   onEvidence: EditorProps["onEvidence"];
@@ -37,6 +38,7 @@ function BulletSection({
   title,
   bullets,
   observations,
+  emptyEvidenceMessage,
   readOnly,
   onChange,
   onEvidence,
@@ -70,7 +72,9 @@ function BulletSection({
         )}
       </div>
       {bullets.length === 0 ? (
-        <p className="rounded-xl bg-stone-50 px-4 py-5 text-sm text-stone-400">{t("emptySection")}</p>
+        <p className="rounded-xl bg-stone-50 px-4 py-5 text-sm text-stone-400">
+          {observations.length === 0 && emptyEvidenceMessage ? emptyEvidenceMessage : t("emptySection")}
+        </p>
       ) : (
         <div className="space-y-3">
           {bullets.map((bullet, index) => {
@@ -148,6 +152,11 @@ function BulletSection({
               </article>
             );
           })}
+          {observations.length === 0 && emptyEvidenceMessage && (
+            <p className="rounded-xl bg-stone-50 px-4 py-3 text-sm text-stone-400">
+              {emptyEvidenceMessage}
+            </p>
+          )}
         </div>
       )}
     </section>
@@ -190,12 +199,20 @@ export function ReportEditor({
 
       <div className="space-y-4">
         {content.room_by_room.map((room, roomIndex) => {
-          const roomObservations = observations.filter((item) => item.zone_id === room.zone_id);
+          // A room can only offer evidence from its exact zone. Visit-level
+          // observations are intentionally kept out of room sections and are
+          // available through highlights, concerns, and follow-ups instead.
+          const roomObservations = room.zone_id
+            ? observations.filter((item) => item.zone_id === room.zone_id)
+            : [];
           return (
             <BulletSection
               bullets={room.bullets}
+              emptyEvidenceMessage={
+                room.zone_id ? t("emptyRoomEvidence") : t("visitLevelRoomEvidence")
+              }
               key={`${room.zone_id ?? "visit"}-${roomIndex}`}
-              observations={roomObservations.length ? roomObservations : observations}
+              observations={roomObservations}
               onApplyRewrite={onApplyRewrite}
               onChange={(bullets) => {
                 const rooms = [...content.room_by_room];

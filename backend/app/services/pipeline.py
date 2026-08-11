@@ -338,7 +338,7 @@ class RealEstatePipelineService:
         )
         sanitized = self._sanitize_report(
             invocation.response.parsed,
-            {observation.id for observation in observations},
+            {observation.id: observation.zone_id for observation in observations},
             {zone.id for zone in zones},
         )
         await self._repository.delete_pending_reports(workspace_id, visit_id)
@@ -587,20 +587,27 @@ class RealEstatePipelineService:
     def _sanitize_report(
         cls,
         report: RealEstateReportSchema,
-        observation_ids: set[uuid.UUID],
+        observation_zones: dict[uuid.UUID, uuid.UUID | None],
         zone_ids: set[uuid.UUID],
     ) -> SanitizedReport:
         dropped_bullets = 0
         dropped_references = 0
 
-        def bullets(items: list[ReportBullet]) -> list[ReportBullet]:
+        def bullets(
+            items: list[ReportBullet],
+            room_zone_id: uuid.UUID | None = None,
+        ) -> list[ReportBullet]:
             nonlocal dropped_bullets, dropped_references
             sanitized: list[ReportBullet] = []
             for item in items:
                 valid_ids = [
                     observation_id
                     for observation_id in item.observation_ids
-                    if observation_id in observation_ids
+                    if observation_id in observation_zones
+                    and (
+                        room_zone_id is None
+                        or observation_zones[observation_id] == room_zone_id
+                    )
                 ]
                 dropped_references += len(item.observation_ids) - len(valid_ids)
                 if valid_ids:
@@ -613,14 +620,24 @@ class RealEstatePipelineService:
 
         room_by_room: list[RoomByRoomSection] = []
         for section in report.room_by_room:
-            sanitized_bullets = bullets(section.bullets)
             valid_zone_reference = (
                 section.zone_id is not None and section.zone_id in zone_ids
             )
-            if section.zone_id is not None and not valid_zone_reference:
+            if section.zone_id is None:
+                # Visit-level observations have no room binding. Keep them
+                # available to highlights/concerns/follow-ups, but never
+                # represent them as a room section.
+                dropped_bullets += len(section.bullets)
+                dropped_references += sum(
+                    len(item.observation_ids) for item in section.bullets
+                )
+                continue
+            if not valid_zone_reference:
+                sanitized_bullets = bullets(section.bullets)
                 dropped_bullets += len(sanitized_bullets)
                 continue
-            if not sanitized_bullets and not valid_zone_reference:
+            sanitized_bullets = bullets(section.bullets, section.zone_id)
+            if not sanitized_bullets:
                 continue
             room_by_room.append(
                 RoomByRoomSection(

@@ -143,6 +143,28 @@ async def test_trusted_forwarded_client_ips_get_distinct_rate_limit_buckets() ->
     assert len(redis.counts) == 2
 
 
+@pytest.mark.asyncio
+async def test_rate_limit_keys_use_configured_namespace() -> None:
+    redis = _PerKeyRedis()
+    base = Starlette(routes=[Route("/auth/login", _ok, methods=["POST"])])
+    limited = RateLimitMiddleware(
+        base,
+        _settings(rate_limit_key_prefix="kawu:test:isolated"),
+    )
+    limited._redis = redis
+
+    async with AsyncClient(
+        transport=ASGITransport(app=limited), base_url="http://test"
+    ) as client:
+        response = await client.post("/auth/login")
+
+    assert response.status_code == 200
+    assert len(redis.counts) == 1
+    assert next(iter(redis.counts)).startswith(
+        "kawu:test:isolated:ratelimit:auth:127.0.0.1:"
+    )
+
+
 def test_sentry_sanitizers_remove_pii_credentials_and_share_tokens() -> None:
     event = {
         "request": {

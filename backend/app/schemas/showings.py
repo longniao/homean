@@ -4,12 +4,21 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, model_validator
 
-from app.models import Observation, RawMedia, Report, TranscriptSegment, Visit, Zone
+from app.models import (
+    Observation,
+    RawMedia,
+    Report,
+    TranscriptSegment,
+    Visit,
+    VisitMarker,
+    Zone,
+)
 from app.schemas.contacts import ContactResponse
 from app.schemas.properties import PropertyResponse
 
 ShowingStatus = Literal["draft", "confirmed", "sent_to_client"]
 MediaType = Literal["audio", "photo", "video"]
+MarkerType = Literal["voice_tag"]
 
 
 class ShowingCreate(BaseModel):
@@ -17,6 +26,7 @@ class ShowingCreate(BaseModel):
     address: str | None = Field(default=None, min_length=1, max_length=1000)
     contact_id: uuid.UUID | None = None
     consent_ack: bool = False
+    capture_client_id: uuid.UUID | None = None
 
     @model_validator(mode="after")
     def validate_subject_source(self) -> "ShowingCreate":
@@ -37,6 +47,12 @@ class ShowingUpdate(BaseModel):
 
 
 class MediaPresignRequest(BaseModel):
+    # ``client_id`` is the durable local media UUID.  It is required by mobile
+    # retries, but remains optional for older/dashboard capture callers.
+    client_id: uuid.UUID | None = None
+    # Supplying an existing media id refreshes the URL for that exact row and
+    # object.  Omitting it creates or reconciles the initial presign by client_id.
+    media_id: uuid.UUID | None = None
     type: MediaType
     content_type: str = Field(min_length=1, max_length=200)
     timestamp_offset_ms: float | None = Field(default=None, ge=0)
@@ -48,6 +64,7 @@ class MediaPresignResponse(BaseModel):
     method: Literal["PUT"] = "PUT"
     headers: dict[str, str]
     expires_in: int
+    expires_at: datetime
     max_size_bytes: int
 
 
@@ -68,6 +85,24 @@ class MediaResponse(BaseModel):
 class MediaDownloadResponse(BaseModel):
     download_url: str
     expires_in: int
+
+
+class MarkerCreate(BaseModel):
+    client_id: uuid.UUID
+    marker_type: MarkerType = "voice_tag"
+    timestamp_offset_ms: float = Field(ge=0, allow_inf_nan=False)
+
+
+class MarkerResponse(BaseModel):
+    id: uuid.UUID
+    client_id: uuid.UUID
+    marker_type: MarkerType
+    timestamp_offset_ms: float
+    created_at: datetime
+
+    @classmethod
+    def from_marker(cls, marker: VisitMarker) -> "MarkerResponse":
+        return cls.model_validate(marker, from_attributes=True)
 
 
 class ZoneResponse(BaseModel):

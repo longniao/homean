@@ -1,36 +1,90 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Kawu dashboard
 
-## Getting Started
+The dashboard is the browser workspace for reviewing, editing, confirming, and
+delivering Kawu showing reports. It is a Next.js 15 App Router application; capture
+is handled by the Expo app in [`../mobile/README.md`](../mobile/README.md).
 
-First, run the development server:
+## Local setup
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Install the dashboard dependencies and configure the backend origin:
+
+```sh
+cd dashboard
+npm ci
+cp .env.example .env.local
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+`.env.local` contains `NEXT_PUBLIC_API_URL`, the backend origin used by the server-side
+proxy. The checked-in example points at `http://127.0.0.1:8000`; change it when the API
+is running on another host or port. Do not put API keys or other provider credentials in
+the dashboard environment.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Start the backend using the root setup instructions, then run the dashboard:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```sh
+npm run dev
+```
 
-## Learn More
+Open <http://localhost:3000>.
 
-To learn more about Next.js, take a look at the following resources:
+## API proxy and authentication
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Browser API calls go through the same-origin `/api/backend/*` route. That route forwards
+requests to `NEXT_PUBLIC_API_URL`, attaches the httpOnly access-token cookie as a bearer
+token, and refreshes the access token through `/auth/refresh` when the backend returns
+`401`. Login and signup use `/api/auth/login` and `/api/auth/signup`; logout is handled
+by `/api/auth/logout`. The browser therefore does not need direct backend CORS access or
+exposure to JWT values.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+For a container or hosted dashboard, set `NEXT_PUBLIC_API_URL` to the reachable API
+origin in the dashboard service environment. The API must allow the deployed dashboard
+origin through its `DASHBOARD_ORIGIN` setting; see the
+[infra release runbook](../infra/README.md) for the private-upload CORS check and other
+release requirements.
 
-## Deploy on Vercel
+## Local validation
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Run these checks from `dashboard/` before opening a PR:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```sh
+npm test
+npm run typecheck
+npm run lint
+npm run build
+```
+
+The Docker image uses the same `npm run build` path and produces a standalone Next.js
+server. The repository-level release preflight also builds the API, worker, and dashboard
+images without credentials:
+
+```sh
+cd ..
+bash scripts/release_preflight.sh
+```
+
+## End-to-end tests
+
+The Playwright smoke flow uses the real API with fake storage, email, and pipeline
+providers. It requires:
+
+- Python 3.12, `uv`, and a backend environment installed with `cd ../backend && uv sync`;
+- PostgreSQL reachable at `127.0.0.1:55432` (the local Compose PostgreSQL service);
+- Docker Compose infrastructure running as described in the
+  [infra runbook](../infra/README.md), if using the repository local environment;
+- Playwright Chromium, installed with `npx playwright install chromium`.
+
+From `dashboard/`, run:
+
+```sh
+npm run test:e2e
+```
+
+The E2E runner creates and removes an isolated database, starts the fake-provider API,
+builds the dashboard, and runs the Playwright suite on port 3001. It does not call
+Deepgram, Anthropic, Stripe, or an email provider.
+
+## Related runbooks
+
+- [Root local-development guide](../README.md)
+- [Infrastructure and release runbook](../infra/README.md)
+- [Mobile capture and airplane-mode runbook](../mobile/README.md)

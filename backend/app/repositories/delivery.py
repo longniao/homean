@@ -40,6 +40,72 @@ class DeliveryRepository:
         )
         return row.tuples().one_or_none()
 
+    async def get_visit_for_update(
+        self, workspace_id: uuid.UUID, visit_id: uuid.UUID
+    ) -> Visit | None:
+        """Acquire the visit lifecycle lock before any report lock."""
+
+        return await self.session.scalar(
+            select(Visit)
+            .where(
+                Visit.id == visit_id,
+                Visit.workspace_id == workspace_id,
+            )
+            .with_for_update()
+        )
+
+    async def get_report_for_update(
+        self, workspace_id: uuid.UUID, report_id: uuid.UUID
+    ) -> Report | None:
+        """Lock a report after its parent visit has been locked."""
+
+        statement = (
+            select(Report)
+            .join(Visit, Visit.id == Report.visit_id)
+            .where(Report.id == report_id, Visit.workspace_id == workspace_id)
+            .execution_options(populate_existing=True)
+            .with_for_update(of=Report)
+        )
+        return await self.session.scalar(statement)
+
+    async def get_email_send_for_update(
+        self, workspace_id: uuid.UUID, visit_id: uuid.UUID
+    ) -> ReportSend | None:
+        """Load the one logical email delivery for a visit under a lock.
+
+        The caller must decide whether a pending row is still within its
+        delivery lease. Taking this lock before that decision prevents two
+        readers from both trying to recover the same stale attempt.
+        """
+
+        return await self.session.scalar(
+            select(ReportSend)
+            .where(
+                ReportSend.workspace_id == workspace_id,
+                ReportSend.visit_id == visit_id,
+                ReportSend.channel == "email",
+            )
+            .order_by(ReportSend.created_at.desc(), ReportSend.id.desc())
+            .limit(1)
+            .with_for_update()
+        )
+
+    async def get_send_for_update(
+        self,
+        workspace_id: uuid.UUID,
+        visit_id: uuid.UUID,
+        send_id: uuid.UUID,
+    ) -> ReportSend | None:
+        return await self.session.scalar(
+            select(ReportSend)
+            .where(
+                ReportSend.id == send_id,
+                ReportSend.workspace_id == workspace_id,
+                ReportSend.visit_id == visit_id,
+            )
+            .with_for_update()
+        )
+
     async def get_link(
         self,
         workspace_id: uuid.UUID,

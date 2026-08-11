@@ -4,17 +4,19 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { Card, PrimaryButton, SecondaryButton } from '../components/ui';
 import { colors } from '../theme';
-import type { ReportBullet, ReportContent, ShowingDetail } from '../types';
+import type { ReportBullet, ReportContent, ShowingDetail, VerticalConfig } from '../types';
 
 type BulletLocation = { group: 'highlights' | 'concerns' | 'follow_ups'; index: number } | { group: 'room_by_room'; room: number; index: number };
 
 export function ReportScreen({ visitId, onBack }: { visitId: string; onBack: () => void }) {
-  const { t } = useTranslation(); const [detail, setDetail] = useState<ShowingDetail | null>(null); const [loading, setLoading] = useState(true);
+  const { t } = useTranslation(); const [detail, setDetail] = useState<ShowingDetail | null>(null); const [verticalConfig, setVerticalConfig] = useState<VerticalConfig | null>(null); const [loading, setLoading] = useState(true);
   const [edit, setEdit] = useState<{ location: BulletLocation; value: string } | null>(null);
   const load = async () => { setLoading(true); try { setDetail(await api.getShowing(visitId)); } catch { Alert.alert(t('common.error')); } finally { setLoading(false); } };
   useEffect(() => {
     let active = true;
     void api.getShowing(visitId).then((value) => { if (active) setDetail(value); }).catch(() => Alert.alert(t('common.error'))).finally(() => { if (active) setLoading(false); });
+    // Config is best-effort so an offline report stays readable with the key fallback.
+    void api.getVerticalConfig().then((value) => { if (active) setVerticalConfig(value); }).catch(() => undefined);
     return () => { active = false; };
   }, [t, visitId]);
   const canConfirm = useMemo(() => {
@@ -45,10 +47,10 @@ export function ReportScreen({ visitId, onBack }: { visitId: string; onBack: () 
       <ReportSection title={t('report.summary')}><Text style={styles.summary}>{report.executive_summary}</Text></ReportSection>
       <ReportSection title={t('report.highlights')}><BulletList bullets={report.highlights} onEdit={(index, bullet) => setEdit({ location: { group: 'highlights', index }, value: bullet.text })} /></ReportSection>
       <ReportSection title={t('report.concerns')}><BulletList bullets={report.concerns} onEdit={(index, bullet) => setEdit({ location: { group: 'concerns', index }, value: bullet.text })} /></ReportSection>
-      <Text style={styles.sectionTitle}>{t('report.rooms')}</Text>{report.room_by_room.map((room, roomIndex) => <Card key={`${room.zone_id}-${roomIndex}`} style={styles.card}><Text style={styles.roomTitle}>{room.zone_type ?? t('home.untitled')}</Text><BulletList bullets={room.bullets} onEdit={(index, bullet) => setEdit({ location: { group: 'room_by_room', room: roomIndex, index }, value: bullet.text })} /></Card>)}
+      <Text style={styles.sectionTitle}>{t('report.rooms')}</Text>{report.room_by_room.map((room, roomIndex) => <Card key={`${room.zone_id}-${roomIndex}`} style={styles.card}><Text style={styles.roomTitle}>{verticalLabel(verticalConfig?.displayLabels.zones, room.zone_type, t('home.untitled'))}</Text><BulletList bullets={room.bullets} onEdit={(index, bullet) => setEdit({ location: { group: 'room_by_room', room: roomIndex, index }, value: bullet.text })} /></Card>)}
       <ReportSection title={t('report.followUps')}><BulletList bullets={report.follow_ups} onEdit={(index, bullet) => setEdit({ location: { group: 'follow_ups', index }, value: bullet.text })} /></ReportSection>
       <Text style={styles.sectionTitle}>{t('report.observations')}</Text>{detail.observations.filter((item) => item.reviewStatus !== 'dismissed').map((item) => <Card key={item.id} style={[styles.card, item.flags.sensitive ? styles.sensitive : undefined]}>
-        <Text style={styles.category}>{item.category}</Text><Text style={styles.observation}>{item.content}</Text>{item.flags.sensitive && <Text style={styles.warning}>{t('report.sensitive')}</Text>}
+        <Text style={styles.category}>{verticalLabel(verticalConfig?.displayLabels.observations, item.category, t('report.observations'))}</Text><Text style={styles.observation}>{item.content}</Text>{item.flags.sensitive && <Text style={styles.warning}>{t('report.sensitive')}</Text>}
         <SecondaryButton label={t('report.deleteObservation')} onPress={() => { void dismiss(item.id); }} style={styles.delete} textStyle={styles.deleteText} />
       </Card>)}
       {detail.status === 'draft' && (canConfirm ? <PrimaryButton label={t('report.confirm')} onPress={() => { void confirm(); }} /> : <Card style={styles.desktop}><Text style={styles.desktopBody}>{detail.property ? t('report.desktopBody') : t('report.propertyRequired')}</Text><SecondaryButton label={t('report.desktop')} onPress={desktop} /></Card>)}
@@ -56,6 +58,15 @@ export function ReportScreen({ visitId, onBack }: { visitId: string; onBack: () 
     </ScrollView>
     <Modal visible={Boolean(edit)} transparent animationType="fade" onRequestClose={() => setEdit(null)}><View style={styles.overlay}><Card style={styles.editor}><Text style={styles.sectionTitle}>{t('report.edit')}</Text><TextInput multiline value={edit?.value ?? ''} onChangeText={(value) => setEdit((current) => current ? { ...current, value } : null)} style={styles.input} /><PrimaryButton label={t('common.save')} onPress={() => { void saveBullet(); }} /><SecondaryButton label={t('common.cancel')} onPress={() => setEdit(null)} /></Card></View></Modal>
   </View>;
+}
+
+/** Keep unknown future/config values readable without exposing raw snake_case keys. */
+export function verticalLabel(labels: Record<string, string> | undefined, value: string | null, emptyLabel: string): string {
+  if (!value) return emptyLabel;
+  const configured = labels?.[value]?.trim();
+  if (configured) return configured;
+  const readable = value.replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
+  return readable ? readable.charAt(0).toUpperCase() + readable.slice(1) : emptyLabel;
 }
 
 function ReportSection({ title, children }: { title: string; children: React.ReactNode }) { return <View><Text style={styles.sectionTitle}>{title}</Text><Card style={styles.card}>{children}</Card></View>; }

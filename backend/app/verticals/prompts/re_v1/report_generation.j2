@@ -7,7 +7,9 @@ Return the configured sections: executive_summary, room_by_room, highlights, con
 and follow_ups. Keep room_by_room ordered as supplied and key each entry to its zone.
 Every bullet must list one or more observation IDs from the supplied evidence that
 directly support it. Room_by_room must still include all observations for each zone,
-including observations whose zone_id is null in a null-zone section.
+and every room bullet must cite an observation whose zone_id matches that room's zone_id.
+Observations whose zone_id is null are visit-level evidence: do not put them in
+room_by_room. When relevant, represent them only in highlights, concerns, or follow_ups.
 
 Use judgment to promote only clearly salient observations into the summary sections:
 - highlights: "pro" observations plus genuinely favorable descriptive observations,

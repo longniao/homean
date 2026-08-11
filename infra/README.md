@@ -13,6 +13,29 @@ Release sequence:
 2. Run `uv run alembic upgrade head` as the release migration step.
 3. Start or roll the worker and dashboard after the migration succeeds.
 
+## Repository preflight
+
+Before a release, run the credential-free repository preflight from the repository
+root:
+
+```sh
+cd /path/to/kawu
+(cd backend && uv sync --frozen)
+bash scripts/release_preflight.sh
+```
+
+It checks that the Alembic graph has exactly one expected head, validates the Render
+Blueprint structure and every Docker service's local context/Dockerfile path, validates
+the local Compose file, and builds the API, worker, and dashboard images without
+pushing or calling Render or any application provider. The dashboard context check
+also ensures `.env` and `.env.*` files stay out of the image build context while the
+safe `.env.example` remains available. The preflight is run by the
+`release-preflight` GitHub Actions job.
+
+The API and worker use the canonical Dockerfiles in `backend/` with `backend/` as the
+build context. Keep those paths aligned in `infra/docker-compose.yml` and
+`infra/render.yaml`; there are no release Dockerfiles under `infra/`.
+
 ## Staging acceptance gate
 
 Do not promote staging to production until every item below has an owner and recorded

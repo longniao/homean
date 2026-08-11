@@ -23,8 +23,11 @@ export const en = {
     resume: 'Resume recording', photo: 'Photo', voiceTag: 'Voice Tag', end: 'End',
     endTitle: 'End this showing?', endBody: 'Kawu will sync all captured media, then begin processing.',
     endConfirm: 'End and sync', permission: 'Microphone access is required to record a showing.',
-    cameraPermission: 'Camera access is required to attach photos.', tagged: 'Voice tag saved',
-    photoSaved: 'Photo saved', recovering: 'Recovered recording. Tap resume to continue.',
+    cameraPermission: 'Camera access is required to attach photos or videos.', video: 'Video',
+    startVideo: 'Record video', stopVideo: 'Stop video', videoSaved: 'Video saved',
+    tagged: 'Voice tag saved', photoSaved: 'Photo saved', recovering: 'Recovering the previous audio segment…',
+    notificationPermission: 'Android notification access is required to keep showing audio recording active in the background. Recording did not start.',
+    recoveryFailed: 'Kawu could not safely recover the previous audio segment. Keep this showing open and try again before continuing.',
   },
   sync: {
     local: 'Local', syncing: 'Syncing', synced: 'Synced', processing: 'Processing', ready: 'Ready',

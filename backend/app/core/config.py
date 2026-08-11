@@ -37,11 +37,13 @@ class Settings(BaseSettings):
     smtp_from_email: str = "reports@kawu.local"
     smtp_from_name: str = "Kawu"
     smtp_use_tls: bool = True
+    email_pending_lease_seconds: int = Field(default=900, ge=1)
     app_env: str = "dev"
     dashboard_origin: str = "http://localhost:3000"
     auth_rate_limit: int = Field(default=100, ge=1)
     public_share_rate_limit: int = Field(default=120, ge=1)
     rate_limit_window_seconds: int = Field(default=60, ge=1)
+    rate_limit_key_prefix: str = "kawu"
     sentry_dsn: str | None = None
     stripe_secret_key: SecretStr | None = None
     stripe_webhook_secret: SecretStr | None = None

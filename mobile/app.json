@@ -34,7 +34,9 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow Kawu to take showing photos."
+          "cameraPermission": "Allow Kawu to take showing photos and videos.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
         }
       ],
       "expo-sqlite",

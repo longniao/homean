@@ -8,6 +8,8 @@ from sqlalchemy import (
     DateTime,
     Float,
     ForeignKey,
+    ForeignKeyConstraint,
+    Integer,
     Text,
     UniqueConstraint,
 )
@@ -208,6 +210,13 @@ class Contact(UUIDTimestampMixin, Base):
 
 class Subject(UUIDTimestampMixin, Base):
     __tablename__ = "subjects"
+    __table_args__ = (
+        UniqueConstraint(
+            "workspace_id",
+            "id",
+            name="uq_subjects_workspace_id_id",
+        ),
+    )
 
     workspace_id: Mapped[uuid.UUID] = mapped_column(
         PGUUID(as_uuid=True),
@@ -236,6 +245,17 @@ class Visit(UUIDTimestampMixin, Base):
             "status IN ('draft', 'confirmed', 'sent_to_client')",
             name="visit_status",
         ),
+        UniqueConstraint(
+            "workspace_id",
+            "capture_client_id",
+            name="uq_visits_workspace_capture_client_id",
+        ),
+        ForeignKeyConstraint(
+            ["workspace_id", "subject_id"],
+            ["subjects.workspace_id", "subjects.id"],
+            name="fk_visits_workspace_subject_subjects",
+            ondelete="RESTRICT",
+        ),
     )
 
     workspace_id: Mapped[uuid.UUID] = mapped_column(
@@ -246,7 +266,6 @@ class Visit(UUIDTimestampMixin, Base):
     )
     subject_id: Mapped[uuid.UUID | None] = mapped_column(
         PGUUID(as_uuid=True),
-        ForeignKey("subjects.id", ondelete="RESTRICT"),
         index=True,
     )
     created_by: Mapped[uuid.UUID] = mapped_column(
@@ -265,6 +284,12 @@ class Visit(UUIDTimestampMixin, Base):
         ForeignKey("professional_profiles.id", ondelete="RESTRICT"),
         nullable=False,
         index=True,
+    )
+    # Nullable because dashboard-created visits do not have a mobile capture
+    # identity.  Mobile retries use this per-workspace key to make remote visit
+    # creation idempotent after an ambiguous response.
+    capture_client_id: Mapped[uuid.UUID | None] = mapped_column(
+        PGUUID(as_uuid=True), nullable=True
     )
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -311,12 +336,24 @@ class Zone(UUIDTimestampMixin, Base):
 
 class RawMedia(UUIDTimestampMixin, Base):
     __tablename__ = "raw_media"
+    __table_args__ = (
+        UniqueConstraint(
+            "visit_id",
+            "client_id",
+            name="uq_raw_media_visit_client_id",
+        ),
+    )
 
     visit_id: Mapped[uuid.UUID] = mapped_column(
         PGUUID(as_uuid=True),
         ForeignKey("visits.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
+    )
+    # The durable local media UUID lets a mobile retry reconcile an ambiguous
+    # initial presign response without relying on the server-generated id.
+    client_id: Mapped[uuid.UUID | None] = mapped_column(
+        PGUUID(as_uuid=True), nullable=True
     )
     type: Mapped[str] = mapped_column(Text, nullable=False)
     object_key: Mapped[str] = mapped_column("storage_url", Text, nullable=False)
@@ -325,7 +362,41 @@ class RawMedia(UUIDTimestampMixin, Base):
     status: Mapped[str] = mapped_column(
         Text, nullable=False, default="pending", server_default="pending", index=True
     )
+    upload_url_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True)
+    )
     size_bytes: Mapped[int | None] = mapped_column(BigInteger)
+
+
+class VisitMarker(UUIDTimestampMixin, Base):
+    """A timestamped, user-created marker in a visit capture."""
+
+    __tablename__ = "visit_markers"
+    __table_args__ = (
+        UniqueConstraint(
+            "visit_id",
+            "client_id",
+            name="uq_visit_markers_visit_client_id",
+        ),
+    )
+
+    visit_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("visits.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    client_id: Mapped[uuid.UUID] = mapped_column(PGUUID(as_uuid=True), nullable=False)
+    created_by: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    marker_type: Mapped[str] = mapped_column(
+        Text, nullable=False, default="voice_tag", server_default="voice_tag"
+    )
+    timestamp_offset_ms: Mapped[float] = mapped_column(Float, nullable=False)
 
 
 class TranscriptSegment(UUIDTimestampMixin, Base):
@@ -413,6 +484,57 @@ class Report(UUIDTimestampMixin, Base):
     )
 
 
+class ReportRevision(UUIDTimestampMixin, Base):
+    """An immutable snapshot of a professional report edit.
+
+    ``previous_content`` and ``new_content`` intentionally remain JSONB: report
+    structure is vertical-configured and can evolve without a migration.  The
+    workspace, report, visit, and editor are ordinary columns because they are
+    the tenancy, relationship, and audit dimensions used for querying.
+    """
+
+    __tablename__ = "report_revisions"
+    __table_args__ = (
+        UniqueConstraint(
+            "report_id",
+            "revision_number",
+            name="uq_report_revisions_report_revision_number",
+        ),
+        CheckConstraint(
+            "revision_number > 0",
+            name="report_revision_number_positive",
+        ),
+    )
+
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("workspaces.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    report_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("reports.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    visit_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("visits.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    edited_by: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    revision_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    previous_content: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    new_content: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+
+
 class ReportShareLink(UUIDTimestampMixin, Base):
     __tablename__ = "report_share_links"
 
@@ -459,6 +581,12 @@ class ReportShareView(UUIDTimestampMixin, Base):
 
 class ReportSend(UUIDTimestampMixin, Base):
     __tablename__ = "report_sends"
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('pending', 'sent', 'failed', 'outcome_unknown')",
+            name="report_send_status",
+        ),
+    )
 
     workspace_id: Mapped[uuid.UUID] = mapped_column(
         PGUUID(as_uuid=True),
@@ -493,8 +621,15 @@ class ReportSend(UUIDTimestampMixin, Base):
     channel: Mapped[str] = mapped_column(Text, nullable=False)
     to_email: Mapped[str | None] = mapped_column(Text)
     status: Mapped[str] = mapped_column(Text, nullable=False, index=True)
+    # Stable application-owned identity for the email.  SMTP providers do not
+    # offer portable idempotency, so a safe retry must reuse this value.
+    message_id: Mapped[str | None] = mapped_column(Text, unique=True)
     provider_message_id: Mapped[str | None] = mapped_column(Text)
     error: Mapped[str | None] = mapped_column(Text)
+    attempt_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
+    last_attempt_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class PipelineRun(UUIDTimestampMixin, Base):

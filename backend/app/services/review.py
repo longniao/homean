@@ -1,9 +1,10 @@
+import copy
 import uuid
 from datetime import UTC, datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Observation, Report, TranscriptSegment, Visit
+from app.models import Observation, Report, ReportRevision, TranscriptSegment, Visit
 from app.repositories import ReviewRepository
 from app.schemas.review import ObservationCreate, ObservationUpdate
 from app.services.context import CurrentContext
@@ -138,26 +139,80 @@ class RealEstateReviewService:
         report = await self._repository.get_report(context.workspace.id, report_id)
         if report is None:
             raise ResourceNotFoundError
-        visit = await self._require_editable_visit(
+        # All report lifecycle mutations use the same lock order: parent
+        # visit first, then report.  The initial report lookup only discovers
+        # the parent id; reload both rows after locking so this request cannot
+        # edit a stale snapshot after a concurrent delivery transition.
+        visit = await self._repository.get_visit_for_update(
             context.workspace.id, report.visit_id
         )
-        report.content = content
+        if visit is None:
+            raise ResourceNotFoundError
+        report = await self._repository.get_report_for_update(
+            context.workspace.id, report_id
+        )
+        if report is None:
+            raise ResourceNotFoundError
+        if visit.status == "sent_to_client":
+            raise ResourceConflictError("sent showings cannot be changed")
+
+        previous_content = copy.deepcopy(report.content)
+        normalized_content = copy.deepcopy(content)
+        await self._validate_report_references(
+            context.workspace.id, visit.id, normalized_content
+        )
+
+        # Pydantic has already normalized the request at the API boundary
+        # (including default empty sections).  A semantically identical JSON
+        # document is therefore a no-op, not an audit revision.
+        if previous_content == normalized_content:
+            return report
+
+        report.content = normalized_content
         if visit.status == "confirmed":
             branding = await self._repository.get_branding(context.workspace.id)
             report.rendered_html = await self._renderer.render_html(
-                content, branding, consent_ack=visit.consent_ack
+                normalized_content, branding, consent_ack=visit.consent_ack
             )
             report.status = "confirmed"
         else:
             report.rendered_html = None
             report.status = "pending_review"
+        revision_number = await self._repository.next_report_revision_number(
+            context.workspace.id, report.id
+        )
+        self._repository.add(
+            ReportRevision(
+                workspace_id=context.workspace.id,
+                report_id=report.id,
+                visit_id=visit.id,
+                edited_by=context.user.id,
+                revision_number=revision_number,
+                previous_content=previous_content,
+                new_content=copy.deepcopy(normalized_content),
+            )
+        )
         await self._repository.flush()
         return report
+
+    async def list_report_revisions(
+        self, context: CurrentContext, report_id: uuid.UUID
+    ) -> list[ReportRevision]:
+        if await self._repository.get_report(context.workspace.id, report_id) is None:
+            raise ResourceNotFoundError
+        return await self._repository.list_report_revisions(
+            context.workspace.id, report_id
+        )
 
     async def confirm_showing(
         self, context: CurrentContext, visit_id: uuid.UUID
     ) -> tuple[Visit, Report]:
-        visit = await self._repository.get_visit(context.workspace.id, visit_id)
+        # Keep this transition in the same visit -> report lock order as
+        # report edits and delivery.  Otherwise confirmation could race an
+        # edit and render content that is no longer the report snapshot.
+        visit = await self._repository.get_visit_for_update(
+            context.workspace.id, visit_id
+        )
         if visit is None:
             raise ResourceNotFoundError
         if visit.status == "sent_to_client":
@@ -165,8 +220,16 @@ class RealEstateReviewService:
         report = await self._repository.get_visit_report(context.workspace.id, visit.id)
         if report is None:
             raise ResourceConflictError("showing has no report to confirm")
+        report = await self._repository.get_report_for_update(
+            context.workspace.id, report.id
+        )
+        if report is None:
+            raise ResourceConflictError("showing has no report to confirm")
         if visit.subject_id is None:
             raise PropertyRequiredError
+        await self._validate_report_references(
+            context.workspace.id, visit.id, report.content
+        )
         reviewed = await self._repository.reviewed_observations(
             context.workspace.id, visit.id
         )
@@ -219,6 +282,126 @@ class RealEstateReviewService:
             and await self._repository.get_zone(workspace_id, visit_id, zone_id) is None
         ):
             raise ResourceNotFoundError
+
+    async def _validate_report_references(
+        self,
+        workspace_id: uuid.UUID,
+        visit_id: uuid.UUID,
+        content: dict[str, object],
+    ) -> None:
+        observation_ids, zone_ids = self._report_reference_ids(content)
+        (
+            valid_observation_zones,
+            valid_zone_ids,
+        ) = await self._repository.report_reference_ids(
+            workspace_id,
+            visit_id,
+            observation_ids,
+            zone_ids,
+        )
+        if (
+            set(valid_observation_zones) != observation_ids
+            or valid_zone_ids != zone_ids
+        ):
+            raise ResourceNotFoundError
+        self._validate_room_evidence(content, valid_observation_zones, valid_zone_ids)
+
+    @classmethod
+    def _validate_room_evidence(
+        cls,
+        content: dict[str, object],
+        observation_zones: dict[uuid.UUID, uuid.UUID | None],
+        zone_ids: set[uuid.UUID],
+    ) -> None:
+        """Keep room evidence bound to one visit zone.
+
+        Visit-level observations intentionally remain valid evidence for the
+        non-room summary sections. They cannot be placed in ``room_by_room``:
+        a room entry always needs a real Zone owned by the report Visit, and
+        every observation cited by that entry must point to that same Zone.
+        """
+
+        room_by_room = content.get("room_by_room", [])
+        if not isinstance(room_by_room, list):
+            raise DomainValidationError("report room_by_room must be a list")
+        for room in room_by_room:
+            if not isinstance(room, dict):
+                raise DomainValidationError("report room entries must be objects")
+            raw_zone_id = room.get("zone_id")
+            if raw_zone_id is None:
+                raise DomainValidationError(
+                    "room_by_room entries must reference a visit zone; "
+                    "put visit-level observations in highlights, concerns, "
+                    "or follow-ups"
+                )
+            zone_id = cls._parse_reference_id(raw_zone_id)
+            if zone_id not in zone_ids:
+                # This normally gets caught by the repository set comparison,
+                # but keeping the guard here makes the invariant explicit for
+                # direct service callers too.
+                raise ResourceNotFoundError
+            bullets = room.get("bullets", [])
+            if not isinstance(bullets, list):
+                raise DomainValidationError("report room bullets must be a list")
+            for bullet in bullets:
+                if not isinstance(bullet, dict):
+                    raise DomainValidationError("report bullets must be objects")
+                references = bullet.get("observation_ids", [])
+                if not isinstance(references, list):
+                    raise DomainValidationError("report observation_ids must be a list")
+                for reference in references:
+                    observation_id = cls._parse_reference_id(reference)
+                    if observation_zones.get(observation_id) != zone_id:
+                        raise DomainValidationError(
+                            "room evidence must reference observations from the "
+                            "same zone"
+                        )
+
+    @staticmethod
+    def _report_reference_ids(
+        content: dict[str, object],
+    ) -> tuple[set[uuid.UUID], set[uuid.UUID]]:
+        observation_ids: set[uuid.UUID] = set()
+        zone_ids: set[uuid.UUID] = set()
+
+        def collect_observation_ids(value: object) -> None:
+            if isinstance(value, dict):
+                references = value.get("observation_ids")
+                if references is not None:
+                    if not isinstance(references, list):
+                        raise DomainValidationError(
+                            "report observation_ids must be a list"
+                        )
+                    observation_ids.update(
+                        RealEstateReviewService._parse_reference_id(reference)
+                        for reference in references
+                    )
+                for nested in value.values():
+                    collect_observation_ids(nested)
+            elif isinstance(value, list):
+                for nested in value:
+                    collect_observation_ids(nested)
+
+        room_by_room = content.get("room_by_room", [])
+        if isinstance(room_by_room, list):
+            for room in room_by_room:
+                if not isinstance(room, dict):
+                    continue
+                zone_id = room.get("zone_id")
+                if zone_id is not None:
+                    zone_ids.add(RealEstateReviewService._parse_reference_id(zone_id))
+
+        collect_observation_ids(content)
+        return observation_ids, zone_ids
+
+    @staticmethod
+    def _parse_reference_id(value: object) -> uuid.UUID:
+        try:
+            return value if isinstance(value, uuid.UUID) else uuid.UUID(str(value))
+        except (AttributeError, ValueError, TypeError) as exc:
+            raise DomainValidationError(
+                "report references must contain valid IDs"
+            ) from exc
 
     def _validate_category(self, category: str) -> None:
         if category not in self._verticals.get().observation_schema:

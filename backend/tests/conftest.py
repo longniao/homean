@@ -8,6 +8,7 @@ import pytest
 import pytest_asyncio
 from alembic.config import Config
 from httpx import ASGITransport, AsyncClient
+from redis.asyncio import Redis
 from sqlalchemy.engine import make_url
 
 from alembic import command
@@ -18,6 +19,13 @@ from app.pipeline import FakePipelineEnqueuer
 from app.services.renderer import ReportRenderer
 from app.storage import FakeStorageProvider
 from app.verticals import VerticalConfigService
+
+# Set this during conftest import, before test modules are collected. Some
+# tests import the FastAPI app lazily in their test body, while others may do
+# so earlier; both cases must receive the same isolated namespace regardless of
+# test ordering.
+_TEST_RATE_LIMIT_KEY_PREFIX = f"kawu:test:{uuid.uuid4().hex}"
+os.environ["RATE_LIMIT_KEY_PREFIX"] = _TEST_RATE_LIMIT_KEY_PREFIX
 
 
 class FakeReportRenderer(ReportRenderer):
@@ -41,6 +49,26 @@ def _run_migrations(database_url: str) -> None:
     command.check(alembic_config)
 
 
+async def _clear_redis_namespace(redis_url: str, key_prefix: str) -> None:
+    """Remove only this test session's rate-limit keys from Redis.
+
+    Tests use a unique key prefix, so cleanup cannot affect a running API or
+    another pytest process that shares the Redis service. Redis is optional in
+    the test environment because the middleware has a local fallback; cleanup
+    therefore deliberately ignores connection errors.
+    """
+
+    redis = Redis.from_url(redis_url, decode_responses=True)
+    try:
+        keys = [key async for key in redis.scan_iter(match=f"{key_prefix}:*")]
+        if keys:
+            await redis.delete(*keys)
+    except Exception:
+        pass
+    finally:
+        await redis.aclose()
+
+
 @pytest_asyncio.fixture(scope="session", loop_scope="session")
 async def database_url() -> AsyncIterator[str]:
     admin_url = os.environ.get(
@@ -49,6 +77,8 @@ async def database_url() -> AsyncIterator[str]:
     )
     database_name = f"kawu_test_{uuid.uuid4().hex}"
     database_url = _render_url(admin_url, database_name)
+    redis_url = os.environ.get("TEST_REDIS_URL", "redis://127.0.0.1:6379/0")
+    rate_limit_key_prefix = _TEST_RATE_LIMIT_KEY_PREFIX
 
     admin_connection = await asyncpg.connect(_asyncpg_dsn(admin_url))
     try:
@@ -59,7 +89,8 @@ async def database_url() -> AsyncIterator[str]:
     os.environ.update(
         {
             "DATABASE_URL": database_url,
-            "REDIS_URL": "redis://127.0.0.1:6379/0",
+            "REDIS_URL": redis_url,
+            "RATE_LIMIT_KEY_PREFIX": rate_limit_key_prefix,
             "S3_ENDPOINT_URL": "http://127.0.0.1:9000",
             "S3_ACCESS_KEY": "test-access-key",
             "S3_SECRET_KEY": "test-secret-key",
@@ -75,6 +106,7 @@ async def database_url() -> AsyncIterator[str]:
         yield database_url
     finally:
         await dispose_database()
+        await _clear_redis_namespace(redis_url, rate_limit_key_prefix)
         admin_connection = await asyncpg.connect(_asyncpg_dsn(admin_url))
         try:
             await admin_connection.execute(
@@ -149,7 +181,9 @@ def pipeline(app_pipeline: FakePipelineEnqueuer) -> FakePipelineEnqueuer:
 @pytest.fixture
 def email_provider(app_email: FakeEmailProvider) -> FakeEmailProvider:
     app_email.messages.clear()
+    app_email.attempts.clear()
     app_email.error = None
+    app_email.error_after_accept = None
     return app_email
 
 

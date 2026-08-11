@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -31,6 +32,17 @@ class TranscriptSegmentUpdate(BaseModel):
 
 class ReportUpdate(BaseModel):
     content: RealEstateReportSchema
+
+
+class ReportRevisionResponse(BaseModel):
+    id: uuid.UUID
+    report_id: uuid.UUID
+    visit_id: uuid.UUID
+    edited_by: uuid.UUID
+    revision_number: int
+    previous_content: dict[str, object]
+    new_content: dict[str, object]
+    created_at: datetime
 
 
 class ShowingConfirmationResponse(BaseModel):

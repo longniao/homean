@@ -1,6 +1,8 @@
 from app.email.provider import (
     ConsoleEmailProvider,
     EmailAttachment,
+    EmailDeliveryError,
+    EmailDeliveryOutcome,
     EmailProvider,
     FakeEmailProvider,
     OutboundEmail,
@@ -11,6 +13,8 @@ from app.email.provider import (
 __all__ = [
     "ConsoleEmailProvider",
     "EmailAttachment",
+    "EmailDeliveryError",
+    "EmailDeliveryOutcome",
     "EmailProvider",
     "FakeEmailProvider",
     "OutboundEmail",

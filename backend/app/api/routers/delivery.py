@@ -39,6 +39,7 @@ async def get_delivery(
     return DeliverySummaryResponse(
         share_links=[
             DeliveryShareLinkResponse(
+                id=item.link.id,
                 token=item.link.token,
                 url=item.url,
                 created_at=item.link.created_at,
@@ -50,9 +51,14 @@ async def get_delivery(
         ],
         sends=[
             DeliverySendResponse(
+                send_id=item.id,
                 channel=item.channel,
                 to_email=item.to_email,
+                status=item.status,
+                attempt_count=item.attempt_count,
+                last_attempt_at=item.last_attempt_at,
                 sent_at=item.created_at,
+                error=item.error,
             )
             for item in result.sends
         ],

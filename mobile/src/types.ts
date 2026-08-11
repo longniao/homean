@@ -1,11 +1,21 @@
 export type SyncState = 'local' | 'syncing' | 'synced' | 'processing' | 'ready' | 'failed';
 export type MediaState = 'queued' | 'presigned' | 'uploading' | 'uploaded' | 'completed' | 'failed';
-export type MediaKind = 'audio' | 'photo';
+export type MediaKind = 'audio' | 'photo' | 'video';
+export type MarkerState = 'queued' | 'syncing' | 'synced' | 'failed';
 
 export interface TokenPair { accessToken: string; refreshToken: string; expiresAt: number }
 
 export interface Contact { id: string; name: string; email: string | null }
 export interface Property { id: string; displayName: string; address: string }
+export interface VerticalDisplayLabels {
+  zones: Record<string, string>;
+  observations: Record<string, string>;
+}
+export interface VerticalConfig {
+  zoneTaxonomy: string[];
+  observationSchema: string[];
+  displayLabels: VerticalDisplayLabels;
+}
 export interface Observation {
   id: string; zoneId: string | null; category: string; content: string;
   sourceTranscriptSegmentId: string | null; timestampStart: number | null;
@@ -31,11 +41,19 @@ export interface LocalShowing {
   address: string | null; title: string; startedAt: number; endedAt: number | null;
   elapsedMs: number; syncState: SyncState; processingStatus: string | null;
   finishRequested: boolean; lastError: string | null; updatedAt: number;
+  generation: number;
   consentAck?: boolean;
 }
 export interface LocalMedia {
   id: string; showingId: string; remoteMediaId: string | null; kind: MediaKind;
   fileUri: string; contentType: string; timestampOffsetMs: number; state: MediaState;
   attemptCount: number; nextAttemptAt: number; uploadUrl: string | null;
-  uploadHeaders: Record<string, string>; createdAt: number;
+  uploadHeaders: Record<string, string>; uploadExpiresAt: number | null; createdAt: number;
+  /** Present for audio recovered from an interrupted recording. */
+  recoveryKey?: string | null;
+}
+export interface LocalMarker {
+  id: string; showingId: string; remoteMarkerId: string | null; markerType: 'voice_tag';
+  timestampOffsetMs: number; state: MarkerState; attemptCount: number; nextAttemptAt: number;
+  lastError: string | null; createdAt: number;
 }

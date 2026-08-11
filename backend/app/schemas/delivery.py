@@ -46,6 +46,7 @@ class SendReportResponse(BaseModel):
 
 
 class DeliveryShareLinkResponse(BaseModel):
+    id: uuid.UUID
     token: str
     url: str
     created_at: datetime
@@ -55,9 +56,14 @@ class DeliveryShareLinkResponse(BaseModel):
 
 
 class DeliverySendResponse(BaseModel):
+    send_id: uuid.UUID
     channel: str
     to_email: EmailStr | None
+    status: Literal["pending", "sent", "failed", "outcome_unknown"]
+    attempt_count: int
+    last_attempt_at: datetime | None
     sent_at: datetime
+    error: str | None
 
 
 class DeliverySummaryResponse(BaseModel):

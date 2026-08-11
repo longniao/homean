@@ -13,6 +13,7 @@ import { api, uploadWithProgress } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 type UploadItem = { file: File; progress: number; done: boolean };
+type PropertySelection = "assigned" | "none";
 
 function mediaType(file: File) {
   if (file.type.startsWith("audio/")) return "audio";
@@ -28,10 +29,14 @@ export function NewShowingForm() {
   const contacts = useQuery({ queryKey: ["contacts"], queryFn: api.contacts.list });
   const [propertyQuery, setPropertyQuery] = useState("");
   const [subjectId, setSubjectId] = useState("");
+  const [propertySelection, setPropertySelection] = useState<PropertySelection>("assigned");
+  const [propertyError, setPropertyError] = useState("");
   const [contactId, setContactId] = useState("");
   const [uploads, setUploads] = useState<UploadItem[]>([]);
   const [dragging, setDragging] = useState(false);
   const [pending, setPending] = useState(false);
+  const [consentAck, setConsentAck] = useState(false);
+  const [consentError, setConsentError] = useState("");
 
   const matches = useMemo(
     () =>
@@ -60,16 +65,28 @@ export function NewShowingForm() {
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!subjectId && !propertyQuery.trim()) return;
+    if (propertySelection === "assigned" && !subjectId && !propertyQuery.trim()) {
+      setPropertyError(t("propertyRequired"));
+      return;
+    }
     if (!uploads.some(({ file }) => mediaType(file) === "audio")) {
       toast.error(t("audioRequired"));
+      return;
+    }
+    if (!consentAck) {
+      setConsentError(t("consentRequired"));
       return;
     }
     setPending(true);
     try {
       const showing = await api.showings.create({
-        ...(subjectId ? { subject_id: subjectId } : { address: propertyQuery.trim() }),
+        ...(propertySelection === "none"
+          ? {}
+          : subjectId
+            ? { subject_id: subjectId }
+            : { address: propertyQuery.trim() }),
         contact_id: contactId || null,
+        consent_ack: consentAck,
       });
       for (let index = 0; index < uploads.length; index += 1) {
         const item = uploads[index];
@@ -114,38 +131,91 @@ export function NewShowingForm() {
           <div className="mb-5 flex size-9 items-center justify-center rounded-xl bg-emerald-50 text-sm font-bold text-[#1f6f5b]">1</div>
           <h2 className="font-serif text-2xl font-semibold">{t("propertyTitle")}</h2>
           <p className="mt-1 text-sm text-stone-500">{t("propertyBody")}</p>
-          <div className="relative mt-5">
-            <input
-              className="field"
-              onChange={(event) => {
-                setPropertyQuery(event.target.value);
-                if (selected && event.target.value !== selected.address) setSubjectId("");
-              }}
-              placeholder={t("addressPlaceholder")}
-              required
-              value={propertyQuery}
-            />
-            {propertyQuery && !subjectId && matches.length > 0 && (
-              <div className="absolute inset-x-0 top-12 z-20 overflow-hidden rounded-xl border bg-white shadow-xl">
-                {matches.map((property) => (
-                  <button
-                    className="block w-full border-b px-4 py-3 text-left last:border-0 hover:bg-stone-50"
-                    key={property.id}
-                    onClick={() => {
-                      setSubjectId(property.id);
-                      setPropertyQuery(property.address);
-                    }}
-                    type="button"
-                  >
-                    <span className="block text-sm font-semibold">{property.display_name}</span>
-                    <span className="block text-xs text-stone-500">{property.address}</span>
-                  </button>
-                ))}
+          <fieldset className="mt-5">
+            <legend className="mb-2 text-sm font-semibold text-stone-800">{t("propertyChoiceLabel")}</legend>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <label className={cn("flex cursor-pointer gap-3 rounded-xl border p-3 transition", propertySelection === "assigned" ? "border-emerald-700 bg-emerald-50/60" : "border-stone-200 hover:bg-stone-50")}>
+                <input
+                  checked={propertySelection === "assigned"}
+                  className="mt-1 accent-[#1f6f5b]"
+                  name="property-selection"
+                  onChange={() => {
+                    setPropertySelection("assigned");
+                    setPropertyError("");
+                  }}
+                  type="radio"
+                  value="assigned"
+                />
+                <span>
+                  <span className="block text-sm font-semibold">{t("propertyChoiceAssigned")}</span>
+                  <span className="mt-0.5 block text-xs leading-5 text-stone-500">{t("propertyChoiceAssignedBody")}</span>
+                </span>
+              </label>
+              <label className={cn("flex cursor-pointer gap-3 rounded-xl border p-3 transition", propertySelection === "none" ? "border-emerald-700 bg-emerald-50/60" : "border-stone-200 hover:bg-stone-50")}>
+                <input
+                  checked={propertySelection === "none"}
+                  className="mt-1 accent-[#1f6f5b]"
+                  name="property-selection"
+                  onChange={() => {
+                    setPropertySelection("none");
+                    setPropertyError("");
+                  }}
+                  type="radio"
+                  value="none"
+                />
+                <span>
+                  <span className="block text-sm font-semibold">{t("propertyChoiceNone")}</span>
+                  <span className="mt-0.5 block text-xs leading-5 text-stone-500">{t("propertyChoiceNoneBody")}</span>
+                </span>
+              </label>
+            </div>
+          </fieldset>
+          {propertySelection === "assigned" ? (
+            <>
+              <div className="relative mt-4">
+                <label className="sr-only" htmlFor="property-address">{t("addressLabel")}</label>
+                <input
+                  aria-describedby={propertyError ? "property-help property-error" : "property-help"}
+                  aria-invalid={Boolean(propertyError)}
+                  className="field"
+                  id="property-address"
+                  onChange={(event) => {
+                    setPropertyQuery(event.target.value);
+                    setPropertyError("");
+                    if (selected && event.target.value !== selected.address) setSubjectId("");
+                  }}
+                  placeholder={t("addressPlaceholder")}
+                  value={propertyQuery}
+                />
+                {propertyQuery && !subjectId && matches.length > 0 && (
+                  <div className="absolute inset-x-0 top-12 z-20 overflow-hidden rounded-xl border bg-white shadow-xl">
+                    {matches.map((property) => (
+                      <button
+                        className="block w-full border-b px-4 py-3 text-left last:border-0 hover:bg-stone-50"
+                        key={property.id}
+                        onClick={() => {
+                          setSubjectId(property.id);
+                          setPropertyQuery(property.address);
+                          setPropertyError("");
+                        }}
+                        type="button"
+                      >
+                        <span className="block text-sm font-semibold">{property.display_name}</span>
+                        <span className="block text-xs text-stone-500">{property.address}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-          {!subjectId && propertyQuery && (
-            <p className="mt-2 text-xs text-stone-500">{t("newPropertyHint")}</p>
+              <p className="mt-2 text-xs text-stone-500" id="property-help">
+                {subjectId ? t("savedPropertyHint") : propertyQuery ? t("newPropertyHint") : t("propertyHelp")}
+              </p>
+              {propertyError && <p className="mt-2 text-sm text-red-700" id="property-error" role="alert">{propertyError}</p>}
+            </>
+          ) : (
+            <div className="mt-4 rounded-xl border border-dashed border-emerald-200 bg-emerald-50/50 p-4" role="status">
+              <p className="text-sm leading-6 text-stone-700">{t("noPropertyHint")}</p>
+            </div>
           )}
           <label className="mt-5 block text-sm font-medium">
             {t("clientLabel")}
@@ -215,8 +285,33 @@ export function NewShowingForm() {
           )}
         </section>
 
+        <fieldset
+          aria-describedby={consentError ? "consent-help consent-error" : "consent-help"}
+          className="panel p-5 sm:p-7"
+        >
+          <legend className="px-1 font-serif text-2xl font-semibold">{t("consentTitle")}</legend>
+          <p className="mt-1 text-sm text-stone-500" id="consent-help">{t("consentHelp")}</p>
+          <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-xl border border-stone-200 p-4 transition hover:bg-stone-50">
+            <input
+              aria-describedby={consentError ? "consent-help consent-error" : "consent-help"}
+              aria-invalid={Boolean(consentError)}
+              checked={consentAck}
+              className="mt-1 size-4 accent-[#1f6f5b]"
+              id="consent-attestation"
+              onChange={(event) => {
+                setConsentAck(event.target.checked);
+                setConsentError("");
+              }}
+              required
+              type="checkbox"
+            />
+            <span className="text-sm font-semibold leading-6 text-stone-800">{t("consentLabel")}</span>
+          </label>
+          {consentError && <p className="mt-2 text-sm text-red-700" id="consent-error" role="alert">{consentError}</p>}
+        </fieldset>
+
         <div className="flex justify-end">
-          <Button className="h-11 px-5" disabled={pending || uploads.length === 0} type="submit">
+          <Button className="h-11 px-5" disabled={pending || uploads.length === 0 || !consentAck} type="submit">
             {pending && <LoaderCircle className="animate-spin" />}
             {pending ? t("uploading") : t("createAction")}
           </Button>

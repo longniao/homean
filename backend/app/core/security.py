@@ -285,7 +285,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         key = (name, client)
         now = time.monotonic()
         redis_key = (
-            f"kawu:ratelimit:{name}:{client}:"
+            f"{self._settings.rate_limit_key_prefix}:ratelimit:{name}:{client}:"
             f"{int(time.time()) // self._settings.rate_limit_window_seconds}"
         )
         try:

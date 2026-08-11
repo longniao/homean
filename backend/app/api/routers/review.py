@@ -7,6 +7,7 @@ from app.api.dependencies import get_current_context, get_review_service
 from app.schemas.review import (
     ObservationCreate,
     ObservationUpdate,
+    ReportRevisionResponse,
     ReportUpdate,
     ShowingConfirmationResponse,
     TranscriptSegmentUpdate,
@@ -100,6 +101,21 @@ async def update_report(
             context, report_id, payload.content.model_dump(mode="json")
         )
     )
+
+
+@router.get(
+    "/reports/{report_id}/revisions", response_model=list[ReportRevisionResponse]
+)
+async def list_report_revisions(
+    report_id: uuid.UUID,
+    context: Annotated[CurrentContext, Depends(get_current_context)],
+    service: Annotated[RealEstateReviewService, Depends(get_review_service)],
+) -> list[ReportRevisionResponse]:
+    revisions = await service.list_report_revisions(context, report_id)
+    return [
+        ReportRevisionResponse.model_validate(item, from_attributes=True)
+        for item in revisions
+    ]
 
 
 @router.post("/showings/{visit_id}/confirm", response_model=ShowingConfirmationResponse)

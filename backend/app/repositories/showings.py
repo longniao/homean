@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import and_, or_, select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import (
@@ -14,6 +15,7 @@ from app.models import (
     Subject,
     TranscriptSegment,
     Visit,
+    VisitMarker,
     Zone,
 )
 
@@ -38,6 +40,17 @@ class ShowingRepository:
             )
         )
 
+    async def get_visit_by_capture_client_id(
+        self, workspace_id: uuid.UUID, capture_client_id: uuid.UUID
+    ) -> Visit | None:
+        """Find a mobile-created visit within one workspace by capture key."""
+        return await self.session.scalar(
+            select(Visit).where(
+                Visit.workspace_id == workspace_id,
+                Visit.capture_client_id == capture_client_id,
+            )
+        )
+
     async def get_media(
         self,
         workspace_id: uuid.UUID,
@@ -50,6 +63,41 @@ class ShowingRepository:
             .where(
                 RawMedia.id == media_id,
                 RawMedia.visit_id == visit_id,
+                Visit.workspace_id == workspace_id,
+            )
+        )
+
+    async def get_media_for_update(
+        self,
+        workspace_id: uuid.UUID,
+        visit_id: uuid.UUID,
+        media_id: uuid.UUID,
+    ) -> RawMedia | None:
+        """Load one workspace-scoped media row and serialize identity claims."""
+        return await self.session.scalar(
+            select(RawMedia)
+            .join(Visit, Visit.id == RawMedia.visit_id)
+            .where(
+                RawMedia.id == media_id,
+                RawMedia.visit_id == visit_id,
+                Visit.workspace_id == workspace_id,
+            )
+            .execution_options(populate_existing=True)
+            .with_for_update(of=RawMedia)
+        )
+
+    async def get_media_by_client_id(
+        self,
+        workspace_id: uuid.UUID,
+        visit_id: uuid.UUID,
+        client_id: uuid.UUID,
+    ) -> RawMedia | None:
+        return await self.session.scalar(
+            select(RawMedia)
+            .join(Visit, Visit.id == RawMedia.visit_id)
+            .where(
+                RawMedia.visit_id == visit_id,
+                RawMedia.client_id == client_id,
                 Visit.workspace_id == workspace_id,
             )
         )
@@ -152,6 +200,68 @@ class ShowingRepository:
             .order_by(RawMedia.created_at, RawMedia.id)
         )
         return list(result)
+
+    async def list_markers(
+        self, workspace_id: uuid.UUID, visit_id: uuid.UUID
+    ) -> list[VisitMarker]:
+        result = await self.session.scalars(
+            select(VisitMarker)
+            .join(Visit, Visit.id == VisitMarker.visit_id)
+            .where(
+                VisitMarker.visit_id == visit_id,
+                Visit.workspace_id == workspace_id,
+            )
+            .order_by(
+                VisitMarker.timestamp_offset_ms,
+                VisitMarker.created_at,
+                VisitMarker.id,
+            )
+        )
+        return list(result)
+
+    async def get_marker(
+        self, visit_id: uuid.UUID, client_id: uuid.UUID
+    ) -> VisitMarker | None:
+        return await self.session.scalar(
+            select(VisitMarker).where(
+                VisitMarker.visit_id == visit_id,
+                VisitMarker.client_id == client_id,
+            )
+        )
+
+    async def insert_marker(self, marker: VisitMarker) -> VisitMarker:
+        """Insert once and return the existing row when a retry races it.
+
+        The unique visit/client key is the idempotency boundary.  Using
+        ``ON CONFLICT DO NOTHING`` keeps concurrent retries from surfacing a
+        transient integrity error to the capture client.
+        """
+        statement = (
+            pg_insert(VisitMarker)
+            .values(
+                visit_id=marker.visit_id,
+                client_id=marker.client_id,
+                created_by=marker.created_by,
+                marker_type=marker.marker_type,
+                timestamp_offset_ms=marker.timestamp_offset_ms,
+            )
+            .on_conflict_do_nothing(
+                index_elements=[VisitMarker.visit_id, VisitMarker.client_id]
+            )
+            .returning(VisitMarker.id)
+        )
+        marker_id = await self.session.scalar(statement)
+        if marker_id is None:
+            existing = await self.get_marker(marker.visit_id, marker.client_id)
+            if existing is None:  # pragma: no cover - conflict row cannot vanish here
+                raise RuntimeError("marker insert conflict could not be resolved")
+            return existing
+        created = await self.session.scalar(
+            select(VisitMarker).where(VisitMarker.id == marker_id)
+        )
+        if created is None:  # pragma: no cover - returning row was just inserted
+            raise RuntimeError("marker insert did not return a row")
+        return created
 
     async def detail_zones(
         self, workspace_id: uuid.UUID, visit_id: uuid.UUID

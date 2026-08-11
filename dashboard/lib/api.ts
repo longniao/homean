@@ -163,6 +163,7 @@ export const verticalConfigSchema = z.object({
 export const deliverySchema = z.object({
   share_links: z.array(
     z.object({
+      id: z.string().uuid(),
       token: z.string(),
       url: z.string(),
       created_at: dateString,
@@ -173,9 +174,14 @@ export const deliverySchema = z.object({
   ),
   sends: z.array(
     z.object({
+      send_id: z.string().uuid(),
       channel: z.string(),
       to_email: nullableString,
+      status: z.enum(["pending", "sent", "failed", "outcome_unknown"]),
+      attempt_count: z.number().int().nonnegative(),
+      last_attempt_at: nullableString,
       sent_at: dateString,
+      error: nullableString,
     }),
   ),
 });
@@ -197,6 +203,7 @@ export const billingSchema = z.object({
 export type Contact = z.infer<typeof contactSchema>;
 export type Property = z.infer<typeof propertySchema>;
 export type Showing = z.infer<typeof showingSchema>;
+export type ShowingList = z.infer<typeof showingListSchema>;
 export type ShowingDetail = z.infer<typeof showingDetailSchema>;
 export type Observation = z.infer<typeof observationSchema>;
 export type TranscriptSegment = z.infer<typeof transcriptSchema>;
@@ -206,6 +213,30 @@ export type Branding = z.infer<typeof brandingSchema>;
 export type VerticalConfig = z.infer<typeof verticalConfigSchema>;
 export type Delivery = z.infer<typeof deliverySchema>;
 export type BillingStatus = z.infer<typeof billingSchema>;
+
+export function dedupeShowingsById(showings: Showing[]): Showing[] {
+  const seen = new Set<string>();
+  return showings.filter((showing) => {
+    if (seen.has(showing.id)) return false;
+    seen.add(showing.id);
+    return true;
+  });
+}
+
+export function getPublicReportPdfUrl(shareUrl: string): string | null {
+  try {
+    const url = new URL(shareUrl);
+    if (!['http:', 'https:'].includes(url.protocol)) return null;
+    const match = url.pathname.match(/^\/r\/([^/]+)\/?$/);
+    if (!match) return null;
+    url.pathname = `/r/${match[1]}/pdf`;
+    url.search = "";
+    url.hash = "";
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
 
 export class ApiError extends Error {
   constructor(
@@ -261,6 +292,7 @@ export type ShowingFilters = {
   subjectId?: string;
   unassigned?: boolean;
   query?: string;
+  cursor?: string;
   limit?: number;
 };
 
@@ -300,11 +332,13 @@ export const api = {
       if (filters.subjectId) params.set("subject_id", filters.subjectId);
       if (filters.unassigned !== undefined) params.set("unassigned", String(filters.unassigned));
       if (filters.query) params.set("q", filters.query);
+      if (filters.cursor) params.set("cursor", filters.cursor);
       params.set("limit", String(filters.limit ?? 100));
       return request(`/showings?${params}`, showingListSchema);
     },
+    listAll: (filters: ShowingFilters = {}) => listAllShowings(filters),
     get: (id: string) => request(`/showings/${id}`, showingDetailSchema),
-    create: (body: { subject_id?: string; address?: string; contact_id?: string | null }) =>
+    create: (body: { subject_id?: string; address?: string; contact_id?: string | null; consent_ack: boolean }) =>
       request("/showings", showingSchema, json("POST", body)),
     attachProperty: (id: string, body: { subject_id: string } | { address: string }) =>
       request(`/showings/${id}`, showingSchema, json("PATCH", body)),
@@ -365,6 +399,18 @@ export const api = {
         }),
         json("POST", body),
       ),
+    revokeShareLink: (visitId: string, linkId: string) =>
+      request(
+        `/showings/${visitId}/share-links/${linkId}/revoke`,
+        z.object({
+          id: z.string().uuid(),
+          token: z.string(),
+          url: z.string(),
+          expires_at: nullableString,
+          revoked_at: dateString,
+        }),
+        json("POST"),
+      ),
     delivery: (id: string) => request(`/showings/${id}/delivery`, deliverySchema),
   },
   observations: {
@@ -403,6 +449,31 @@ export const api = {
   },
   vertical: () => request("/vertical-config", verticalConfigSchema),
 };
+
+export async function listAllShowings(filters: ShowingFilters = {}): Promise<ShowingList> {
+  const baseFilters = { ...filters };
+  let cursor = baseFilters.cursor;
+  delete baseFilters.cursor;
+  delete baseFilters.limit;
+
+  const seenCursors = new Set<string>();
+  const items: Showing[] = [];
+  while (true) {
+    if (cursor !== undefined) {
+      if (seenCursors.has(cursor)) {
+        throw new Error(`Repeated showing pagination cursor: ${cursor}`);
+      }
+      seenCursors.add(cursor);
+    }
+
+    const page = await api.showings.list({ ...baseFilters, cursor, limit: 100 });
+    items.push(...page.items);
+    if (!page.next_cursor) break;
+    cursor = page.next_cursor;
+  }
+
+  return { items: dedupeShowingsById(items), next_cursor: null };
+}
 
 export function uploadWithProgress(
   url: string,
