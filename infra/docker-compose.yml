@@ -1,5 +1,45 @@
 name: kawu
 
+x-backend-environment: &backend-environment
+  DATABASE_URL: postgresql+asyncpg://kawu:kawu@postgres:5432/kawu
+  REDIS_URL: redis://redis:6379/0
+  S3_ENDPOINT_URL: http://minio:9000
+  S3_ACCESS_KEY: ${S3_ACCESS_KEY:-kawu}
+  S3_SECRET_KEY: ${S3_SECRET_KEY:-kawu-minio-secret}
+  S3_BUCKET: kawu-media
+  S3_REGION: ${S3_REGION:-us-east-1}
+  PRESIGNED_UPLOAD_SECONDS: ${PRESIGNED_UPLOAD_SECONDS:-900}
+  PRESIGNED_DOWNLOAD_SECONDS: ${PRESIGNED_DOWNLOAD_SECONDS:-300}
+  JWT_SECRET: ${JWT_SECRET:-local-compose-only-secret}
+  ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+  DEEPGRAM_API_KEY: ${DEEPGRAM_API_KEY:-}
+  TRANSCRIPTION_PROVIDER: ${TRANSCRIPTION_PROVIDER:-deepgram}
+  PIPELINE_DEEPGRAM_MODEL: ${PIPELINE_DEEPGRAM_MODEL:-nova-3}
+  PIPELINE_ZONE_DETECTION_MODEL: ${PIPELINE_ZONE_DETECTION_MODEL:-claude-opus-4-8}
+  PIPELINE_OBSERVATION_EXTRACTION_MODEL: ${PIPELINE_OBSERVATION_EXTRACTION_MODEL:-claude-opus-4-8}
+  PIPELINE_REPORT_GENERATION_MODEL: ${PIPELINE_REPORT_GENERATION_MODEL:-claude-opus-4-8}
+  EMAIL_PROVIDER: ${EMAIL_PROVIDER:-console}
+  PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:8000}
+  SMTP_HOST: ${SMTP_HOST:-}
+  SMTP_PORT: ${SMTP_PORT:-587}
+  SMTP_USERNAME: ${SMTP_USERNAME:-}
+  SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+  SMTP_FROM_EMAIL: ${SMTP_FROM_EMAIL:-reports@kawu.local}
+  SMTP_FROM_NAME: ${SMTP_FROM_NAME:-Kawu}
+  SMTP_USE_TLS: ${SMTP_USE_TLS:-true}
+  APP_ENV: ${APP_ENV:-dev}
+  DASHBOARD_ORIGIN: ${DASHBOARD_ORIGIN:-http://localhost:3000}
+  AUTH_RATE_LIMIT: ${AUTH_RATE_LIMIT:-30}
+  PUBLIC_SHARE_RATE_LIMIT: ${PUBLIC_SHARE_RATE_LIMIT:-60}
+  RATE_LIMIT_WINDOW_SECONDS: ${RATE_LIMIT_WINDOW_SECONDS:-60}
+  SENTRY_DSN: ${SENTRY_DSN:-}
+  STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+  STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+  STRIPE_SOLO_MONTHLY_PRICE_ID: ${STRIPE_SOLO_MONTHLY_PRICE_ID:-}
+  STRIPE_API_BASE_URL: ${STRIPE_API_BASE_URL:-https://api.stripe.com/v1}
+  ANTHROPIC_INPUT_COST_PER_MILLION: ${ANTHROPIC_INPUT_COST_PER_MILLION:-0}
+  ANTHROPIC_OUTPUT_COST_PER_MILLION: ${ANTHROPIC_OUTPUT_COST_PER_MILLION:-0}
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -57,18 +97,9 @@ services:
   worker:
     build:
       context: ../backend
+      dockerfile: Dockerfile.worker
     environment:
-      DATABASE_URL: postgresql+asyncpg://kawu:kawu@postgres:5432/kawu
-      REDIS_URL: redis://redis:6379/0
-      S3_ENDPOINT_URL: http://minio:9000
-      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-kawu}
-      S3_SECRET_KEY: ${S3_SECRET_KEY:-kawu-minio-secret}
-      S3_BUCKET: kawu-media
-      JWT_SECRET: ${JWT_SECRET:-local-compose-only-secret}
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
-      DEEPGRAM_API_KEY: ${DEEPGRAM_API_KEY:-}
-      TRANSCRIPTION_PROVIDER: ${TRANSCRIPTION_PROVIDER:-deepgram}
-      APP_ENV: ${APP_ENV:-dev}
+      <<: *backend-environment
     depends_on:
       postgres:
         condition: service_healthy
@@ -76,6 +107,23 @@ services:
         condition: service_healthy
       minio-bucket-init:
         condition: service_completed_successfully
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile.api
+    environment:
+      <<: *backend-environment
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio-bucket-init:
+        condition: service_completed_successfully
+    ports:
+      - "8000:8000"
     restart: unless-stopped
 
 volumes:

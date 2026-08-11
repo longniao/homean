@@ -59,7 +59,7 @@ export default function App() {
   const recent = useMemo(() => {
     const linked = new Set(localShowings.map((item) => item.remoteId).filter(Boolean));
     const remoteOnly: LocalShowing[] = remoteShowings.filter((item) => !linked.has(item.id)).map((item) => ({
-      id: `remote-${item.id}`, remoteId: item.id, contactId: item.contact?.id ?? null, subjectId: item.property?.id ?? null, address: null,
+      id: `remote-${item.id}`, remoteId: item.id, contactId: item.contact?.id ?? null, subjectId: item.property?.id ?? null, address: null, consentAck: item.consentAck,
       title: item.property?.displayName ?? i18n.t('home.untitled'), startedAt: new Date(item.createdAt).getTime(), endedAt: null, elapsedMs: 0,
       syncState: syncStateFromProcessing(item.processingStatus, 'synced'),
       processingStatus: item.processingStatus, finishRequested: false, lastError: null, updatedAt: new Date(item.createdAt).getTime(),

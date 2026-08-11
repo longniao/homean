@@ -1,0 +1,135 @@
+services:
+  - type: web
+    name: kawu-api
+    runtime: docker
+    autoDeployTrigger: checksPass
+    dockerfilePath: ./backend/Dockerfile.api
+    dockerContext: ./backend
+    healthCheckPath: /ready
+    preDeployCommand: uv run alembic upgrade head
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: kawu-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: kawu-redis
+          property: connectionString
+      - key: DASHBOARD_ORIGIN
+        fromService:
+          type: web
+          name: kawu-dashboard
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: PUBLIC_BASE_URL
+        fromService:
+          type: web
+          name: kawu-api
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: S3_ENDPOINT_URL
+        sync: false
+      - key: S3_ACCESS_KEY
+        sync: false
+      - key: S3_SECRET_KEY
+        sync: false
+      - key: S3_BUCKET
+        sync: false
+      - key: S3_REGION
+        value: us-east-1
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ANTHROPIC_INPUT_COST_PER_MILLION
+        sync: false
+      - key: ANTHROPIC_OUTPUT_COST_PER_MILLION
+        sync: false
+      - key: DEEPGRAM_API_KEY
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SENTRY_DSN
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_SOLO_MONTHLY_PRICE_ID
+        sync: false
+      - key: EMAIL_PROVIDER
+        value: smtp
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USERNAME
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_FROM_EMAIL
+        sync: false
+      - key: SMTP_FROM_NAME
+        value: Kawu
+  - type: worker
+    name: kawu-worker
+    runtime: docker
+    autoDeployTrigger: checksPass
+    dockerfilePath: ./backend/Dockerfile.worker
+    dockerContext: ./backend
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: kawu-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: kawu-redis
+          property: connectionString
+      - key: S3_ENDPOINT_URL
+        sync: false
+      - key: S3_ACCESS_KEY
+        sync: false
+      - key: S3_SECRET_KEY
+        sync: false
+      - key: S3_BUCKET
+        sync: false
+      - key: S3_REGION
+        value: us-east-1
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: DEEPGRAM_API_KEY
+        sync: false
+      - key: JWT_SECRET
+        fromService:
+          type: web
+          name: kawu-api
+          envVarKey: JWT_SECRET
+      - key: SENTRY_DSN
+        sync: false
+  - type: web
+    name: kawu-dashboard
+    runtime: docker
+    autoDeployTrigger: checksPass
+    dockerfilePath: ./dashboard/Dockerfile
+    dockerContext: ./dashboard
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        fromService:
+          type: web
+          name: kawu-api
+          envVarKey: RENDER_EXTERNAL_URL
+  - type: keyvalue
+    name: kawu-redis
+    plan: starter
+    ipAllowList: []
+databases:
+  - name: kawu-postgres
+    databaseName: kawu
+    user: kawu
+    plan: basic-256mb
+    postgresMajorVersion: "16"
+    ipAllowList: []

@@ -47,5 +47,33 @@ class PropertyRequiredError(DomainValidationError):
         super().__init__("attach a property before confirming")
 
 
+class SubscriptionRequiredError(DomainValidationError):
+    code = "subscription_required"
+
+    def __init__(self) -> None:
+        super().__init__("your trial has ended; subscribe to continue")
+
+
+class BillingUnavailableError(DomainValidationError):
+    def __init__(self, detail: str = "billing is temporarily unavailable") -> None:
+        super().__init__(detail)
+
+
+class InvalidBillingEventError(DomainValidationError):
+    code = "invalid_billing_event"
+
+    def __init__(self, detail: str = "invalid billing event") -> None:
+        super().__init__(detail)
+
+
+class BillingAlreadySubscribedError(ResourceConflictError):
+    code = "billing_portal_required"
+
+    def __init__(self) -> None:
+        super().__init__(
+            "an active subscription is already attached; use the billing portal"
+        )
+
+
 class DeliveryUnavailableError(RuntimeError):
     """A report delivery provider failed after the send was recorded."""

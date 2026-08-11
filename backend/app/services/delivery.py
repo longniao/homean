@@ -17,6 +17,8 @@ from app.models import (
     Visit,
 )
 from app.repositories import DeliveryRepository, ReviewRepository
+from app.repositories.delivery import share_token_lookup_hash
+from app.services.billing import BillingService
 from app.services.context import CurrentContext
 from app.services.exceptions import (
     DeliveryUnavailableError,
@@ -65,12 +67,14 @@ class RealEstateDeliveryService:
         settings: Settings,
         renderer: ReportRenderer,
         email_provider: EmailProvider,
+        billing: BillingService,
     ) -> None:
         self._repository = DeliveryRepository(session)
         self._review_repository = ReviewRepository(session)
         self._settings = settings
         self._renderer = renderer
         self._email = email_provider
+        self._billing = billing
 
     async def create_share_link(
         self,
@@ -78,6 +82,7 @@ class RealEstateDeliveryService:
         visit_id: uuid.UUID,
         expires_at: datetime | None,
     ) -> ShareLinkResult:
+        await self._billing.require_active(context)
         visit, report = await self._require_confirmed_report(
             context.workspace.id, visit_id, allow_sent=True
         )
@@ -155,6 +160,7 @@ class RealEstateDeliveryService:
         channel: str,
         to_email: str | None,
     ) -> SendResult:
+        await self._billing.require_active(context)
         visit, report = await self._require_confirmed_report(
             context.workspace.id, visit_id
         )
@@ -218,6 +224,7 @@ class RealEstateDeliveryService:
             token=secrets.token_urlsafe(16),
             expires_at=expires_at,
         )
+        link.token_lookup_hash = share_token_lookup_hash(link.token)
         self._repository.add(link)
         await self._repository.flush()
         return ShareLinkResult(link=link, url=self._share_url(link.token))
@@ -241,7 +248,7 @@ class RealEstateDeliveryService:
         if not report.rendered_html:
             branding = await self._review_repository.get_branding(workspace_id)
             report.rendered_html = await self._renderer.render_html(
-                report.content, branding
+                report.content, branding, consent_ack=visit.consent_ack
             )
             await self._repository.flush()
         return visit, report

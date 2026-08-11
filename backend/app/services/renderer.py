@@ -37,6 +37,8 @@ class ReportRenderer:
         self,
         content: RealEstateReportSchema | dict[str, object],
         branding: WorkspaceBranding | None,
+        *,
+        consent_ack: bool = False,
     ) -> str:
         report = RealEstateReportSchema.model_validate(content)
         pack = self._verticals.get()
@@ -64,6 +66,7 @@ class ReportRenderer:
             report=report_data,
             branding=branding_data,
             labels=pack.report_template.labels,
+            consent_ack=consent_ack,
         )
 
     async def render_pdf(self, html: str) -> bytes:
@@ -89,4 +92,8 @@ class ReportRenderer:
     @staticmethod
     def _accent_color(branding: WorkspaceBranding | None) -> str:
         value = branding.accent_color if branding else "#1F6F5B"
-        return value if re.fullmatch(r"#[0-9A-Fa-f]{6}", value) else "#1F6F5B"
+        return (
+            value
+            if isinstance(value, str) and re.fullmatch(r"#[0-9A-Fa-f]{6}", value)
+            else "#1F6F5B"
+        )

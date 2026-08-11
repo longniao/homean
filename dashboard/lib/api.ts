@@ -41,6 +41,7 @@ export const showingSchema = z.object({
   updated_at: dateString,
   property: propertySchema.nullable(),
   contact: contactSchema.nullable(),
+  consent_ack: z.boolean().optional(),
 });
 
 export const mediaSchema = z.object({
@@ -179,6 +180,20 @@ export const deliverySchema = z.object({
   ),
 });
 
+export const billingSchema = z.object({
+  workspace_id: z.string().uuid(),
+  plan: z.enum(["trial", "solo_monthly"]),
+  status: z.string(),
+  active: z.boolean(),
+  billing_action: z.enum(["subscribe", "manage_billing"]),
+  can_checkout: z.boolean(),
+  can_portal: z.boolean(),
+  stripe_customer_attached: z.boolean(),
+  trial_ends_at: nullableString,
+  current_period_end: nullableString,
+  cancel_at_period_end: z.boolean(),
+});
+
 export type Contact = z.infer<typeof contactSchema>;
 export type Property = z.infer<typeof propertySchema>;
 export type Showing = z.infer<typeof showingSchema>;
@@ -190,6 +205,7 @@ export type ReportBullet = z.infer<typeof reportBulletSchema>;
 export type Branding = z.infer<typeof brandingSchema>;
 export type VerticalConfig = z.infer<typeof verticalConfigSchema>;
 export type Delivery = z.infer<typeof deliverySchema>;
+export type BillingStatus = z.infer<typeof billingSchema>;
 
 export class ApiError extends Error {
   constructor(
@@ -249,6 +265,11 @@ export type ShowingFilters = {
 };
 
 export const api = {
+  billing: {
+    get: () => request("/billing", billingSchema),
+    checkout: () => request("/billing/checkout", z.object({ url: z.string().url() }), json("POST", { plan: "solo_monthly" })),
+    portal: () => request("/billing/portal", z.object({ url: z.string().url() }), json("POST")),
+  },
   me: () => request("/me", meSchema),
   updateMe: (body: { name: string | null }) => request("/me", meSchema, json("PATCH", body)),
   contacts: {

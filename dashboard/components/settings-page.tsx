@@ -26,6 +26,7 @@ export function SettingsPage() {
   const queryClient = useQueryClient();
   const me = useQuery({ queryKey: ["me"], queryFn: api.me });
   const branding = useQuery({ queryKey: ["branding"], queryFn: api.branding.get });
+  const billing = useQuery({ queryKey: ["billing"], queryFn: api.billing.get });
   const preview = useQuery({
     queryKey: ["branding-preview"],
     queryFn: api.branding.preview,
@@ -72,6 +73,11 @@ export function SettingsPage() {
     },
     onError: (error) => toast.error(error.message),
   });
+  const billingAction = useMutation({
+    mutationFn: async () => billing.data?.billing_action === "manage_billing" ? api.billing.portal() : api.billing.checkout(),
+    onSuccess: ({ url }) => window.location.assign(url),
+    onError: (error) => toast.error(error.message),
+  });
 
   const uploadLogo = async (file: File) => {
     setLogoPreview(URL.createObjectURL(file));
@@ -110,6 +116,12 @@ export function SettingsPage() {
       </div>
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_440px]">
         <div className="space-y-6">
+          {billing.data && <section className="panel border-emerald-200 bg-emerald-50/40 p-5 sm:p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+              <div className="flex-1"><p className="eyebrow mb-2">{t("billingEyebrow")}</p><h2 className="font-serif text-xl font-semibold">{t("billingTitle")}</h2><p className="mt-1 text-sm text-stone-600">{billing.data.active ? t("billingActive", { plan: billing.data.plan === "trial" ? t("trialPlan") : t("soloPlan") }) : t("billingExpired")}</p></div>
+              <Button disabled={billingAction.isPending} onClick={() => billingAction.mutate()}>{billing.data.billing_action === "manage_billing" ? t("manageBilling") : t("subscribe")}</Button>
+            </div>
+          </section>}
           <form
             className="panel p-5 sm:p-6"
             onSubmit={(event) => {

@@ -1,5 +1,6 @@
 from sqlalchemy import inspect, text
-from sqlalchemy.ext.asyncio import create_async_engine
+
+from app.core.database_url import create_async_engine_for_url
 
 EXPECTED_TABLES = {
     "alembic_version",
@@ -13,6 +14,7 @@ EXPECTED_TABLES = {
     "report_sends",
     "report_share_links",
     "report_share_views",
+    "stripe_webhook_events",
     "subjects",
     "transcript_segments",
     "users",
@@ -20,12 +22,14 @@ EXPECTED_TABLES = {
     "visits",
     "workspaces",
     "workspace_branding",
+    "workspace_report_usage",
+    "workspace_subscriptions",
     "zones",
 }
 
 
 async def test_migration_up_from_empty_database(database_url: str) -> None:
-    engine = create_async_engine(database_url)
+    engine = create_async_engine_for_url(database_url)
     try:
         async with engine.connect() as connection:
             schema = await connection.run_sync(inspect_schema)
@@ -36,7 +40,7 @@ async def test_migration_up_from_empty_database(database_url: str) -> None:
         await engine.dispose()
 
     assert schema["tables"] == EXPECTED_TABLES
-    assert revision == "20260805_0005"
+    assert revision == "20260807_0008"
     for table in EXPECTED_TABLES - {"alembic_version"}:
         assert {"id", "created_at", "updated_at"} <= schema["columns"][table]
     assert {
@@ -71,6 +75,18 @@ async def test_migration_up_from_empty_database(database_url: str) -> None:
     assert "ix_visits_workspace_id" in schema["indexes"]["visits"]
     assert "ix_visits_subject_id" in schema["indexes"]["visits"]
     assert schema["nullable"]["visits"]["subject_id"] is True
+    assert schema["nullable"]["visits"]["consent_ack"] is False
+    assert "token_lookup_hash" in schema["columns"]["report_share_links"]
+    assert (
+        "ix_report_share_links_token_lookup_hash"
+        in schema["indexes"]["report_share_links"]
+    )
+    assert {"event_id", "event_type", "stripe_created_at"} <= schema["columns"][
+        "stripe_webhook_events"
+    ]
+    assert {"stripe_event_created_at", "stripe_event_type"} <= schema["columns"][
+        "workspace_subscriptions"
+    ]
     assert "ix_visits_contact_id" in schema["indexes"]["visits"]
     assert "ix_subjects_workspace_id" in schema["indexes"]["subjects"]
     assert "ix_raw_media_status" in schema["indexes"]["raw_media"]

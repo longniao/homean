@@ -81,3 +81,4 @@ report_template:
     phone: Phone
     email: Email
     generated_by: Prepared with Kawu
+    consent_disclosure: "Recording disclosure: This report was prepared from a visit recording. TODO: counsel review required."

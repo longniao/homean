@@ -2,13 +2,16 @@ from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
 from app.services.exceptions import (
+    BillingUnavailableError,
     DeliveryUnavailableError,
     DomainValidationError,
+    InvalidBillingEventError,
     PipelineUnavailableError,
     PropertyRequiredError,
     ResourceConflictError,
     ResourceNotFoundError,
     SensitiveReviewRequiredError,
+    SubscriptionRequiredError,
     VerticalNotSeededError,
 )
 
@@ -22,6 +25,36 @@ def register_exception_handlers(app: FastAPI) -> None:
         return JSONResponse(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             content={"detail": str(exception), "code": exception.code},
+        )
+
+    @app.exception_handler(SubscriptionRequiredError)
+    async def subscription_required(
+        request: Request, exception: SubscriptionRequiredError
+    ) -> JSONResponse:
+        del request
+        return JSONResponse(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            content={"detail": str(exception), "code": exception.code},
+        )
+
+    @app.exception_handler(InvalidBillingEventError)
+    async def invalid_billing_event(
+        request: Request, exception: InvalidBillingEventError
+    ) -> JSONResponse:
+        del request
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"detail": str(exception), "code": exception.code},
+        )
+
+    @app.exception_handler(BillingUnavailableError)
+    async def billing_unavailable(
+        request: Request, exception: BillingUnavailableError
+    ) -> JSONResponse:
+        del request
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content={"detail": str(exception)},
         )
 
     @app.exception_handler(SensitiveReviewRequiredError)
@@ -53,7 +86,10 @@ def register_exception_handlers(app: FastAPI) -> None:
         del request
         return JSONResponse(
             status_code=status.HTTP_409_CONFLICT,
-            content={"detail": str(exception) or "Resource conflict"},
+            content={
+                "detail": str(exception) or "Resource conflict",
+                **({"code": exception.code} if hasattr(exception, "code") else {}),
+            },
         )
 
     @app.exception_handler(DomainValidationError)

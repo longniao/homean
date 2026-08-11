@@ -20,6 +20,9 @@ class S3Client(StorageProvider):
             region_name=settings.s3_region,
         )
 
+    async def check_ready(self) -> None:
+        await asyncio.to_thread(self._client.head_bucket, Bucket=self._bucket)
+
     async def presign_put(
         self, object_key: str, content_type: str, expires_in: int
     ) -> str:

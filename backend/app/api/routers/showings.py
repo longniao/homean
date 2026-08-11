@@ -43,6 +43,7 @@ def showing_response(record: ShowingRecord) -> ShowingResponse:
         ended_at=visit.ended_at,
         created_at=visit.created_at,
         updated_at=visit.updated_at,
+        consent_ack=visit.consent_ack,
         property=(
             PropertyResponse.from_subject(record.subject) if record.subject else None
         ),

@@ -8,7 +8,7 @@ export interface SyncStore {
 }
 
 export interface SyncTransport {
-  createShowing(input: { subjectId: string | null; address: string | null; contactId: string | null }): Promise<{ id: string }>;
+  createShowing(input: { subjectId: string | null; address: string | null; contactId: string | null; consentAck?: boolean }): Promise<{ id: string }>;
   presignMedia(visitId: string, media: { kind: 'audio' | 'photo'; contentType: string; timestampOffsetMs: number }): Promise<{ media_id: string; upload_url: string; headers: Record<string, string> }>;
   uploadFile(url: string, headers: Record<string, string>, fileUri: string): Promise<void>;
   completeMedia(visitId: string, mediaId: string): Promise<void>;
@@ -44,7 +44,8 @@ export class SyncEngine {
     try {
       await this.store.patchShowing(showing.id, { syncState: 'syncing', lastError: null, updatedAt: this.now() });
       if (!remoteId) {
-        remoteId = (await this.transport.createShowing({ subjectId: showing.subjectId, address: showing.address, contactId: showing.contactId })).id;
+        const input = { subjectId: showing.subjectId, address: showing.address, contactId: showing.contactId, ...(showing.consentAck === undefined ? {} : { consentAck: showing.consentAck }) };
+        remoteId = (await this.transport.createShowing(input)).id;
         await this.store.patchShowing(showing.id, { remoteId, updatedAt: this.now() });
       }
 

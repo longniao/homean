@@ -1,6 +1,7 @@
 import time
 import uuid
 from dataclasses import dataclass
+from datetime import date
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -24,6 +25,7 @@ from app.pipeline.schemas import (
 )
 from app.pipeline.transcription import TranscriptionProvider
 from app.repositories import PipelineRepository
+from app.repositories.billing import BillingRepository
 from app.services.exceptions import ResourceConflictError, ResourceNotFoundError
 from app.storage import StorageProvider
 from app.verticals import VerticalConfigService
@@ -61,6 +63,7 @@ class RealEstatePipelineService:
     ) -> None:
         self._session = session
         self._repository = PipelineRepository(session)
+        self._billing_repository = BillingRepository(session)
         self._storage = storage
         self._transcription = transcription
         self._llm = llm
@@ -363,6 +366,9 @@ class RealEstatePipelineService:
                 f"dropped_refs={sanitized.dropped_references}"
             )
         self._repository.add(report, report_run)
+        await self._billing_repository.increment_report_usage(
+            workspace_id, date.today().replace(day=1)
+        )
         await self._session.commit()
 
     async def mark_failed(

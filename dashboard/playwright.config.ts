@@ -17,7 +17,7 @@ export default defineConfig({
       timeout: 120_000,
     },
     {
-      command: "NEXT_PUBLIC_API_URL=http://127.0.0.1:8001 npm run start -- -p 3001",
+      command: "PORT=3001 HOSTNAME=127.0.0.1 NEXT_PUBLIC_API_URL=http://127.0.0.1:8001 node .next/standalone/server.js",
       url: "http://127.0.0.1:3001/login",
       reuseExistingServer: false,
       timeout: 120_000,

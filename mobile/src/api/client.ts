@@ -30,6 +30,7 @@ const reportSchema = z.object({ id: z.string(), content: reportContentSchema, st
 const showingSchema = z.object({
   id: z.string(), status: z.string(), processing_status: z.string(), created_at: z.string(),
   property: propertySchema.nullable(), contact: contactSchema.nullable(),
+  consent_ack: z.boolean().optional().default(false),
 });
 const showingDetailSchema = showingSchema.extend({ observations: z.array(observationSchema), report: reportSchema.nullable() });
 
@@ -43,7 +44,7 @@ function propertyFromWire(value: z.infer<typeof propertySchema>): Property {
   return { id: value.id, displayName: value.display_name, address: value.address };
 }
 function showingFromWire(value: z.infer<typeof showingSchema>): ShowingSummary {
-  return { id: value.id, status: value.status, processingStatus: value.processing_status, createdAt: value.created_at, property: value.property ? propertyFromWire(value.property) : null, contact: value.contact ? contactFromWire(value.contact) : null };
+  return { id: value.id, status: value.status, processingStatus: value.processing_status, createdAt: value.created_at, property: value.property ? propertyFromWire(value.property) : null, contact: value.contact ? contactFromWire(value.contact) : null, consentAck: value.consent_ack };
 }
 
 async function responseDetail(response: Response): Promise<string> {
@@ -110,8 +111,9 @@ export class ApiClient {
     const body = z.object({ items: z.array(showingSchema) }).parse(await (await this.request('/showings?limit=50')).json());
     return body.items.map(showingFromWire);
   }
-  async createShowing(input: { subjectId: string | null; address: string | null; contactId: string | null }): Promise<ShowingSummary> {
-    const payload: { subject_id?: string; address?: string; contact_id: string | null } = { contact_id: input.contactId };
+  async createShowing(input: { subjectId: string | null; address: string | null; contactId: string | null; consentAck?: boolean }): Promise<ShowingSummary> {
+    const payload: { subject_id?: string; address?: string; contact_id: string | null; consent_ack?: boolean } = { contact_id: input.contactId };
+    if (input.consentAck !== undefined) payload.consent_ack = input.consentAck;
     if (input.subjectId) payload.subject_id = input.subjectId;
     else if (input.address) payload.address = input.address;
     const body = showingSchema.parse(await (await this.request('/showings', { method: 'POST', body: JSON.stringify(payload) })).json());

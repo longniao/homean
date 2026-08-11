@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 
 from sqlalchemy import (
@@ -56,6 +56,75 @@ class WorkspaceBranding(UUIDTimestampMixin, Base):
     license_no: Mapped[str | None] = mapped_column(Text)
     accent_color: Mapped[str] = mapped_column(
         Text, nullable=False, default="#1F6F5B", server_default="#1F6F5B"
+    )
+
+
+class WorkspaceSubscription(UUIDTimestampMixin, Base):
+    __tablename__ = "workspace_subscriptions"
+    __table_args__ = (
+        UniqueConstraint(
+            "workspace_id", name="uq_workspace_subscriptions_workspace_id"
+        ),
+        UniqueConstraint(
+            "stripe_subscription_id",
+            name="uq_workspace_subscriptions_stripe_subscription_id",
+        ),
+    )
+
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("workspaces.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    stripe_customer_id: Mapped[str | None] = mapped_column(Text, index=True)
+    stripe_subscription_id: Mapped[str | None] = mapped_column(Text, index=True)
+    stripe_event_id: Mapped[str | None] = mapped_column(Text, index=True)
+    stripe_event_type: Mapped[str | None] = mapped_column(Text)
+    stripe_event_created_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True)
+    )
+    plan: Mapped[str] = mapped_column(
+        Text, nullable=False, default="trial", server_default="trial"
+    )
+    status: Mapped[str] = mapped_column(
+        Text, nullable=False, default="trialing", index=True
+    )
+    trial_ends_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    current_period_end: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    cancel_at_period_end: Mapped[bool] = mapped_column(
+        nullable=False, default=False, server_default="false"
+    )
+
+
+class StripeWebhookEvent(UUIDTimestampMixin, Base):
+    __tablename__ = "stripe_webhook_events"
+    __table_args__ = (
+        UniqueConstraint("event_id", name="uq_stripe_webhook_events_event_id"),
+    )
+
+    event_id: Mapped[str] = mapped_column(Text, nullable=False, index=True)
+    event_type: Mapped[str] = mapped_column(Text, nullable=False)
+    stripe_created_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class WorkspaceReportUsage(UUIDTimestampMixin, Base):
+    __tablename__ = "workspace_report_usage"
+    __table_args__ = (
+        UniqueConstraint(
+            "workspace_id", "period_start", name="uq_workspace_report_usage_period"
+        ),
+    )
+
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("workspaces.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    period_start: Mapped[date] = mapped_column(nullable=False, index=True)
+    report_count: Mapped[int] = mapped_column(
+        nullable=False, default=0, server_default="0"
     )
 
 
@@ -212,6 +281,9 @@ class Visit(UUIDTimestampMixin, Base):
     processing_failed_step: Mapped[str | None] = mapped_column(Text)
     processing_error: Mapped[str | None] = mapped_column(Text)
     processing_run_id: Mapped[uuid.UUID | None] = mapped_column(PGUUID(as_uuid=True))
+    consent_ack: Mapped[bool] = mapped_column(
+        nullable=False, default=False, server_default="false"
+    )
 
 
 class Zone(UUIDTimestampMixin, Base):
@@ -363,6 +435,7 @@ class ReportShareLink(UUIDTimestampMixin, Base):
         index=True,
     )
     token: Mapped[str] = mapped_column(Text, nullable=False, unique=True, index=True)
+    token_lookup_hash: Mapped[str] = mapped_column(Text, nullable=False, index=True)
     expires_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), index=True
     )

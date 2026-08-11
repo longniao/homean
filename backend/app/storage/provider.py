@@ -15,6 +15,10 @@ class StoredObjectBody:
 
 
 class StorageProvider(ABC):
+    async def check_ready(self) -> None:
+        """Verify the backing bucket is reachable when the provider supports it."""
+        return None
+
     @abstractmethod
     async def presign_put(
         self, object_key: str, content_type: str, expires_in: int

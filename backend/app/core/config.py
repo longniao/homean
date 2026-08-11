@@ -1,6 +1,6 @@
 from functools import lru_cache
 
-from pydantic import SecretStr
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -19,8 +19,8 @@ class Settings(BaseSettings):
     s3_secret_key: SecretStr
     s3_bucket: str
     s3_region: str = "us-east-1"
-    presigned_upload_seconds: int = 900
-    presigned_download_seconds: int = 300
+    presigned_upload_seconds: int = Field(default=900, ge=1)
+    presigned_download_seconds: int = Field(default=300, ge=1)
     jwt_secret: SecretStr
     jwt_algorithm: str = "HS256"
     access_token_minutes: int = 15
@@ -38,6 +38,22 @@ class Settings(BaseSettings):
     smtp_from_name: str = "Kawu"
     smtp_use_tls: bool = True
     app_env: str = "dev"
+    dashboard_origin: str = "http://localhost:3000"
+    auth_rate_limit: int = Field(default=100, ge=1)
+    public_share_rate_limit: int = Field(default=120, ge=1)
+    rate_limit_window_seconds: int = Field(default=60, ge=1)
+    sentry_dsn: str | None = None
+    stripe_secret_key: SecretStr | None = None
+    stripe_webhook_secret: SecretStr | None = None
+    stripe_solo_monthly_price_id: str | None = None
+    stripe_api_base_url: str = "https://api.stripe.com/v1"
+    anthropic_input_cost_per_million: float = Field(default=0.0, ge=0)
+    anthropic_output_cost_per_million: float = Field(default=0.0, ge=0)
+
+    @field_validator("presigned_upload_seconds", "presigned_download_seconds")
+    @classmethod
+    def cap_presigned_ttl(cls, value: int) -> int:
+        return min(value, 900)
 
 
 @lru_cache

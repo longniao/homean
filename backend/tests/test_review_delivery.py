@@ -2,6 +2,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
+import pytest
 from httpx import AsyncClient
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,7 +19,9 @@ from app.models import (
     WorkspaceBranding,
     Zone,
 )
+from app.services.renderer import ReportRenderer
 from app.storage import FakeStorageProvider
+from app.verticals import VerticalConfigService
 
 PASSWORD = "correct-horse-battery-staple"
 
@@ -416,10 +419,16 @@ async def test_share_links_public_views_revocation_and_expiry(
     public_html = await client.get(f"/r/{token}", headers={"User-Agent": "Buyer/1"})
     assert public_html.status_code == 200
     assert public_html.headers["content-type"].startswith("text/html")
+    assert public_html.headers["cache-control"] == "private, no-store, max-age=0"
+    assert public_html.headers["pragma"] == "no-cache"
+    assert public_html.headers["x-robots-tag"] == "noindex, nofollow, noarchive"
     assert "Showing report" in public_html.text
     public_pdf = await client.get(f"/r/{token}/pdf", headers={"User-Agent": "Buyer/1"})
     assert public_pdf.status_code == 200
     assert public_pdf.content.startswith(b"%PDF")
+    assert public_pdf.headers["cache-control"] == "private, no-store, max-age=0"
+    assert public_pdf.headers["pragma"] == "no-cache"
+    assert public_pdf.headers["x-robots-tag"] == "noindex, nofollow, noarchive"
     assert (
         await session.scalar(
             select(func.count())
@@ -428,6 +437,10 @@ async def test_share_links_public_views_revocation_and_expiry(
         )
         == 2
     )
+    assert (await client.get("/r/not a token")).status_code == 404
+    assert (await client.get("/r/é")).status_code == 404
+    assert (await client.get(f"/r/{'a' * 129}")).status_code == 404
+    assert (await client.get(f"/r/{token}/pdf")).status_code == 200
 
     revoked = await client.post(
         f"/showings/{scenario.visit_id}/share-links/{share.json()['id']}/revoke",
@@ -435,7 +448,10 @@ async def test_share_links_public_views_revocation_and_expiry(
     )
     assert revoked.status_code == 200
     assert revoked.json()["revoked_at"] is not None
-    assert (await client.get(f"/r/{token}")).status_code == 404
+    revoked_response = await client.get(f"/r/{token}")
+    assert revoked_response.status_code == 404
+    assert revoked_response.headers["cache-control"] == "private, no-store, max-age=0"
+    assert revoked_response.headers["x-robots-tag"] == "noindex, nofollow, noarchive"
 
     expiring = await client.post(
         f"/showings/{scenario.visit_id}/share-links",
@@ -448,7 +464,9 @@ async def test_share_links_public_views_revocation_and_expiry(
         .values(expires_at=datetime.now(UTC) - timedelta(seconds=1))
     )
     await session.commit()
-    assert (await client.get(f"/r/{expiring.json()['token']}")).status_code == 404
+    expired_response = await client.get(f"/r/{expiring.json()['token']}")
+    assert expired_response.status_code == 404
+    assert expired_response.headers["pragma"] == "no-cache"
 
 
 async def test_email_and_link_delivery_transitions_and_sent_edit_guards(
@@ -607,3 +625,23 @@ async def test_review_and_delivery_workspace_isolation(
         await client.get(f"/showings/{owner.visit_id}/delivery", headers=other.headers),
     ]
     assert {response.status_code for response in attempts} == {404}
+
+
+@pytest.mark.asyncio
+async def test_consent_disclosure_is_rendered_only_when_acknowledged() -> None:
+    renderer = ReportRenderer(FakeStorageProvider(), VerticalConfigService())
+    content = {
+        "executive_summary": "A concise showing summary.",
+        "room_by_room": [],
+        "highlights": [],
+        "concerns": [],
+        "follow_ups": [],
+    }
+    branding = WorkspaceBranding(workspace_id=uuid.uuid4())
+    acknowledged = await renderer.render_html(content, branding, consent_ack=True)
+    not_acknowledged = await renderer.render_html(content, branding, consent_ack=False)
+    disclosure = (
+        "Recording disclosure: This report was prepared from a visit recording."
+    )
+    assert disclosure in acknowledged
+    assert disclosure not in not_acknowledged

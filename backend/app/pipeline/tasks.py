@@ -2,10 +2,11 @@ import asyncio
 import uuid
 
 from celery import chain
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 from sqlalchemy.pool import NullPool
 
 from app.core.config import get_settings
+from app.core.database_url import create_async_engine_for_url
 from app.core.pipeline_config import PipelineStep, get_pipeline_config
 from app.pipeline.celery_app import celery_app
 from app.pipeline.llm import AnthropicLLMClient
@@ -20,7 +21,7 @@ async def _execute_step(
 ) -> None:
     settings = get_settings()
     pipeline_config = get_pipeline_config()
-    engine = create_async_engine(settings.database_url, poolclass=NullPool)
+    engine = _create_pipeline_engine(settings.database_url)
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
     anthropic_key = (
         settings.anthropic_api_key.get_secret_value()
@@ -40,6 +41,10 @@ async def _execute_step(
             await service.run_step(workspace_id, visit_id, step)
     finally:
         await engine.dispose()
+
+
+def _create_pipeline_engine(database_url: str) -> AsyncEngine:
+    return create_async_engine_for_url(database_url, poolclass=NullPool)
 
 
 def _run(workspace_id: str, visit_id: str, step: PipelineStep) -> None:

@@ -144,7 +144,9 @@ class RealEstateReviewService:
         report.content = content
         if visit.status == "confirmed":
             branding = await self._repository.get_branding(context.workspace.id)
-            report.rendered_html = await self._renderer.render_html(content, branding)
+            report.rendered_html = await self._renderer.render_html(
+                content, branding, consent_ack=visit.consent_ack
+            )
             report.status = "confirmed"
         else:
             report.rendered_html = None
@@ -179,7 +181,7 @@ class RealEstateReviewService:
             raise SensitiveReviewRequiredError([str(item.id) for item in sensitive])
         branding = await self._repository.get_branding(context.workspace.id)
         report.rendered_html = await self._renderer.render_html(
-            report.content, branding
+            report.content, branding, consent_ack=visit.consent_ack
         )
         report.status = "confirmed"
         visit.status = "confirmed"

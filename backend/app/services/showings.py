@@ -27,6 +27,7 @@ from app.repositories import (
     ShowingRepository,
 )
 from app.schemas.showings import MediaPresignRequest, ShowingCreate, ShowingUpdate
+from app.services.billing import BillingService
 from app.services.context import CurrentContext
 from app.services.exceptions import (
     DomainValidationError,
@@ -106,6 +107,7 @@ class RealEstateShowingService:
         storage: StorageProvider,
         pipeline: PipelineEnqueuer,
         settings: Settings,
+        billing: BillingService,
     ) -> None:
         self._repository = ShowingRepository(session)
         self._contacts = ContactRepository(session)
@@ -115,10 +117,12 @@ class RealEstateShowingService:
         self._storage = storage
         self._pipeline = pipeline
         self._settings = settings
+        self._billing = billing
 
     async def create_showing(
         self, context: CurrentContext, payload: ShowingCreate
     ) -> ShowingRecord:
+        await self._billing.require_active(context)
         contact = await self._optional_contact(context.workspace.id, payload.contact_id)
         subject = None
         if payload.subject_id is not None:
@@ -147,6 +151,7 @@ class RealEstateShowingService:
             started_at=datetime.now(UTC),
             status="draft",
             processing_status="not_started",
+            consent_ack=payload.consent_ack,
         )
         self._repository.add(visit)
         await self._repository.flush()

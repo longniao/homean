@@ -2,13 +2,22 @@ import json
 import re
 import uuid
 from collections.abc import Callable
+from datetime import date
 
 from httpx import AsyncClient
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.pipeline_config import PipelineConfig, PipelineStep
-from app.models import Observation, PipelineRun, Report, TranscriptSegment, Visit, Zone
+from app.models import (
+    Observation,
+    PipelineRun,
+    Report,
+    TranscriptSegment,
+    Visit,
+    WorkspaceReportUsage,
+    Zone,
+)
 from app.pipeline import (
     FakeLLMClient,
     FakePipelineEnqueuer,
@@ -463,6 +472,14 @@ async def test_fake_pipeline_builds_full_evidence_chain_and_is_idempotent(
         ]
     )
     assert counts_after == counts_before
+    usage = await session.scalar(
+        select(WorkspaceReportUsage).where(
+            WorkspaceReportUsage.workspace_id == workspace_id,
+            WorkspaceReportUsage.period_start == date.today().replace(day=1),
+        )
+    )
+    assert usage is not None
+    assert usage.report_count == 1
     assert len(llm.calls) == llm_call_count
     assert len(transcription.calls) == transcription_call_count
 

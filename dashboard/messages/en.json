@@ -9,7 +9,8 @@
     "loading": "Loading workspace…",
     "loadError": "We couldn't load this information.",
     "tryAgain": "Try again",
-    "open": "Open"
+    "open": "Open",
+    "manageBilling": "Manage billing"
   },
   "Navigation": {
     "home": "Showings",
@@ -69,6 +70,9 @@
     "allProperties": "All property assignments",
     "unassignedProperty": "Unassigned property",
     "unassignedBadge": "Unassigned",
+    "upgradeTitle": "Your trial has ended",
+    "upgradeBody": "Subscribe to create new showings and send reports. Your existing workspace remains available to read.",
+    "upgradeAction": "Subscribe",
     "dateFrom": "Starting date",
     "dateTo": "Ending date",
     "unassignedClient": "No client assigned",
@@ -127,7 +131,8 @@
     "orAddress": "Or enter an address",
     "addressPlaceholder": "123 Main Street",
     "attach": "Attach property",
-    "propertyAttached": "Property attached to this showing."
+    "propertyAttached": "Property attached to this showing.",
+    "subscriptionRequired": "Your trial has ended. Subscribe in Settings to send reports."
   },
   "ReportEditor": {
     "summary": "Executive summary",
@@ -300,6 +305,14 @@
     "eyebrow": "Workspace preferences",
     "title": "Settings",
     "subtitle": "Keep your professional identity consistent across every client report.",
+    "billingEyebrow": "Workspace billing",
+    "billingTitle": "Your Kawu plan",
+    "billingActive": "{plan} is active for this workspace.",
+    "billingExpired": "Your trial or subscription needs attention. Continue with the recommended billing action.",
+    "trialPlan": "14-day trial",
+    "soloPlan": "Solo monthly",
+    "manageBilling": "Manage billing",
+    "subscribe": "Subscribe",
     "profileTitle": "Profile",
     "profileBody": "Your account and workspace identity.",
     "name": "Name",

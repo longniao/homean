@@ -10,6 +10,7 @@ from app.models.entities import (
     ReportSend,
     ReportShareLink,
     ReportShareView,
+    StripeWebhookEvent,
     Subject,
     TranscriptSegment,
     User,
@@ -17,6 +18,8 @@ from app.models.entities import (
     Visit,
     Workspace,
     WorkspaceBranding,
+    WorkspaceReportUsage,
+    WorkspaceSubscription,
     Zone,
 )
 
@@ -39,5 +42,8 @@ __all__ = [
     "Visit",
     "Workspace",
     "WorkspaceBranding",
+    "WorkspaceReportUsage",
+    "WorkspaceSubscription",
+    "StripeWebhookEvent",
     "Zone",
 ]

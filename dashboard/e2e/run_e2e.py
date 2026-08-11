@@ -2,8 +2,10 @@
 
 import asyncio
 import os
+import shutil
 import subprocess
 import uuid
+from pathlib import Path
 
 import asyncpg
 
@@ -34,6 +36,9 @@ def main() -> int:
         build = subprocess.run(["npm", "run", "build"], check=False)
         if build.returncode:
             return build.returncode
+        standalone = Path(".next/standalone")
+        shutil.copytree(".next/static", standalone / ".next/static", dirs_exist_ok=True)
+        shutil.copytree("public", standalone / "public", dirs_exist_ok=True)
         return subprocess.run(
             ["npx", "playwright", "test"],
             check=False,

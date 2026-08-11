@@ -85,7 +85,7 @@
       {% if report.follow_ups %}<ul>{% for bullet in report.follow_ups %}<li>{{ bullet.text }}</li>{% endfor %}</ul>{% else %}<p class="empty">-</p>{% endif %}
     </section>
 
-    <footer>{{ labels.generated_by }}</footer>
+    <footer>{{ labels.generated_by }}{% if consent_ack %}<br>{{ labels.consent_disclosure }}{% endif %}</footer>
   </main>
 </body>
 </html>

@@ -5,15 +5,15 @@ from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
     async_sessionmaker,
-    create_async_engine,
 )
 
 from app.core.config import get_settings
+from app.core.database_url import create_async_engine_for_url
 
 
 @lru_cache
 def get_engine() -> AsyncEngine:
-    return create_async_engine(get_settings().database_url, pool_pre_ping=True)
+    return create_async_engine_for_url(get_settings().database_url, pool_pre_ping=True)
 
 
 @lru_cache

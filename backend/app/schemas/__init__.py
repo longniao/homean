@@ -1,4 +1,10 @@
 from app.schemas.auth import LoginRequest, RefreshRequest, SignupRequest, TokenResponse
+from app.schemas.billing import (
+    BillingStatusResponse,
+    CheckoutRequest,
+    CheckoutResponse,
+    PortalResponse,
+)
 from app.schemas.contacts import ContactCreate, ContactResponse, ContactUpdate
 from app.schemas.me import MeResponse
 from app.schemas.properties import (
@@ -24,6 +30,9 @@ __all__ = [
     "ContactCreate",
     "ContactResponse",
     "ContactUpdate",
+    "BillingStatusResponse",
+    "CheckoutRequest",
+    "CheckoutResponse",
     "MediaDownloadResponse",
     "MediaPresignRequest",
     "MediaPresignResponse",
@@ -31,6 +40,7 @@ __all__ = [
     "PropertyCreate",
     "PropertyResponse",
     "PropertyUpdate",
+    "PortalResponse",
     "RealEstateSubjectAttributes",
     "RefreshRequest",
     "ShowingCreate",

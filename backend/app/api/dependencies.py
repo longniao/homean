@@ -12,6 +12,8 @@ from app.pipeline import CeleryPipelineEnqueuer, PipelineEnqueuer
 from app.repositories import AuthRepository
 from app.services import (
     AuthService,
+    BillingProvider,
+    BillingService,
     CurrentContext,
     RealEstateBrandingService,
     RealEstateContactService,
@@ -20,6 +22,7 @@ from app.services import (
     RealEstateReviewService,
     RealEstateShowingService,
     ReportRenderer,
+    StripeBillingProvider,
     TokenService,
 )
 from app.services.exceptions import InvalidTokenError
@@ -34,6 +37,19 @@ def get_auth_service(
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> AuthService:
     return AuthService(session, settings)
+
+
+@lru_cache
+def get_billing_provider() -> StripeBillingProvider:
+    return StripeBillingProvider(get_settings())
+
+
+def get_billing_service(
+    session: Annotated[AsyncSession, Depends(get_session)],
+    settings: Annotated[Settings, Depends(get_settings)],
+    provider: Annotated[BillingProvider, Depends(get_billing_provider)],
+) -> BillingService:
+    return BillingService(session, settings, provider)
 
 
 def get_contact_service(
@@ -63,8 +79,9 @@ def get_showing_service(
     settings: Annotated[Settings, Depends(get_settings)],
     storage: Annotated[StorageProvider, Depends(get_storage_provider)],
     pipeline: Annotated[PipelineEnqueuer, Depends(get_pipeline_enqueuer)],
+    billing: Annotated[BillingService, Depends(get_billing_service)],
 ) -> RealEstateShowingService:
-    return RealEstateShowingService(session, storage, pipeline, settings)
+    return RealEstateShowingService(session, storage, pipeline, settings, billing)
 
 
 def get_report_renderer(
@@ -99,8 +116,11 @@ def get_delivery_service(
     settings: Annotated[Settings, Depends(get_settings)],
     renderer: Annotated[ReportRenderer, Depends(get_report_renderer)],
     email_provider: Annotated[EmailProvider, Depends(get_email_provider)],
+    billing: Annotated[BillingService, Depends(get_billing_service)],
 ) -> RealEstateDeliveryService:
-    return RealEstateDeliveryService(session, settings, renderer, email_provider)
+    return RealEstateDeliveryService(
+        session, settings, renderer, email_provider, billing
+    )
 
 
 async def get_current_context(

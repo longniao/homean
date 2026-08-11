@@ -1,9 +1,18 @@
+import hashlib
+import hmac
+import re
 import uuid
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Report, ReportSend, ReportShareLink, ReportShareView, Visit
+
+_SHARE_TOKEN_PATTERN = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
+
+
+def share_token_lookup_hash(token: str) -> str:
+    return hashlib.sha256(b"kawu-share-token-v1:\0" + token.encode("ascii")).hexdigest()
 
 
 class DeliveryRepository:
@@ -52,12 +61,20 @@ class DeliveryRepository:
     async def get_public_link(
         self, token: str
     ) -> tuple[ReportShareLink, Report] | None:
+        if not isinstance(token, str) or not _SHARE_TOKEN_PATTERN.fullmatch(token):
+            return None
+        lookup_hash = share_token_lookup_hash(token)
         row = await self.session.execute(
             select(ReportShareLink, Report)
             .join(Report, Report.id == ReportShareLink.report_id)
-            .where(ReportShareLink.token == token)
+            .where(ReportShareLink.token_lookup_hash == lookup_hash)
+            .limit(1)
         )
-        return row.tuples().one_or_none()
+        candidate = row.tuples().first()
+        if candidate is None:
+            return None
+        link, report = candidate
+        return (link, report) if hmac.compare_digest(link.token, token) else None
 
     async def get_visit(
         self, workspace_id: uuid.UUID, visit_id: uuid.UUID

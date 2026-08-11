@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import Settings
 from app.models import Membership, ProfessionalProfile, User, Workspace
 from app.repositories import AuthRepository
+from app.services.billing import BillingService, StripeBillingProvider
 from app.services.exceptions import (
     EmailAlreadyRegisteredError,
     InvalidCredentialsError,
@@ -111,6 +112,9 @@ class AuthService:
         self._repository = AuthRepository(session)
         self._passwords = PasswordHash.recommended()
         self._tokens = TokenService(settings)
+        self._billing = BillingService(
+            session, settings, StripeBillingProvider(settings)
+        )
 
     async def signup(self, email: str, password: str) -> TokenPair:
         normalized_email = email.strip().lower()
@@ -142,6 +146,8 @@ class AuthService:
             role=BUYERS_AGENT_ROLE,
         )
         self._repository.add(profile)
+        await self._repository.flush()
+        await self._billing.ensure_trial(workspace.id)
         await self._repository.flush()
 
         return self._tokens.create_pair(user.id, workspace.id)

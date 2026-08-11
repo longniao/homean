@@ -1,4 +1,10 @@
 from app.services.auth import AuthService, TokenPair, TokenService
+from app.services.billing import (
+    BillingProvider,
+    BillingService,
+    FakeBillingProvider,
+    StripeBillingProvider,
+)
 from app.services.branding import RealEstateBrandingService
 from app.services.contacts import RealEstateContactService
 from app.services.context import CurrentContext
@@ -12,6 +18,8 @@ from app.services.showings import RealEstateShowingService
 
 __all__ = [
     "AuthService",
+    "BillingProvider",
+    "BillingService",
     "CurrentContext",
     "MeResult",
     "MeService",
@@ -23,6 +31,8 @@ __all__ = [
     "RealEstatePipelineService",
     "RealEstateShowingService",
     "ReportRenderer",
+    "FakeBillingProvider",
+    "StripeBillingProvider",
     "TokenPair",
     "TokenService",
 ]

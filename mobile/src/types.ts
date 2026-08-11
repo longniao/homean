@@ -20,7 +20,7 @@ export interface ReportContent {
 }
 export interface ShowingSummary {
   id: string; status: string; processingStatus: string; createdAt: string;
-  property: Property | null; contact: Contact | null;
+  property: Property | null; contact: Contact | null; consentAck?: boolean;
 }
 export interface ShowingDetail extends ShowingSummary {
   observations: Observation[];
@@ -31,6 +31,7 @@ export interface LocalShowing {
   address: string | null; title: string; startedAt: number; endedAt: number | null;
   elapsedMs: number; syncState: SyncState; processingStatus: string | null;
   finishRequested: boolean; lastError: string | null; updatedAt: number;
+  consentAck?: boolean;
 }
 export interface LocalMedia {
   id: string; showingId: string; remoteMediaId: string | null; kind: MediaKind;

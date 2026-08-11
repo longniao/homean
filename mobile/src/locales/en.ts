@@ -16,6 +16,7 @@ export const en = {
     title: 'New showing', client: 'Client (optional)', property: 'Property (optional)',
     address: 'Or type a new address', search: 'Search', noClient: 'No client',
     noProperty: 'Add later', begin: 'Begin recording', addressPlaceholder: '123 Main Street',
+    consent: 'I attest that I have consent to record this showing',
   },
   recording: {
     title: 'Showing in progress', recording: 'Recording', interrupted: 'Recording interrupted',

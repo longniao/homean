@@ -377,7 +377,10 @@ export function DeliveryPanel({ showing }: { showing: ShowingDetail }) {
       await queryClient.invalidateQueries({ queryKey: ["delivery", showing.id] });
       toast.success(t("linkCopied"));
     },
-    onError: (error) => toast.error(error.message),
+    onError: (error) => {
+      const payload = error instanceof ApiError ? error.payload as { code?: string } : null;
+      toast.error(payload?.code === "subscription_required" ? t("subscriptionRequired") : error.message);
+    },
   });
   const send = useMutation({
     mutationFn: () => api.showings.send(showing.id, { channel: "email", to_email: email }),
@@ -388,7 +391,10 @@ export function DeliveryPanel({ showing }: { showing: ShowingDetail }) {
         queryClient.invalidateQueries({ queryKey: ["delivery", showing.id] }),
       ]);
     },
-    onError: (error) => toast.error(error.message),
+    onError: (error) => {
+      const payload = error instanceof ApiError ? error.payload as { code?: string } : null;
+      toast.error(payload?.code === "subscription_required" ? t("subscriptionRequired") : error.message);
+    },
   });
   const openCount = delivery.data?.share_links.reduce((total, item) => total + item.open_count, 0) ?? 0;
   const history = [

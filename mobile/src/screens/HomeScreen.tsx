@@ -8,19 +8,19 @@ import type { Contact, LocalShowing, Property } from '../types';
 interface Props {
   showings: LocalShowing[]; contacts: Contact[]; properties: Property[]; refreshing: boolean;
   onRefresh: () => void; onLogout: () => void;
-  onStart: (input: { contactId: string | null; subjectId: string | null; address: string | null; title: string }) => void;
+  onStart: (input: { contactId: string | null; subjectId: string | null; address: string | null; title: string; consentAck: boolean }) => void;
   onOpenReport: (remoteId: string) => void;
 }
 
 export function HomeScreen(props: Props) {
-  const { t } = useTranslation(); const [setup, setSetup] = useState(false); const [query, setQuery] = useState('');
+  const { t } = useTranslation(); const [setup, setSetup] = useState(false); const [query, setQuery] = useState(''); const [consentAck, setConsentAck] = useState(false);
   const [contactId, setContactId] = useState<string | null>(null); const [subjectId, setSubjectId] = useState<string | null>(null); const [address, setAddress] = useState('');
   const contacts = useMemo(() => props.contacts.filter((item) => item.name.toLowerCase().includes(query.toLowerCase())), [props.contacts, query]);
   const properties = useMemo(() => props.properties.filter((item) => `${item.displayName} ${item.address}`.toLowerCase().includes(query.toLowerCase())), [props.properties, query]);
   const begin = () => {
     const property = props.properties.find((item) => item.id === subjectId);
-    props.onStart({ contactId, subjectId, address: subjectId ? null : address.trim() || null, title: property?.displayName ?? (address.trim() || t('home.untitled')) });
-    setSetup(false); setQuery(''); setContactId(null); setSubjectId(null); setAddress('');
+    props.onStart({ contactId, subjectId, address: subjectId ? null : address.trim() || null, title: property?.displayName ?? (address.trim() || t('home.untitled')), consentAck });
+    setSetup(false); setQuery(''); setContactId(null); setSubjectId(null); setAddress(''); setConsentAck(false);
   };
   return <View style={styles.page}>
     <View style={styles.header}><Text style={styles.title}>{t('home.title')}</Text><Pressable onPress={props.onLogout}><Text style={styles.logout}>{t('home.signOut')}</Text></Pressable></View>
@@ -43,7 +43,8 @@ export function HomeScreen(props: Props) {
         <Text style={styles.label}>{t('setup.property')}</Text><Choice selected={subjectId === null && !address} label={t('setup.noProperty')} onPress={() => { setSubjectId(null); setAddress(''); }} />
         {properties.map((item) => <Choice key={item.id} selected={subjectId === item.id} label={`${item.displayName} · ${item.address}`} onPress={() => { setSubjectId(item.id); setAddress(''); }} />)}
         <Text style={styles.label}>{t('setup.address')}</Text><TextInput style={styles.input} placeholder={t('setup.addressPlaceholder')} value={address} onChangeText={(value) => { setAddress(value); if (value) setSubjectId(null); }} />
-        <PrimaryButton label={t('setup.begin')} onPress={begin} style={styles.begin} />
+        <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: consentAck }} onPress={() => setConsentAck((value) => !value)} style={styles.consent}><View style={[styles.checkbox, consentAck && styles.checkboxChecked]} /><Text style={styles.consentText}>{t('setup.consent')}</Text></Pressable>
+        <PrimaryButton label={t('setup.begin')} onPress={begin} style={styles.begin} disabled={!consentAck} />
       </ScrollView>
     </Modal>
   </View>;
@@ -59,7 +60,7 @@ const styles = StyleSheet.create({
   section: { marginHorizontal: 22, marginBottom: 10, color: colors.ink, fontSize: 19, fontWeight: '700' }, list: { paddingHorizontal: 22, paddingBottom: 40, gap: 12 }, empty: { color: colors.muted, textAlign: 'center', paddingTop: 40, lineHeight: 24 },
   showing: { gap: 12 }, row: { flexDirection: 'row', alignItems: 'center', gap: 12 }, grow: { flex: 1 }, showingTitle: { fontSize: 17, fontWeight: '700', color: colors.ink }, date: { color: colors.muted, marginTop: 4 },
   badge: { backgroundColor: colors.greenSoft, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 6 }, failed: { backgroundColor: colors.redSoft }, badgeText: { color: colors.ink, fontWeight: '600', fontSize: 12 }, error: { color: colors.red }, reportButton: { alignSelf: 'flex-start' },
-  modal: { flex: 1, backgroundColor: colors.cream }, modalContent: { paddingTop: 28, paddingBottom: 50 }, input: { backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 14, fontSize: 16, margin: 22, marginBottom: 8 },
+  modal: { flex: 1, backgroundColor: colors.cream }, modalContent: { paddingTop: 28, paddingBottom: 50 }, input: { backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 14, fontSize: 16, margin: 22, marginBottom: 8 }, consent: { flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 22, marginTop: 26 }, checkbox: { width: 22, height: 22, borderRadius: 5, borderWidth: 2, borderColor: colors.border, backgroundColor: colors.white }, checkboxChecked: { backgroundColor: colors.green, borderColor: colors.green }, consentText: { flex: 1, color: colors.ink, lineHeight: 20 },
   label: { marginHorizontal: 22, marginTop: 22, marginBottom: 8, fontWeight: '700', color: colors.ink }, choice: { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 22, paddingVertical: 11 }, choiceSelected: { backgroundColor: colors.greenSoft, borderRadius: 10, paddingHorizontal: 10 },
   radio: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: colors.border }, radioSelected: { borderWidth: 6, borderColor: colors.green }, choiceText: { flex: 1, color: colors.ink }, begin: { margin: 22, marginTop: 34 },
 });

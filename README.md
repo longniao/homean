@@ -1,6 +1,6 @@
 # Kawu
 
-Kawu is an AI showing-report tool for real-estate buyer's agents. This repository contains the FastAPI backend, Next.js dashboard, and local development infrastructure.
+Kawu is an AI showing-report tool for real-estate buyer's agents. This repository contains the FastAPI backend, Next.js dashboard, Expo mobile capture app, and local development infrastructure.
 
 ## Prerequisites
 
@@ -22,14 +22,22 @@ Create the local environment file:
 cp .env.example .env
 ```
 
-Start PostgreSQL, Redis, MinIO, the one-time `kawu-media` bucket initializer, and the
-Celery pipeline worker:
+For host-based API development, start PostgreSQL, Redis, MinIO, the one-time `kawu-media`
+bucket initializer, and the Celery pipeline worker:
 
 ```sh
-cd infra
-docker compose up -d
-cd ..
+docker compose --env-file .env -f infra/docker-compose.yml up -d \
+  postgres redis minio minio-bucket-init worker
 ```
+
+Alternatively, run the infrastructure, worker, and API entirely in containers:
+
+```sh
+docker compose --env-file .env -f infra/docker-compose.yml up -d --build
+```
+
+The containerized API binds port 8000, so do not also start the host-based Uvicorn command
+below when using this option.
 
 MinIO is available at `http://localhost:9000`; its console is at `http://localhost:9001`.
 
@@ -74,7 +82,35 @@ The dashboard runs at `http://localhost:3000`.
 Run dashboard checks with:
 
 ```sh
+npm test
 npm run typecheck
 npm run lint
 npm run build
+npm run test:e2e
+```
+
+The end-to-end test requires the local PostgreSQL service and a Playwright Chromium
+installation (`npx playwright install chromium`).
+
+## Mobile capture app
+
+In a third terminal:
+
+```sh
+cd mobile
+cp .env.example .env
+npm ci
+npm start
+```
+
+Set `EXPO_PUBLIC_API_URL` in `mobile/.env` to an API URL reachable from the device. See
+`mobile/README.md` for development-build requirements and the physical-device airplane-mode
+acceptance test.
+
+Run mobile checks with:
+
+```sh
+npm test
+npm run typecheck
+npm run lint
 ```

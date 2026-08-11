@@ -16,6 +16,7 @@ class ShowingCreate(BaseModel):
     subject_id: uuid.UUID | None = None
     address: str | None = Field(default=None, min_length=1, max_length=1000)
     contact_id: uuid.UUID | None = None
+    consent_ack: bool = False
 
     @model_validator(mode="after")
     def validate_subject_source(self) -> "ShowingCreate":
@@ -140,6 +141,7 @@ class ShowingResponse(BaseModel):
     ended_at: datetime | None
     created_at: datetime
     updated_at: datetime
+    consent_ack: bool
     property: PropertyResponse | None
     contact: ContactResponse | None
 

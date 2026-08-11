@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Building2, CalendarDays, ContactRound, ListFilter, Plus, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
@@ -8,6 +8,7 @@ import { useMemo, useState } from "react";
 
 import { ErrorState, LoadingState } from "@/components/page-state";
 import { StatusBadge } from "@/components/status-badge";
+import { useOptionalToast } from "@/components/toast-provider";
 import { Button } from "@/components/ui/button";
 import { api, type Showing } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -24,6 +25,13 @@ export function ShowingsDashboard() {
   const [contactId, setContactId] = useState("");
   const [propertyAssignment, setPropertyAssignment] = useState("");
   const [query, setQuery] = useState("");
+  const toast = useOptionalToast();
+  const billing = useQuery({ queryKey: ["billing"], queryFn: api.billing.get });
+  const billingAction = useMutation({
+    mutationFn: async () => billing.data?.billing_action === "manage_billing" ? api.billing.portal() : api.billing.checkout(),
+    onSuccess: ({ url }) => window.location.assign(url),
+    onError: (error) => toast?.error(error.message),
+  });
   const contacts = useQuery({ queryKey: ["contacts"], queryFn: api.contacts.list });
   const showings = useQuery({
     queryKey: ["showings", status, dateFrom, dateTo, contactId, propertyAssignment, query],
@@ -62,10 +70,22 @@ export function ShowingsDashboard() {
           <h1 className="page-title">{t("title")}</h1>
           <p className="mt-3 max-w-2xl text-stone-500">{t("subtitle")}</p>
         </div>
-        <Button className="h-10 px-4" render={<Link href="/showings/new" />}>
-          <Plus /> {t("newShowing")}
-        </Button>
+        {billing.data?.active === false ? (
+          <Button className="h-10 px-4" disabled><Plus /> {t("newShowing")}</Button>
+        ) : (
+          <Button className="h-10 px-4" nativeButton={false} render={<Link href="/showings/new" />}><Plus /> {t("newShowing")}</Button>
+        )}
       </div>
+
+      {billing.data && !billing.data.active && (
+        <div className="mb-6 flex flex-col gap-4 rounded-2xl border border-amber-300 bg-amber-50 p-5 sm:flex-row sm:items-center">
+          <div className="flex-1">
+            <p className="font-semibold text-amber-950">{t("upgradeTitle")}</p>
+            <p className="mt-1 text-sm leading-6 text-amber-900/80">{t("upgradeBody")}</p>
+          </div>
+          <Button disabled={billingAction.isPending} onClick={() => billingAction.mutate()}>{billing.data.billing_action === "manage_billing" ? common("manageBilling") : t("upgradeAction")}</Button>
+        </div>
+      )}
 
       <div className="panel mb-6 p-4 sm:p-5">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -134,9 +154,11 @@ export function ShowingsDashboard() {
           </div>
           <h2 className="font-serif text-2xl font-semibold">{t("emptyTitle")}</h2>
           <p className="mt-2 max-w-md text-sm leading-6 text-stone-500">{t("emptyBody")}</p>
-          <Button className="mt-6" render={<Link href="/showings/new" />}>
-            <Plus /> {t("newShowing")}
-          </Button>
+          {billing.data?.active === false ? (
+            <Button className="mt-6" disabled><Plus /> {t("newShowing")}</Button>
+          ) : (
+            <Button className="mt-6" nativeButton={false} render={<Link href="/showings/new" />}><Plus /> {t("newShowing")}</Button>
+          )}
         </div>
       ) : (
         <div className="space-y-8">

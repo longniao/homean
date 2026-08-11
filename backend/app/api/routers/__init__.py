@@ -1,4 +1,5 @@
 from app.api.routers.auth import router as auth_router
+from app.api.routers.billing import router as billing_router
 from app.api.routers.branding import router as branding_router
 from app.api.routers.contacts import router as contacts_router
 from app.api.routers.delivery import router as delivery_router
@@ -12,6 +13,7 @@ from app.api.routers.vertical import router as vertical_router
 __all__ = [
     "auth_router",
     "branding_router",
+    "billing_router",
     "contacts_router",
     "delivery_router",
     "me_router",

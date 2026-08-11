@@ -16,6 +16,10 @@ The durable queue creates the remote showing, presigns each media item, uploads 
 
 Property and client selection are optional during capture. Subject-less drafts sync and process normally; a property must be attached in the desktop dashboard before confirmation and delivery.
 
+At showing start the agent must attest that they have consent to record. The boolean
+`consent_ack` is persisted with the Visit and the report footer uses a counsel-review
+placeholder disclosure; no legal language is intended by this product text.
+
 Voice tags are stored locally with exact offsets. The current media API accepts only audio, photo, and video and has no marker metadata endpoint, so marker rows remain durable local metadata rather than being disguised as empty media.
 
 ## Manual airplane-mode acceptance test
