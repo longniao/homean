@@ -1,7 +1,7 @@
 [project]
-name = "kawu-backend"
+name = "homean-backend"
 version = "0.1.0"
-description = "Kawu API"
+description = "Homean API"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [

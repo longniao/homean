@@ -1,6 +1,6 @@
-# Kawu Capture
+# Homean Capture
 
-Expo SDK 57 managed-workflow app for capture-only real-estate showing visits. Editing remains in the Kawu dashboard.
+Expo SDK 57 managed-workflow app for capture-only real-estate showing visits. Editing remains in the Homean dashboard.
 
 ## Local setup
 
@@ -8,7 +8,7 @@ Expo SDK 57 managed-workflow app for capture-only real-estate showing visits. Ed
 2. Run `npm install` and `npm start`.
 3. Use a development build for background audio behavior. Expo Go can exercise screens and queue logic, but native background modes require the config plugins in `app.json` to be compiled into the app.
 
-On Android 13 (API 33) and later, Kawu requests notification permission before
+On Android 13 (API 33) and later, Homean requests notification permission before
 preparing the recorder. This permission is required by the Expo Audio foreground
 recording service; if it is denied, recording does not start and the app explains
 why instead of attempting a recording that cannot remain active in the background.

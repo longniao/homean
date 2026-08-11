@@ -1,4 +1,4 @@
-# Kawu production operations
+# Homean production operations
 
 Render is the documented single-region deployment target. The Blueprint in
 `infra/render.yaml` runs the API, Celery worker, Next.js dashboard, Postgres, and Redis.
@@ -19,7 +19,7 @@ Before a release, run the credential-free repository preflight from the reposito
 root:
 
 ```sh
-cd /path/to/kawu
+cd /path/to/homean
 (cd backend && uv sync --frozen)
 bash scripts/release_preflight.sh
 ```
@@ -84,7 +84,7 @@ Render's secret environment variables.
 Readiness is exposed at `/ready` and checks Postgres, Redis, and object storage. Liveness
 is `/health`. The API image starts Uvicorn with access logging disabled; the structured
 request logger is the canonical access log and redacts public share tokens. The Celery
-worker leaves the Kawu root logger in place and applies the same sanitized JSON formatter
+worker leaves the Homean root logger in place and applies the same sanitized JSON formatter
 to worker and task logs. Uvicorn is
 configured with `--forwarded-allow-ips=*` because the API container is reachable only
 through Render's forwarding ingress; this is what makes the trusted client address

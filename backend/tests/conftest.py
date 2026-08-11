@@ -24,7 +24,7 @@ from app.verticals import VerticalConfigService
 # tests import the FastAPI app lazily in their test body, while others may do
 # so earlier; both cases must receive the same isolated namespace regardless of
 # test ordering.
-_TEST_RATE_LIMIT_KEY_PREFIX = f"kawu:test:{uuid.uuid4().hex}"
+_TEST_RATE_LIMIT_KEY_PREFIX = f"homean:test:{uuid.uuid4().hex}"
 os.environ["RATE_LIMIT_KEY_PREFIX"] = _TEST_RATE_LIMIT_KEY_PREFIX
 
 
@@ -73,9 +73,9 @@ async def _clear_redis_namespace(redis_url: str, key_prefix: str) -> None:
 async def database_url() -> AsyncIterator[str]:
     admin_url = os.environ.get(
         "TEST_DATABASE_ADMIN_URL",
-        "postgresql+asyncpg://kawu:kawu@127.0.0.1:55432/postgres",
+        "postgresql+asyncpg://homean:homean@127.0.0.1:55432/postgres",
     )
-    database_name = f"kawu_test_{uuid.uuid4().hex}"
+    database_name = f"homean_test_{uuid.uuid4().hex}"
     database_url = _render_url(admin_url, database_name)
     redis_url = os.environ.get("TEST_REDIS_URL", "redis://127.0.0.1:6379/0")
     rate_limit_key_prefix = _TEST_RATE_LIMIT_KEY_PREFIX
@@ -94,7 +94,7 @@ async def database_url() -> AsyncIterator[str]:
             "S3_ENDPOINT_URL": "http://127.0.0.1:9000",
             "S3_ACCESS_KEY": "test-access-key",
             "S3_SECRET_KEY": "test-secret-key",
-            "S3_BUCKET": "kawu-media-test",
+            "S3_BUCKET": "homean-media-test",
             "JWT_SECRET": "test-jwt-secret-with-sufficient-length",
             "APP_ENV": "test",
         }

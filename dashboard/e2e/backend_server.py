@@ -35,9 +35,9 @@ def migrate(database_url: str) -> None:
 async def main() -> None:
     admin_url = os.environ.get(
         "TEST_DATABASE_ADMIN_URL",
-        "postgresql+asyncpg://kawu:kawu@127.0.0.1:55432/postgres",
+        "postgresql+asyncpg://homean:homean@127.0.0.1:55432/postgres",
     )
-    database_name = os.environ.get("KAWU_E2E_DATABASE", f"kawu_e2e_{uuid.uuid4().hex}")
+    database_name = os.environ.get("HOMEAN_E2E_DATABASE", f"homean_e2e_{uuid.uuid4().hex}")
     database_url = render_url(admin_url, database_name)
     admin = await asyncpg.connect(asyncpg_dsn(admin_url))
     try:
@@ -52,7 +52,7 @@ async def main() -> None:
             "S3_ENDPOINT_URL": "http://127.0.0.1:9000",
             "S3_ACCESS_KEY": "e2e-access-key",
             "S3_SECRET_KEY": "e2e-secret-key",
-            "S3_BUCKET": "kawu-e2e",
+            "S3_BUCKET": "homean-e2e",
             "JWT_SECRET": "e2e-jwt-secret-with-sufficient-length",
             "APP_ENV": "test",
         }

@@ -4,11 +4,11 @@ export const en = {
     save: 'Save', skip: 'Skip', loading: 'Loading…', error: 'Something went wrong.',
   },
   auth: {
-    title: 'Welcome to Kawu', subtitle: 'Sign in to capture your showing.', email: 'Email',
+    title: 'Welcome to Homean', subtitle: 'Sign in to capture your showing.', email: 'Email',
     password: 'Password', login: 'Sign in', invalid: 'Check your email and password.',
   },
   home: {
-    title: 'Kawu Capture', start: 'Start Showing', recent: 'Recent showings',
+    title: 'Homean Capture', start: 'Start Showing', recent: 'Recent showings',
     empty: 'No showings yet. Start one when you arrive.', signOut: 'Sign out',
     syncNow: 'Sync now', report: 'View report', untitled: 'Untitled showing',
   },
@@ -21,13 +21,13 @@ export const en = {
   recording: {
     title: 'Showing in progress', recording: 'Recording', interrupted: 'Recording interrupted',
     resume: 'Resume recording', photo: 'Photo', voiceTag: 'Voice Tag', end: 'End',
-    endTitle: 'End this showing?', endBody: 'Kawu will sync all captured media, then begin processing.',
+    endTitle: 'End this showing?', endBody: 'Homean will sync all captured media, then begin processing.',
     endConfirm: 'End and sync', permission: 'Microphone access is required to record a showing.',
     cameraPermission: 'Camera access is required to attach photos or videos.', video: 'Video',
     startVideo: 'Record video', stopVideo: 'Stop video', videoSaved: 'Video saved',
     tagged: 'Voice tag saved', photoSaved: 'Photo saved', recovering: 'Recovering the previous audio segment…',
     notificationPermission: 'Android notification access is required to keep showing audio recording active in the background. Recording did not start.',
-    recoveryFailed: 'Kawu could not safely recover the previous audio segment. Keep this showing open and try again before continuing.',
+    recoveryFailed: 'Homean could not safely recover the previous audio segment. Keep this showing open and try again before continuing.',
   },
   sync: {
     local: 'Local', syncing: 'Syncing', synced: 'Synced', processing: 'Processing', ready: 'Ready',

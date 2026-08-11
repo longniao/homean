@@ -157,7 +157,9 @@ class SMTPEmailProvider(EmailProvider):
         email["From"] = f"{self._from_name} <{self._from_email}>"
         email["Subject"] = message.subject
         email["Message-ID"] = message.message_id
-        email.set_content("Your Kawu showing report is available in the attached link.")
+        email.set_content(
+            "Your Homean showing report is available in the attached link."
+        )
         email.add_alternative(message.html_body, subtype="html")
         if message.attachment is not None:
             main_type, sub_type = message.attachment.content_type.split("/", 1)

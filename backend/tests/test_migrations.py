@@ -321,9 +321,9 @@ async def test_migration_0002_backfills_populated_subject_workspaces(
     del database_url
     admin_url = os.environ.get(
         "TEST_DATABASE_ADMIN_URL",
-        "postgresql+asyncpg://kawu:kawu@127.0.0.1:55432/postgres",
+        "postgresql+asyncpg://homean:homean@127.0.0.1:55432/postgres",
     )
-    database_name = f"kawu_migration_{uuid.uuid4().hex}"
+    database_name = f"homean_migration_{uuid.uuid4().hex}"
     legacy_url = (
         make_url(admin_url)
         .set(database=database_name)
@@ -678,9 +678,9 @@ async def test_migration_0013_quarantines_legacy_email_outcomes(
 ) -> None:
     admin_url = os.environ.get(
         "TEST_DATABASE_ADMIN_URL",
-        "postgresql+asyncpg://kawu:kawu@127.0.0.1:55432/postgres",
+        "postgresql+asyncpg://homean:homean@127.0.0.1:55432/postgres",
     )
-    database_name = f"kawu_migration_{uuid.uuid4().hex}"
+    database_name = f"homean_migration_{uuid.uuid4().hex}"
     legacy_url = (
         make_url(admin_url)
         .set(database=database_name)
@@ -910,9 +910,9 @@ async def test_migration_0015_backfills_populated_report_revisions(
     del database_url
     admin_url = os.environ.get(
         "TEST_DATABASE_ADMIN_URL",
-        "postgresql+asyncpg://kawu:kawu@127.0.0.1:55432/postgres",
+        "postgresql+asyncpg://homean:homean@127.0.0.1:55432/postgres",
     )
-    database_name = f"kawu_migration_{uuid.uuid4().hex}"
+    database_name = f"homean_migration_{uuid.uuid4().hex}"
     legacy_url = (
         make_url(admin_url)
         .set(database=database_name)

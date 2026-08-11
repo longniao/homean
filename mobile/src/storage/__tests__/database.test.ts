@@ -1,5 +1,5 @@
 import * as SQLite from 'expo-sqlite';
-import { CaptureRepository } from '../database';
+import { CAPTURE_DATABASE_NAME, CaptureRepository } from '../database';
 
 jest.mock('expo-sqlite', () => ({ openDatabaseAsync: jest.fn() }));
 
@@ -178,6 +178,10 @@ beforeEach(() => {
 });
 
 describe('CaptureRepository atomic normal enqueue', () => {
+  test('keeps the legacy database filename to protect offline captures', () => {
+    expect(CAPTURE_DATABASE_NAME).toBe('kawu-capture.db');
+  });
+
   test.each([
     ['media', async () => repository.enqueueMedia({ showingId: 'showing-1', kind: 'audio', fileUri: 'file:///capture.m4a', contentType: 'audio/mp4', timestampOffsetMs: 2_000 })],
     ['voice tag', async () => repository.addVoiceTag('showing-1', 2_000)],

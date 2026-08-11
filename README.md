@@ -1,6 +1,6 @@
-# Kawu
+# Homean
 
-Kawu is an AI showing-report tool for real-estate buyer's agents. This repository contains the FastAPI backend, Next.js dashboard, Expo mobile capture app, and local development infrastructure.
+Homean is an AI showing-report tool for real-estate buyer's agents. This repository contains the FastAPI backend, Next.js dashboard, Expo mobile capture app, and local development infrastructure.
 
 ## Prerequisites
 
@@ -22,7 +22,7 @@ Create the local environment file:
 cp .env.example .env
 ```
 
-For host-based API development, start PostgreSQL, Redis, MinIO, the one-time `kawu-media`
+For host-based API development, start PostgreSQL, Redis, MinIO, the one-time `homean-media`
 bucket initializer, and the Celery pipeline worker:
 
 ```sh

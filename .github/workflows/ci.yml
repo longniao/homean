@@ -15,18 +15,18 @@ jobs:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_DB: kawu
-          POSTGRES_USER: kawu
-          POSTGRES_PASSWORD: kawu
+          POSTGRES_DB: homean
+          POSTGRES_USER: homean
+          POSTGRES_PASSWORD: homean
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U kawu -d kawu"
+          --health-cmd "pg_isready -U homean -d homean"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
     env:
-      TEST_DATABASE_ADMIN_URL: postgresql+asyncpg://kawu:kawu@127.0.0.1:5432/postgres
+      TEST_DATABASE_ADMIN_URL: postgresql+asyncpg://homean:homean@127.0.0.1:5432/postgres
     defaults:
       run:
         working-directory: backend
@@ -89,18 +89,18 @@ jobs:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_DB: kawu
-          POSTGRES_USER: kawu
-          POSTGRES_PASSWORD: kawu
+          POSTGRES_DB: homean
+          POSTGRES_USER: homean
+          POSTGRES_PASSWORD: homean
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U kawu -d kawu"
+          --health-cmd "pg_isready -U homean -d homean"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
     env:
-      TEST_DATABASE_ADMIN_URL: postgresql+asyncpg://kawu:kawu@127.0.0.1:5432/postgres
+      TEST_DATABASE_ADMIN_URL: postgresql+asyncpg://homean:homean@127.0.0.1:5432/postgres
     steps:
       - uses: actions/checkout@v4
       - name: Validate Compose configuration

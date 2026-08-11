@@ -545,7 +545,9 @@ class BillingService:
             raise BillingUnavailableError("Solo monthly billing is not configured")
         actual = self._price_id(authoritative) or self._price_id(checkout)
         if actual != expected:
-            raise InvalidBillingEventError("Checkout price is not configured for Kawu")
+            raise InvalidBillingEventError(
+                "Checkout price is not configured for Homean"
+            )
 
     @staticmethod
     def _price_id(source: dict[str, object]) -> str | None:

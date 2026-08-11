@@ -1,7 +1,7 @@
-# Kawu dashboard
+# Homean dashboard
 
 The dashboard is the browser workspace for reviewing, editing, confirming, and
-delivering Kawu showing reports. It is a Next.js 15 App Router application; capture
+delivering Homean showing reports. It is a Next.js 15 App Router application; capture
 is handled by the Expo app in [`../mobile/README.md`](../mobile/README.md).
 
 ## Local setup

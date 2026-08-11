@@ -1,6 +1,6 @@
-You are building Kawu, an AI showing-report tool for real-estate buyer's agents.
-Read docs/Kawu_Product_Document_v1.1.md, docs/Kawu_Technical_Architecture_v1.1.md,
-and docs/Kawu_Full_Feature_Roadmap_v1.2.md before writing code.
+You are building Homean, an AI showing-report tool for real-estate buyer's agents.
+Read docs/Homean_Product_Document_v1.1.md, docs/Homean_Technical_Architecture_v1.1.md,
+and docs/Homean_Full_Feature_Roadmap_v1.2.md before writing code.
 
 Non-negotiable architecture rules (from the docs):
 1. Database uses GENERIC names: Subject (not Property), Zone (not Room), Contact (not

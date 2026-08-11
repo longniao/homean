@@ -5,18 +5,18 @@ from app.core.database_url import normalize_database_url
 
 
 def test_render_postgres_url_selects_asyncpg_driver() -> None:
-    url = normalize_database_url("postgres://user:pass@db.render.com:5432/kawu")
-    assert url == "postgresql+asyncpg://user:pass@db.render.com:5432/kawu"
+    url = normalize_database_url("postgres://user:pass@db.render.com:5432/homean")
+    assert url == "postgresql+asyncpg://user:pass@db.render.com:5432/homean"
     assert make_url(url).drivername == "postgresql+asyncpg"
 
 
 def test_postgresql_url_selects_asyncpg_driver() -> None:
-    url = normalize_database_url("postgresql://user:pass@localhost/kawu")
+    url = normalize_database_url("postgresql://user:pass@localhost/homean")
     assert make_url(url).drivername == "postgresql+asyncpg"
 
 
 def test_existing_asyncpg_url_is_unchanged() -> None:
-    value = "postgresql+asyncpg://user:pass@localhost/kawu"
+    value = "postgresql+asyncpg://user:pass@localhost/homean"
     assert normalize_database_url(value) == value
 
 
@@ -27,7 +27,7 @@ def test_runtime_engine_normalizes_render_url(monkeypatch) -> None:  # type: ign
     from app.core.config import Settings
 
     settings = Settings(
-        database_url="postgres://user:pass@db.render.com:5432/kawu",
+        database_url="postgres://user:pass@db.render.com:5432/homean",
         redis_url="redis://localhost/0",
         s3_endpoint_url="http://localhost:9000",
         s3_access_key="access",
@@ -55,8 +55,8 @@ def test_runtime_engine_normalizes_render_url(monkeypatch) -> None:  # type: ign
 @pytest.mark.parametrize(
     "database_url",
     [
-        "postgres://user:pass@db.render.com:5432/kawu",
-        "postgresql://user:pass@db.render.com:5432/kawu",
+        "postgres://user:pass@db.render.com:5432/homean",
+        "postgresql://user:pass@db.render.com:5432/homean",
     ],
 )
 def test_pipeline_worker_engine_normalizes_render_urls(
@@ -96,8 +96,8 @@ def test_pipeline_worker_engine_normalizes_render_urls(
 @pytest.mark.parametrize(
     "database_url",
     [
-        "postgres://user:pass@db.render.com:5432/kawu",
-        "postgresql://user:pass@db.render.com:5432/kawu",
+        "postgres://user:pass@db.render.com:5432/homean",
+        "postgresql://user:pass@db.render.com:5432/homean",
     ],
 )
 def test_cost_report_engine_normalizes_render_urls(

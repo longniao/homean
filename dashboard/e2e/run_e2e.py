@@ -28,10 +28,10 @@ async def drop_database(admin_url: str, database_name: str) -> None:
 def main() -> int:
     admin_url = os.environ.get(
         "TEST_DATABASE_ADMIN_URL",
-        "postgresql+asyncpg://kawu:kawu@127.0.0.1:55432/postgres",
+        "postgresql+asyncpg://homean:homean@127.0.0.1:55432/postgres",
     )
-    database_name = f"kawu_e2e_{uuid.uuid4().hex}"
-    environment = {**os.environ, "KAWU_E2E_DATABASE": database_name}
+    database_name = f"homean_e2e_{uuid.uuid4().hex}"
+    environment = {**os.environ, "HOMEAN_E2E_DATABASE": database_name}
     try:
         build = subprocess.run(["npm", "run", "build"], check=False)
         if build.returncode:

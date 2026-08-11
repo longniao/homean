@@ -1,4 +1,5 @@
 import smtplib
+import uuid
 
 import pytest
 from pydantic import SecretStr
@@ -10,6 +11,7 @@ from app.email import (
     OutboundEmail,
     SMTPEmailProvider,
 )
+from app.services.delivery import RealEstateDeliveryService
 
 
 def _settings() -> Settings:
@@ -23,6 +25,32 @@ def _settings() -> Settings:
         jwt_secret=SecretStr("a-sufficiently-long-test-secret"),
         smtp_host="smtp.example.com",
         smtp_from_email="reports@example.com",
+    )
+
+
+def test_new_delivery_message_ids_use_the_homean_namespace() -> None:
+    service = RealEstateDeliveryService(
+        None,  # type: ignore[arg-type]
+        _settings(),
+        None,  # type: ignore[arg-type]
+        None,  # type: ignore[arg-type]
+        None,  # type: ignore[arg-type]
+    )
+    send_id = uuid.uuid4()
+
+    assert service._message_id(send_id) == f"<homean-report-{send_id}@example.com>"
+
+    legacy_settings = _settings()
+    legacy_settings.smtp_from_email = "reports@kawu.local"
+    legacy_service = RealEstateDeliveryService(
+        None,  # type: ignore[arg-type]
+        legacy_settings,
+        None,  # type: ignore[arg-type]
+        None,  # type: ignore[arg-type]
+        None,  # type: ignore[arg-type]
+    )
+    assert legacy_service._message_id(send_id) == (
+        f"<homean-report-{send_id}@homean.com>"
     )
 
 

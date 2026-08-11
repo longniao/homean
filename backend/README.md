@@ -1,3 +1,3 @@
-# Kawu backend
+# Homean backend
 
-FastAPI service for Kawu. See the repository root README for setup instructions.
+FastAPI service for Homean. See the repository root README for setup instructions.

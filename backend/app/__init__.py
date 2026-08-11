@@ -1,1 +1,1 @@
-"""Kawu backend application."""
+"""Homean backend application."""

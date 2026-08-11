@@ -51,23 +51,51 @@ def _run(workspace_id: str, visit_id: str, step: PipelineStep) -> None:
     asyncio.run(_execute_step(uuid.UUID(workspace_id), uuid.UUID(visit_id), step))
 
 
-@celery_app.task(name="kawu.pipeline.transcribe")
+@celery_app.task(name="homean.pipeline.transcribe")
 def transcribe_visit(workspace_id: str, visit_id: str) -> None:
     _run(workspace_id, visit_id, PipelineStep.TRANSCRIBE)
 
 
-@celery_app.task(name="kawu.pipeline.detect_zones")
+@celery_app.task(name="kawu.pipeline.transcribe")
+def legacy_transcribe_visit(workspace_id: str, visit_id: str) -> None:
+    """Execute task messages published before the Kawu-to-Homean rename."""
+
+    _run(workspace_id, visit_id, PipelineStep.TRANSCRIBE)
+
+
+@celery_app.task(name="homean.pipeline.detect_zones")
 def detect_visit_zones(workspace_id: str, visit_id: str) -> None:
     _run(workspace_id, visit_id, PipelineStep.ZONE_DETECTION)
 
 
-@celery_app.task(name="kawu.pipeline.extract_observations")
+@celery_app.task(name="kawu.pipeline.detect_zones")
+def legacy_detect_visit_zones(workspace_id: str, visit_id: str) -> None:
+    """Execute task messages published before the Kawu-to-Homean rename."""
+
+    _run(workspace_id, visit_id, PipelineStep.ZONE_DETECTION)
+
+
+@celery_app.task(name="homean.pipeline.extract_observations")
 def extract_visit_observations(workspace_id: str, visit_id: str) -> None:
     _run(workspace_id, visit_id, PipelineStep.OBSERVATION_EXTRACTION)
 
 
-@celery_app.task(name="kawu.pipeline.generate_report")
+@celery_app.task(name="kawu.pipeline.extract_observations")
+def legacy_extract_visit_observations(workspace_id: str, visit_id: str) -> None:
+    """Execute task messages published before the Kawu-to-Homean rename."""
+
+    _run(workspace_id, visit_id, PipelineStep.OBSERVATION_EXTRACTION)
+
+
+@celery_app.task(name="homean.pipeline.generate_report")
 def generate_visit_report(workspace_id: str, visit_id: str) -> None:
+    _run(workspace_id, visit_id, PipelineStep.REPORT_GENERATION)
+
+
+@celery_app.task(name="kawu.pipeline.generate_report")
+def legacy_generate_visit_report(workspace_id: str, visit_id: str) -> None:
+    """Execute task messages published before the Kawu-to-Homean rename."""
+
     _run(workspace_id, visit_id, PipelineStep.REPORT_GENERATION)
 
 

@@ -1,7 +1,13 @@
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
-import { ACCESS_COOKIE, backendUrl, REFRESH_COOKIE } from "@/lib/auth";
+import {
+  ACCESS_COOKIE,
+  backendUrl,
+  LEGACY_ACCESS_COOKIE,
+  LEGACY_REFRESH_COOKIE,
+  REFRESH_COOKIE,
+} from "@/lib/auth";
 
 type TokenPayload = {
   access_token: string;
@@ -35,22 +41,31 @@ async function handler(
 ) {
   const { path } = await params;
   const cookieStore = await cookies();
-  let accessToken = cookieStore.get(ACCESS_COOKIE)?.value;
-  const refreshToken = cookieStore.get(REFRESH_COOKIE)?.value;
+  let accessToken =
+    cookieStore.get(ACCESS_COOKIE)?.value ??
+    cookieStore.get(LEGACY_ACCESS_COOKIE)?.value;
+  const refreshToken =
+    cookieStore.get(REFRESH_COOKIE)?.value ??
+    cookieStore.get(LEGACY_REFRESH_COOKIE)?.value;
   let upstream = await forward(request, path.join("/"), accessToken);
   let refreshed: TokenPayload | null = null;
+  let refreshFailed = false;
 
   if (upstream.status === 401 && refreshToken) {
-    const refresh = await fetch(`${backendUrl()}/auth/refresh`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refresh_token: refreshToken }),
-      cache: "no-store",
-    });
-    if (refresh.ok) {
-      refreshed = (await refresh.json()) as TokenPayload;
-      accessToken = refreshed.access_token;
-      upstream = await forward(request, path.join("/"), accessToken);
+    try {
+      const refresh = await fetch(`${backendUrl()}/auth/refresh`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+        cache: "no-store",
+      });
+      if (refresh.ok) {
+        refreshed = (await refresh.json()) as TokenPayload;
+        accessToken = refreshed.access_token;
+        upstream = await forward(request, path.join("/"), accessToken);
+      } else refreshFailed = true;
+    } catch {
+      refreshFailed = true;
     }
   }
 
@@ -75,6 +90,17 @@ async function handler(
       ...common,
       maxAge: 60 * 60 * 24 * 30,
     });
+    response.cookies.delete(LEGACY_ACCESS_COOKIE);
+    response.cookies.delete(LEGACY_REFRESH_COOKIE);
+  } else if (refreshFailed) {
+    for (const name of [
+      ACCESS_COOKIE,
+      REFRESH_COOKIE,
+      LEGACY_ACCESS_COOKIE,
+      LEGACY_REFRESH_COOKIE,
+    ]) {
+      response.cookies.delete(name);
+    }
   }
   return response;
 }

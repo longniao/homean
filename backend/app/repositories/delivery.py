@@ -9,10 +9,34 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import Report, ReportSend, ReportShareLink, ReportShareView, Visit
 
 _SHARE_TOKEN_PATTERN = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
+_SHARE_TOKEN_HASH_PREFIX = b"homean-share-token-v1:\0"
+_LEGACY_SHARE_TOKEN_HASH_PREFIX = b"kawu-share-token-v1:\0"
 
 
 def share_token_lookup_hash(token: str) -> str:
-    return hashlib.sha256(b"kawu-share-token-v1:\0" + token.encode("ascii")).hexdigest()
+    """Return the lookup hash used for newly issued Homean links."""
+
+    return hashlib.sha256(_SHARE_TOKEN_HASH_PREFIX + token.encode("ascii")).hexdigest()
+
+
+def legacy_share_token_lookup_hash(token: str) -> str:
+    """Return the pre-rename hash for links already stored in production."""
+
+    return hashlib.sha256(
+        _LEGACY_SHARE_TOKEN_HASH_PREFIX + token.encode("ascii")
+    ).hexdigest()
+
+
+def share_token_lookup_hashes(token: str) -> tuple[str, str]:
+    """Return both accepted namespaces without weakening token validation.
+
+    ``token_lookup_hash`` is indexed and stores only one digest per link.  A
+    lookup therefore checks the new namespace and the historical Kawu
+    namespace in one indexed ``IN`` query, then still verifies the submitted
+    token with ``compare_digest`` below.
+    """
+
+    return (share_token_lookup_hash(token), legacy_share_token_lookup_hash(token))
 
 
 class DeliveryRepository:
@@ -129,11 +153,11 @@ class DeliveryRepository:
     ) -> tuple[ReportShareLink, Report] | None:
         if not isinstance(token, str) or not _SHARE_TOKEN_PATTERN.fullmatch(token):
             return None
-        lookup_hash = share_token_lookup_hash(token)
+        lookup_hashes = share_token_lookup_hashes(token)
         row = await self.session.execute(
             select(ReportShareLink, Report)
             .join(Report, Report.id == ReportShareLink.report_id)
-            .where(ReportShareLink.token_lookup_hash == lookup_hash)
+            .where(ReportShareLink.token_lookup_hash.in_(lookup_hashes))
             .limit(1)
         )
         candidate = row.tuples().first()

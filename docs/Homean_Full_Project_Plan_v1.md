@@ -1,7 +1,7 @@
-# Kawu — Full Project Plan v1 (All Phases)
+# Homean — Full Project Plan v1 (All Phases)
 
-> Companion to: `Kawu_Full_Feature_Roadmap_v1.2.md` (what & why) and
-> `Kawu_Build_Plan_v1.md` (Phase 1 execution detail, milestones M0–M7).
+> Companion to: `Homean_Full_Feature_Roadmap_v1.2.md` (what & why) and
+> `Homean_Build_Plan_v1.md` (Phase 1 execution detail, milestones M0–M7).
 >
 > This document is the **complete engineering plan across all four phases** — Phase 1 MVP
 > through the Phase 4 network hypothesis. Only Phase 1 is scheduled for development now.
@@ -30,7 +30,7 @@ not commitments.
 
 ## Phase 1 — Showing Intelligence (M0–M7) — ACTIVE
 
-Fully specified with Codex prompts in `Kawu_Build_Plan_v1.md`. Summary:
+Fully specified with Codex prompts in `Homean_Build_Plan_v1.md`. Summary:
 
 | M | Scope | Est. |
 |---|---|---|
@@ -155,7 +155,7 @@ Task: Integration framework + the <NAME> integration.
       on mobile (pre-fills property from event location, client from attendee).
    c. Email (Gmail send-as): report emails sent via the agent's own mailbox.
    d. Cloud storage (Google Drive): nightly archive of confirmed report PDFs + originals
-      to a Kawu folder.
+      to a Homean folder.
 3. Every provider behind an interface with a fake; no provider SDK types leak past the
    integration module. Webhooks where offered; polling fallback.
 4. Tests: sync idempotency, token refresh, disconnect cleanup, matching conflicts.
@@ -253,7 +253,7 @@ untouched: every share is per-report, opt-in, twice-confirmed.
    leak). Then a consent screen (plain-language summary of what becomes visible) ->
    second confirm -> submitted_for_review.
 3. Human review queue (roadmap 42): internal /admin/review app (simple, role-gated to
-   Kawu staff) to approve/reject with reason. Only approved snapshots go live at
+   Homean staff) to approve/reject with reason. Only approved snapshots go live at
    /p/{slug}. Takedown = immediate unpublish, hard-delete snapshot after 30 days.
 4. Instrumentation (roadmap 40): views, dwell (beacon), referrer class, per-section
    engagement on public pages; per-agent share funnel (started -> redacted -> consented
@@ -302,7 +302,7 @@ Est. only if greenlit: a quarter-scale effort; re-plan from scratch at that poin
 
 ## How to use this plan
 
-- **Now**: execute `Kawu_Build_Plan_v1.md` (M0–M7) with Codex.
+- **Now**: execute `Homean_Build_Plan_v1.md` (M0–M7) with Codex.
 - **At each gate**: check the evidence in the gate map against Discovery/Experiment logs;
   only then promote the next milestone's draft prompt to a real one — expect to revise it
   against what validation taught you (screens, priorities, even whole milestones like M12

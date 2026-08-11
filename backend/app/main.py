@@ -49,7 +49,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 settings = get_settings()
 configure_observability(settings)
-app = FastAPI(title="Kawu API", lifespan=lifespan)
+app = FastAPI(title="Homean API", lifespan=lifespan)
 app.add_middleware(RequestContextMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(RateLimitMiddleware, settings=settings)

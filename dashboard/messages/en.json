@@ -1,8 +1,8 @@
 {
   "Metadata": {
-    "title": "Kawu — AI showing reports",
+    "title": "Homean — AI showing reports",
     "description": "Turn every real-estate showing into an evidence-backed client report.",
-    "imageAlt": "Kawu — Every showing, remembered with evidence."
+    "imageAlt": "Homean — Every showing, remembered with evidence."
   },
   "Common": {
     "close": "Close",
@@ -32,11 +32,11 @@
   "Auth": {
     "eyebrow": "Showing intelligence for buyer's agents",
     "brandTitle": "Every showing, remembered with evidence.",
-    "brandBody": "Capture the walkthrough once. Kawu turns it into a structured, client-ready report you can review with confidence.",
+    "brandBody": "Capture the walkthrough once. Homean turns it into a structured, client-ready report you can review with confidence.",
     "privacy": "Private by default. Nothing is sent without your confirmation.",
     "welcomeBack": "Welcome back",
     "startTrial": "Start your workspace",
-    "loginTitle": "Sign in to Kawu",
+    "loginTitle": "Sign in to Homean",
     "signupTitle": "Create your account",
     "loginBody": "Continue reviewing and delivering your showing reports.",
     "signupBody": "Set up your private workspace for professional buyer reports.",
@@ -46,7 +46,7 @@
     "passwordPlaceholder": "At least 8 characters",
     "loginAction": "Sign in",
     "signupAction": "Create account",
-    "noAccount": "New to Kawu?",
+    "noAccount": "New to Homean?",
     "hasAccount": "Already have an account?",
     "signupLink": "Create an account",
     "loginLink": "Sign in",
@@ -91,7 +91,7 @@
     "back": "Back to showings",
     "eyebrow": "Capture a walkthrough",
     "title": "Create a new showing",
-    "subtitle": "Add a property or client now if you have them, then upload the recording and supporting media. Kawu will take it from there.",
+    "subtitle": "Add a property or client now if you have them, then upload the recording and supporting media. Homean will take it from there.",
     "propertyTitle": "Property and client",
     "propertyBody": "Add a property now or capture without one. A client is optional.",
     "propertyChoiceLabel": "Property assignment",
@@ -132,7 +132,7 @@
     "transcript": "Transcript",
     "completed": "Capture complete",
     "inProgress": "Capture in progress",
-    "processingTitle": "Kawu is building your draft",
+    "processingTitle": "Homean is building your draft",
     "processingBody": "Transcription, room detection, and report generation are running. This page updates automatically.",
     "processingFailed": "Processing needs attention",
     "processingFailedBody": "The pipeline stopped before the report was ready.",
@@ -347,7 +347,7 @@
     "title": "Settings",
     "subtitle": "Keep your professional identity consistent across every client report.",
     "billingEyebrow": "Workspace billing",
-    "billingTitle": "Your Kawu plan",
+    "billingTitle": "Your Homean plan",
     "billingActive": "{plan} is active for this workspace.",
     "billingExpired": "Your trial or subscription needs attention. Continue with the recommended billing action.",
     "trialPlan": "14-day trial",

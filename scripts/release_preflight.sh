@@ -39,19 +39,19 @@ docker compose \
 echo "==> Building API release image"
 docker build \
   --file "$ROOT_DIR/backend/Dockerfile.api" \
-  --tag kawu-api:preflight \
+  --tag homean-api:preflight \
   "$ROOT_DIR/backend"
 
 echo "==> Building worker release image"
 docker build \
   --file "$ROOT_DIR/backend/Dockerfile.worker" \
-  --tag kawu-worker:preflight \
+  --tag homean-worker:preflight \
   "$ROOT_DIR/backend"
 
 echo "==> Building dashboard release image"
 docker build \
   --file "$ROOT_DIR/dashboard/Dockerfile" \
-  --tag kawu-dashboard:preflight \
+  --tag homean-dashboard:preflight \
   "$ROOT_DIR/dashboard"
 
 echo "Release preflight passed. No provider credentials or deployment calls were used."

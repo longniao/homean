@@ -21,7 +21,7 @@ def _configure_celery_task_logger(logger, **kwargs: object) -> None:  # type: ig
 
 
 celery_app = Celery(
-    "kawu",
+    "homean",
     broker=settings.redis_url,
     backend=settings.redis_url,
     include=["app.pipeline.tasks"],

@@ -41,7 +41,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     <div className="grid min-h-screen bg-[#f5f5f0] lg:grid-cols-[1.05fr_.95fr]">
       <section className="hidden overflow-hidden bg-[#163d34] p-12 text-white lg:flex lg:flex-col">
         <Link className="font-serif text-3xl font-semibold" href="/">
-          Kawu
+          Homean
         </Link>
         <div className="my-auto max-w-xl">
           <p className="mb-5 text-sm font-semibold uppercase tracking-[0.18em] text-emerald-200">
@@ -59,7 +59,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
       <section className="flex items-center justify-center p-6 sm:p-10">
         <div className="w-full max-w-md">
           <Link className="mb-12 block font-serif text-3xl font-semibold lg:hidden" href="/">
-            Kawu
+            Homean
           </Link>
           <p className="mb-2 text-sm font-semibold text-[#1f6f5b]">
             {mode === "login" ? t("welcomeBack") : t("startTrial")}

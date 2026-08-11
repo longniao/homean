@@ -44,7 +44,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-40 border-b border-stone-200/80 bg-[#f5f5f0]/90 backdrop-blur-xl lg:hidden">
         <div className="flex h-16 items-center justify-between px-5">
           <Link className="font-serif text-2xl font-semibold tracking-tight" href="/">
-            Kawu
+            Homean
           </Link>
           <Button
             aria-label={open ? t("closeMenu") : t("openMenu")}
@@ -65,7 +65,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       >
         <div className="mb-10 flex items-center justify-between px-2">
           <Link className="font-serif text-3xl font-semibold tracking-[-0.04em]" href="/">
-            Kawu
+            Homean
           </Link>
           <button className="lg:hidden" onClick={() => setOpen(false)} type="button">
             <X className="size-5" />

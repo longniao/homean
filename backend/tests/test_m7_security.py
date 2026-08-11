@@ -149,7 +149,7 @@ async def test_rate_limit_keys_use_configured_namespace() -> None:
     base = Starlette(routes=[Route("/auth/login", _ok, methods=["POST"])])
     limited = RateLimitMiddleware(
         base,
-        _settings(rate_limit_key_prefix="kawu:test:isolated"),
+        _settings(rate_limit_key_prefix="homean:test:isolated"),
     )
     limited._redis = redis
 
@@ -161,7 +161,7 @@ async def test_rate_limit_keys_use_configured_namespace() -> None:
     assert response.status_code == 200
     assert len(redis.counts) == 1
     assert next(iter(redis.counts)).startswith(
-        "kawu:test:isolated:ratelimit:auth:127.0.0.1:"
+        "homean:test:isolated:ratelimit:auth:127.0.0.1:"
     )
 
 
@@ -207,7 +207,7 @@ def test_observability_preserves_safe_exception_diagnostics_only() -> None:
         raise ValueError("private transcript and password")
     except ValueError:
         record = logging.LogRecord(
-            name="kawu.test",
+            name="homean.test",
             level=logging.ERROR,
             pathname=__file__,
             lineno=1,
@@ -288,7 +288,7 @@ def test_configure_observability_does_not_duplicate_json_handler() -> None:
         handlers = [
             handler
             for handler in root.handlers
-            if getattr(handler, "_kawu_observability", False)
+            if getattr(handler, "_homean_observability", False)
         ]
         assert len(handlers) == 1
     finally:
@@ -327,7 +327,7 @@ def test_celery_post_setup_logger_is_sanitized_json_and_idempotent(
         handlers = [
             handler
             for handler in logger.handlers
-            if getattr(handler, "_kawu_observability", False)
+            if getattr(handler, "_homean_observability", False)
         ]
         assert len(handlers) == 1
         handlers[0].stream = stream

@@ -8,17 +8,17 @@ from typing import Any
 import yaml
 
 EXPECTED_DOCKER_SERVICES = {
-    "kawu-api": {
+    "homean-api": {
         "dockerfilePath": "backend/Dockerfile.api",
         "dockerContext": "backend",
         "type": "web",
     },
-    "kawu-worker": {
+    "homean-worker": {
         "dockerfilePath": "backend/Dockerfile.worker",
         "dockerContext": "backend",
         "type": "worker",
     },
-    "kawu-dashboard": {
+    "homean-dashboard": {
         "dockerfilePath": "dashboard/Dockerfile",
         "dockerContext": "dashboard",
         "type": "web",

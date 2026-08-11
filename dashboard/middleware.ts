@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { ACCESS_COOKIE } from "@/lib/auth";
+import { ACCESS_COOKIE_NAMES } from "@/lib/auth";
 
 export function middleware(request: NextRequest) {
-  const authenticated = Boolean(request.cookies.get(ACCESS_COOKIE)?.value);
+  const authenticated = ACCESS_COOKIE_NAMES.some((name) =>
+    Boolean(request.cookies.get(name)?.value),
+  );
   const isAuthPage = ["/login", "/signup"].includes(request.nextUrl.pathname);
 
   if (!authenticated && !isAuthPage) {

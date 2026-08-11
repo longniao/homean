@@ -1,4 +1,4 @@
-# Kawu — Technical Architecture v1.1
+# Homean — Technical Architecture v1.1
 
 ## Vertical-Agnostic Core, Real Estate as First Vertical Pack
 
@@ -225,7 +225,7 @@ def generate_observation_extraction_prompt(vertical: Vertical, zone_content: str
 
 如果未来验证出第二个行业，两条路都可行，到时候看情况选：
 
-- **同一个 App 内加行业选择**：用户群体有重叠、Kawu 品牌能跨行业成立、工作流明显共享时选这条。
+- **同一个 App 内加行业选择**：用户群体有重叠、Homean 品牌能跨行业成立、工作流明显共享时选这条。
 - **新 App、共用同一套后端 API**：两个行业用户画像/获客渠道差异大、需要独立品牌定位时选这条。
 
 现在不用做这个决策，架构已经支持两条路都走得通。

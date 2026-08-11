@@ -397,8 +397,10 @@ class RealEstateDeliveryService:
         return report_send, visit
 
     def _message_id(self, send_id: uuid.UUID) -> str:
-        domain = self._settings.smtp_from_email.rpartition("@")[2] or "kawu.local"
-        return f"<kawu-report-{send_id}@{domain}>"
+        domain = self._settings.smtp_from_email.rpartition("@")[2] or "homean.com"
+        if domain.casefold() == "kawu.local":
+            domain = "homean.com"
+        return f"<homean-report-{send_id}@{domain}>"
 
     def _now(self) -> datetime:
         return self._clock()

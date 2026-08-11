@@ -1,7 +1,7 @@
-# Kawu — Build Plan v1 (for Codex)
+# Homean — Build Plan v1 (for Codex)
 
-> Companion to: `Kawu_Product_Document_v1.1.md`, `Kawu_Technical_Architecture_v1.1.md`,
-> `Kawu_Full_Feature_Roadmap_v1.2.md`.
+> Companion to: `Homean_Product_Document_v1.1.md`, `Homean_Technical_Architecture_v1.1.md`,
+> `Homean_Full_Feature_Roadmap_v1.2.md`.
 > Scope = **Phase 1 MVP only**, per Roadmap v1.2: English-only, mobile app for capture,
 > web dashboard for editing/management, generic data model with `real_estate` vertical pack.
 >
@@ -40,9 +40,9 @@ earliest.
 ## Global Context Prompt (paste into every Codex session; also lives in AGENTS.md)
 
 ```
-You are building Kawu, an AI showing-report tool for real-estate buyer's agents.
-Read docs/Kawu_Product_Document_v1.1.md, docs/Kawu_Technical_Architecture_v1.1.md,
-and docs/Kawu_Full_Feature_Roadmap_v1.2.md before writing code.
+You are building Homean, an AI showing-report tool for real-estate buyer's agents.
+Read docs/Homean_Product_Document_v1.1.md, docs/Homean_Technical_Architecture_v1.1.md,
+and docs/Homean_Full_Feature_Roadmap_v1.2.md before writing code.
 
 Non-negotiable architecture rules (from the docs):
 1. Database uses GENERIC names: Subject (not Property), Zone (not Room), Contact (not
@@ -93,7 +93,7 @@ renders a placeholder; CI green.
 ```
 [Global Context Prompt]
 
-Task: Scaffold the Kawu monorepo. Do not implement product features yet.
+Task: Scaffold the Homean monorepo. Do not implement product features yet.
 
 1. Create the layout:
    backend/   - FastAPI app skeleton: app/main.py with /health, app/core/config.py
@@ -103,7 +103,7 @@ Task: Scaffold the Kawu monorepo. Do not implement product features yet.
                 next-intl configured with a single 'en' locale and messages/en.json.
                 One placeholder page reading a string from the i18n catalog.
    infra/     - docker-compose.yml: postgres:16, redis:7, minio (with console), and a
-                minio bucket-init job creating bucket "kawu-media".
+                minio bucket-init job creating bucket "homean-media".
    docs/      - already exists; leave untouched.
 2. Create AGENTS.md at repo root containing the project context and engineering conventions
    verbatim from this prompt's preamble, so future sessions pick them up automatically.
@@ -134,7 +134,7 @@ requests resolve the caller's workspace; vertical config accessible via a typed 
 ```
 [Global Context Prompt]
 
-Task: Implement the Kawu data layer, auth, and vertical pack config in backend/.
+Task: Implement the Homean data layer, auth, and vertical pack config in backend/.
 
 1. SQLAlchemy models + Alembic migrations for (columns per the architecture doc §数据模型):
    users, workspaces (with language TEXT NOT NULL DEFAULT 'en'), memberships,
@@ -384,7 +384,7 @@ confirm, brand, and send — entirely from the browser.
 ```
 [Global Context Prompt]
 
-Task: Build the Kawu web dashboard in dashboard/ against the backend API
+Task: Build the Homean web dashboard in dashboard/ against the backend API
 (base URL from NEXT_PUBLIC_API_URL). TypeScript strict, App Router, Tailwind + shadcn/ui,
 TanStack Query. ALL user-facing strings go through next-intl keys in messages/en.json.
 Auth: store JWTs in httpOnly cookies via a Next.js route handler proxying /auth/*;
@@ -463,7 +463,7 @@ syncs automatically when connectivity returns; the showing then appears in the d
 ```
 [Global Context Prompt]
 
-Task: Build the Kawu mobile capture app in mobile/ with Expo (managed workflow,
+Task: Build the Homean mobile capture app in mobile/ with Expo (managed workflow,
 TypeScript). Scope is CAPTURE ONLY per Roadmap v1.2 - editing lives in the dashboard.
 
 1. Auth: login (same JWT endpoints), secure token storage (expo-secure-store), refresh.
@@ -540,7 +540,7 @@ first post-validation iteration — none block putting the product in front of t
 ```
 [Global Context Prompt]
 
-Task: Production-readiness for Kawu.
+Task: Production-readiness for Homean.
 
 1. Billing (Stripe): workspace-level subscription. Plans: trial (14 days, full features,
    default on signup), solo monthly. Stripe Checkout for subscribe, customer portal for

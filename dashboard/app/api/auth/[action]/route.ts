@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { ACCESS_COOKIE, backendUrl, REFRESH_COOKIE } from "@/lib/auth";
+import {
+  ACCESS_COOKIE,
+  backendUrl,
+  LEGACY_ACCESS_COOKIE,
+  LEGACY_REFRESH_COOKIE,
+  REFRESH_COOKIE,
+} from "@/lib/auth";
 
 type TokenPayload = {
   access_token: string;
@@ -23,6 +29,19 @@ function setTokenCookies(response: NextResponse, tokens: TokenPayload) {
     ...common,
     maxAge: 60 * 60 * 24 * 30,
   });
+  response.cookies.delete(LEGACY_ACCESS_COOKIE);
+  response.cookies.delete(LEGACY_REFRESH_COOKIE);
+}
+
+function clearTokenCookies(response: NextResponse) {
+  for (const name of [
+    ACCESS_COOKIE,
+    REFRESH_COOKIE,
+    LEGACY_ACCESS_COOKIE,
+    LEGACY_REFRESH_COOKIE,
+  ]) {
+    response.cookies.delete(name);
+  }
 }
 
 export async function POST(
@@ -32,8 +51,7 @@ export async function POST(
   const { action } = await params;
   if (action === "logout") {
     const response = NextResponse.json({ ok: true });
-    response.cookies.delete(ACCESS_COOKIE);
-    response.cookies.delete(REFRESH_COOKIE);
+    clearTokenCookies(response);
     return response;
   }
   if (action !== "login" && action !== "signup") {

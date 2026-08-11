@@ -14,9 +14,9 @@ BLUEPRINT_PATH = REPOSITORY_ROOT / "infra" / "render.yaml"
 
 def test_render_blueprint_uses_existing_release_docker_paths() -> None:
     assert validate_blueprint(BLUEPRINT_PATH, REPOSITORY_ROOT) == (
-        "kawu-api",
-        "kawu-worker",
-        "kawu-dashboard",
+        "homean-api",
+        "homean-worker",
+        "homean-dashboard",
     )
 
 
@@ -45,17 +45,17 @@ def test_render_blueprint_rejects_a_missing_dockerfile(tmp_path: Path) -> None:
     blueprint.write_text(
         """
 services:
-  - name: kawu-api
+  - name: homean-api
     type: web
     runtime: docker
     dockerfilePath: ./missing/Dockerfile
     dockerContext: ./missing
-  - name: kawu-worker
+  - name: homean-worker
     type: worker
     runtime: docker
     dockerfilePath: ./backend/Dockerfile.worker
     dockerContext: ./backend
-  - name: kawu-dashboard
+  - name: homean-dashboard
     type: web
     runtime: docker
     dockerfilePath: ./dashboard/Dockerfile
@@ -64,7 +64,7 @@ services:
         encoding="utf-8",
     )
 
-    with pytest.raises(BlueprintValidationError, match="kawu-api"):
+    with pytest.raises(BlueprintValidationError, match="homean-api"):
         validate_blueprint(blueprint, REPOSITORY_ROOT)
 
 

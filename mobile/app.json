@@ -1,14 +1,14 @@
 {
   "expo": {
-    "name": "Kawu Capture",
-    "slug": "kawu-capture",
+    "name": "Homean Capture",
+    "slug": "homean-capture",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "ai.kawu.capture"
+      "bundleIdentifier": "com.homean.capture"
     },
     "android": {
       "adaptiveIcon": {
@@ -18,7 +18,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "ai.kawu.capture"
+      "package": "com.homean.capture"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -27,14 +27,14 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "Allow Kawu to record showing audio.",
+          "microphonePermission": "Allow Homean to record showing audio.",
           "enableBackgroundRecording": true
         }
       ],
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow Kawu to take showing photos and videos.",
+          "cameraPermission": "Allow Homean to take showing photos and videos.",
           "microphonePermission": false,
           "recordAudioAndroid": false
         }
@@ -47,6 +47,6 @@
         }
       ]
     ],
-    "scheme": "kawu"
+    "scheme": "homean"
   }
 }

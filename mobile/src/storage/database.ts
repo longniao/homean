@@ -4,9 +4,13 @@ import type { LocalMarker, LocalMedia, LocalShowing, MediaKind, SyncState } from
 import type { SyncStore } from '../sync/engine';
 
 let databasePromise: Promise<SQLite.SQLiteDatabase> | null = null;
+// Keep this legacy filename: renaming an on-device SQLite database without a
+// verified atomic migration could strand offline captures. The schema remains
+// forward-compatible, so existing recordings continue to sync safely.
+export const CAPTURE_DATABASE_NAME = 'kawu-capture.db';
 
 async function database(): Promise<SQLite.SQLiteDatabase> {
-  databasePromise ??= SQLite.openDatabaseAsync('kawu-capture.db');
+  databasePromise ??= SQLite.openDatabaseAsync(CAPTURE_DATABASE_NAME);
   const db = await databasePromise;
   await db.execAsync(`
     PRAGMA journal_mode = WAL;

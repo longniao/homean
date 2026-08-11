@@ -20,8 +20,8 @@ COPY alembic ./alembic
 COPY app ./app
 RUN uv sync --frozen
 
-RUN useradd --create-home --shell /usr/sbin/nologin kawu \
-    && chown -R kawu:kawu /app
-USER kawu
+RUN useradd --create-home --shell /usr/sbin/nologin homean \
+    && chown -R homean:homean /app
+USER homean
 
 CMD ["uv", "run", "celery", "-A", "app.pipeline.celery_app:celery_app", "worker", "--loglevel=info"]

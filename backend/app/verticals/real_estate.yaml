@@ -80,5 +80,5 @@ report_template:
     license_no: License
     phone: Phone
     email: Email
-    generated_by: Prepared with Kawu
+    generated_by: Prepared with Homean
     consent_disclosure: "Recording disclosure: This report was prepared from a visit recording. TODO: counsel review required."

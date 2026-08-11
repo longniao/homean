@@ -17,7 +17,7 @@ from starlette.responses import JSONResponse, Response
 
 from app.core.config import Settings
 
-logger = logging.getLogger("kawu.request")
+logger = logging.getLogger("homean.request")
 
 _SENSITIVE_HEADERS = {
     "authorization",
@@ -231,7 +231,7 @@ def configure_json_logger(log: logging.Logger) -> None:
         (
             candidate
             for candidate in log.handlers
-            if getattr(candidate, "_kawu_observability", False)
+            if getattr(candidate, "_homean_observability", False)
         ),
         None,
     )
@@ -240,7 +240,7 @@ def configure_json_logger(log: logging.Logger) -> None:
             log.removeHandler(existing)
     if handler is None:
         handler = logging.StreamHandler()
-        handler._kawu_observability = True  # type: ignore[attr-defined]
+        handler._homean_observability = True  # type: ignore[attr-defined]
         log.addHandler(handler)
     handler.setFormatter(JsonLogFormatter())
     log.propagate = False
@@ -358,7 +358,7 @@ def configure_observability(settings: Settings) -> None:
     # installed by a previous framework/default logging configuration so a
     # repeated initialization cannot emit every record twice.
     for existing in list(root.handlers):
-        if not getattr(existing, "_kawu_observability", False):
+        if not getattr(existing, "_homean_observability", False):
             root.removeHandler(existing)
     configure_json_logger(root)
     root.setLevel(logging.INFO)
