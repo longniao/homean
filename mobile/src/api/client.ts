@@ -1,8 +1,9 @@
 import { File } from 'expo-file-system';
 import { fetch as expoFetch } from 'expo/fetch';
 import { z } from 'zod';
+import { clearAccount, setAccount } from '../auth/accountStore';
 import { clearTokens, getTokens, setTokens } from '../auth/tokenStore';
-import type { Contact, MediaKind, Property, ReportContent, ShowingDetail, ShowingSummary, TokenPair, VerticalConfig } from '../types';
+import type { Account, Contact, MediaKind, Property, ReportContent, ShowingDetail, ShowingSummary, TokenPair, VerticalConfig } from '../types';
 
 const API_URL = (process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8000').replace(/\/$/, '');
 
@@ -45,6 +46,11 @@ const markerSchema = z.object({
   id: z.string(), client_id: z.string(), marker_type: z.literal('voice_tag'),
   timestamp_offset_ms: z.number(), created_at: z.string(),
 });
+const meSchema = z.object({
+  user: z.object({ id: z.string(), email: z.string(), name: z.string().nullable() }),
+  workspace: z.object({ id: z.string(), name: z.string() }),
+  profile: z.object({ role: z.string() }),
+});
 
 function tokensFromWire(value: z.infer<typeof tokenSchema>): TokenPair {
   return { accessToken: value.access_token, refreshToken: value.refresh_token, expiresAt: Date.now() + value.expires_in * 1000 };
@@ -57,6 +63,12 @@ function propertyFromWire(value: z.infer<typeof propertySchema>): Property {
 }
 function showingFromWire(value: z.infer<typeof showingSchema>): ShowingSummary {
   return { id: value.id, status: value.status, processingStatus: value.processing_status, createdAt: value.created_at, property: value.property ? propertyFromWire(value.property) : null, contact: value.contact ? contactFromWire(value.contact) : null, consentAck: value.consent_ack };
+}
+function accountFromWire(value: z.infer<typeof meSchema>): Account {
+  return {
+    userId: value.user.id, email: value.user.email, name: value.user.name,
+    workspaceId: value.workspace.id, workspaceName: value.workspace.name, role: value.profile.role,
+  };
 }
 function verticalConfigFromWire(value: z.infer<typeof verticalConfigSchema>): VerticalConfig {
   return { zoneTaxonomy: value.zone_taxonomy, observationSchema: value.observation_schema, displayLabels: value.display_labels };
@@ -73,6 +85,14 @@ async function responseDetail(response: Response): Promise<string> {
 
 export class ApiClient {
   private refreshPromise: Promise<TokenPair> | null = null;
+  private sessionExpiredHandler: (() => void) | null = null;
+
+  /**
+   * Registered by the app so a genuinely rejected session returns to the login
+   * screen. Without it the stored tokens are cleared while the UI still
+   * believes it is signed in.
+   */
+  onSessionExpired(handler: (() => void) | null): void { this.sessionExpiredHandler = handler; }
 
   async login(email: string, password: string): Promise<void> {
     const response = await fetch(`${API_URL}/auth/login`, {
@@ -80,15 +100,31 @@ export class ApiClient {
     });
     if (!response.ok) throw new ApiError(response.status, await responseDetail(response));
     await setTokens(tokensFromWire(tokenSchema.parse(await response.json())));
+    // Best effort: a failed identity fetch must not fail an otherwise good
+    // sign-in. The next sync fills it in.
+    try { await this.loadAccount(); } catch { /* identity fills in on the next sync */ }
   }
 
-  async logout(): Promise<void> { await clearTokens(); }
+  async logout(): Promise<void> { await Promise.all([clearTokens(), clearAccount()]); }
+
+  private async endSession(): Promise<void> {
+    await this.logout();
+    this.sessionExpiredHandler?.();
+  }
 
   private async refresh(refreshToken: string): Promise<TokenPair> {
     const response = await fetch(`${API_URL}/auth/refresh`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ refresh_token: refreshToken }),
     });
-    if (!response.ok) { await clearTokens(); throw new ApiError(response.status, await responseDetail(response)); }
+    if (!response.ok) {
+      const detail = await responseDetail(response);
+      // Only a rejected refresh token ends the session. A rate limit, a 5xx,
+      // or a gateway error is transient: discarding the stored session there
+      // would sign the agent out mid-field-day and force a password re-entry
+      // that may be impossible without signal.
+      if (response.status === 401 || response.status === 403) await this.endSession();
+      throw new ApiError(response.status, detail);
+    }
     const tokens = tokensFromWire(tokenSchema.parse(await response.json()));
     await setTokens(tokens);
     return tokens;
@@ -114,6 +150,13 @@ export class ApiClient {
     }
     if (!response.ok) throw new ApiError(response.status, await responseDetail(response));
     return response;
+  }
+
+  /** Fetches the signed-in identity and persists it for offline cold starts. */
+  async loadAccount(): Promise<Account> {
+    const account = accountFromWire(meSchema.parse(await (await this.request('/me')).json()));
+    await setAccount(account);
+    return account;
   }
 
   async listContacts(): Promise<Contact[]> {

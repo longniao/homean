@@ -40,6 +40,9 @@ async function database(): Promise<SQLite.SQLiteDatabase> {
       showing_id TEXT PRIMARY KEY NOT NULL REFERENCES local_showings(id) ON DELETE CASCADE,
       file_uri TEXT NOT NULL, segment_offset_ms INTEGER NOT NULL, updated_at INTEGER NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS cache_entries (
+      key TEXT PRIMARY KEY NOT NULL, value TEXT NOT NULL, updated_at INTEGER NOT NULL
+    );
     CREATE INDEX IF NOT EXISTS idx_local_media_showing ON local_media(showing_id, created_at);
   `);
   try { await db.execAsync('ALTER TABLE local_showings ADD COLUMN consent_ack INTEGER NOT NULL DEFAULT 0'); } catch { /* already present */ }
@@ -228,6 +231,26 @@ export class CaptureRepository implements SyncStore {
   }
   async clearRecordingSession(showingId: string): Promise<void> {
     await (await database()).runAsync('DELETE FROM recording_sessions WHERE showing_id = ?', showingId);
+  }
+
+  /**
+   * Read-through cache for server-owned reference data. It never holds capture
+   * state, so dropping it can only cost a round trip — the durable queue above
+   * remains the sole owner of anything that has not reached the backend.
+   */
+  async readCache(key: string): Promise<unknown> {
+    const row = await (await database()).getFirstAsync<{ value: string }>('SELECT value FROM cache_entries WHERE key = ?', key);
+    if (!row) return null;
+    try { return JSON.parse(row.value) as unknown; } catch { return null; }
+  }
+  async writeCache(key: string, value: unknown): Promise<void> {
+    await (await database()).runAsync(
+      'INSERT INTO cache_entries (key, value, updated_at) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at',
+      key, JSON.stringify(value), Date.now(),
+    );
+  }
+  async clearCache(): Promise<void> {
+    await (await database()).runAsync('DELETE FROM cache_entries');
   }
 }
 

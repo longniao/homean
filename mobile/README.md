@@ -27,6 +27,33 @@ placeholder disclosure; no legal language is intended by this product text.
 
 Voice tags are stored locally with exact offsets and sync through the visit marker API after the remote visit exists. Each tag carries its local client id as an idempotency key, so retries after an ambiguous network failure return the same server marker instead of creating a duplicate. Marker acknowledgement is persisted before the showing can be finished.
 
+## Signed-in session
+
+Tokens live in SecureStore and the session slides: every refresh mints a new
+30-day refresh token, so an agent who keeps using the app stays signed in
+indefinitely. Only a rejected refresh token (401/403) ends the session — a rate
+limit, a 5xx, or a lost connection leaves the stored session intact so the next
+attempt recovers it. The signed-in account is persisted alongside the tokens and
+is shown on Home, including on an offline cold start.
+
+Signing out needs a network round trip to reverse, so the app warns first when
+captures are still queued on the device.
+
+## What works offline
+
+Capture is fully local: starting a showing, recording, voice tags, photos and
+video, ending the showing, and crash recovery all work with no connection and
+survive a force-quit.
+
+Server-owned reference data is mirrored into SQLite on each successful sync, so
+an offline cold start still offers the client and property pickers and can open
+a previously synced report. A report served from that cache is presented
+read-only behind an offline notice — editing, confirming, and sharing all need
+the server, so the app does not offer actions that cannot succeed. The cache
+holds no capture state and is dropped on sign-out.
+
+Signing in for the first time still requires a connection.
+
 Video capture is intentionally muted because the continuous `expo-audio` recorder remains the single source for showing audio and its evidence chain.
 
 If the app is reopened with an unfinished showing, it first recovers the persisted
@@ -46,6 +73,7 @@ Use a development build on a physical iOS or Android device.
 6. Disable airplane mode. Tap **Sync now** (pull-to-refresh currently triggers the same engine) or foreground the app.
 7. Observe state advance through **Syncing**, **Processing**, and **Ready**. Force-quit once during upload and reopen; verify sync resumes without duplicate media records and processing begins only after all media completes.
 8. Open the ready report. If backend guards pass, confirm and create a share link. If a sensitive item is pending, verify the app offers **Review on desktop** instead.
+9. Force-quit, enable airplane mode, and reopen. Verify Home still names the signed-in account, the client and property pickers are still populated, and the report from step 8 still opens — read-only, behind the offline notice, with no edit, confirm, or share actions offered.
 
 ## Checks
 
