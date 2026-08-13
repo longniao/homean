@@ -10,6 +10,9 @@ export const en = {
   home: {
     title: 'Homean Capture', start: 'Start Showing', recent: 'Recent showings',
     empty: 'No showings yet. Start one when you arrive.', signOut: 'Sign out',
+    signedInAs: 'Signed in as {{account}}',
+    signOutPending_one: '{{count}} showing has not synced yet. It stays on this device, but you need to sign back in — and that needs a connection — before it can upload.',
+    signOutPending_other: '{{count}} showings have not synced yet. They stay on this device, but you need to sign back in — and that needs a connection — before they can upload.',
     syncNow: 'Sync now', report: 'View report', untitled: 'Untitled showing',
   },
   setup: {
@@ -42,5 +45,6 @@ export const en = {
     propertyRequired: 'Attach a property on the desktop dashboard before confirming this report.',
     noReport: 'The draft report is still processing.', sensitive: 'Sensitive item requires review',
     saved: 'Report updated', dismissed: 'Observation removed', shared: 'Share link created',
+    offline: 'Offline — showing the last synced copy. Editing, confirming, and sharing need a connection.',
   },
 } as const;

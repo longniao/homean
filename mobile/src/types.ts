@@ -5,6 +5,11 @@ export type MarkerState = 'queued' | 'syncing' | 'synced' | 'failed';
 
 export interface TokenPair { accessToken: string; refreshToken: string; expiresAt: number }
 
+export interface Account {
+  userId: string; email: string; name: string | null;
+  workspaceId: string; workspaceName: string; role: string;
+}
+
 export interface Contact { id: string; name: string; email: string | null }
 export interface Property { id: string; displayName: string; address: string }
 export interface VerticalDisplayLabels {

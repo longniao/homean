@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
-import { Modal, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Modal, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Card, PrimaryButton, SecondaryButton } from '../components/ui';
 import { colors } from '../theme';
-import type { Contact, LocalShowing, Property } from '../types';
+import type { Account, Contact, LocalShowing, Property } from '../types';
 
 interface Props {
   showings: LocalShowing[]; contacts: Contact[]; properties: Property[]; refreshing: boolean;
+  account: Account | null;
   onRefresh: () => void; onLogout: () => void;
   onStart: (input: { contactId: string | null; subjectId: string | null; address: string | null; title: string; consentAck: boolean }) => void;
   onOpenReport: (remoteId: string) => void;
@@ -17,13 +18,25 @@ export function HomeScreen(props: Props) {
   const [contactId, setContactId] = useState<string | null>(null); const [subjectId, setSubjectId] = useState<string | null>(null); const [address, setAddress] = useState('');
   const contacts = useMemo(() => props.contacts.filter((item) => item.name.toLowerCase().includes(query.toLowerCase())), [props.contacts, query]);
   const properties = useMemo(() => props.properties.filter((item) => `${item.displayName} ${item.address}`.toLowerCase().includes(query.toLowerCase())), [props.properties, query]);
+  // Signing out needs a network round trip to reverse, so warn while work is
+  // still queued on this device. The captures survive either way; the agent
+  // just cannot push them until they sign back in.
+  const unsynced = props.showings.filter((item) => ['local', 'syncing', 'failed'].includes(item.syncState)).length;
+  const logout = () => {
+    if (!unsynced) { props.onLogout(); return; }
+    Alert.alert(t('home.signOut'), t('home.signOutPending', { count: unsynced }), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('home.signOut'), style: 'destructive', onPress: props.onLogout },
+    ]);
+  };
   const begin = () => {
     const property = props.properties.find((item) => item.id === subjectId);
     props.onStart({ contactId, subjectId, address: subjectId ? null : address.trim() || null, title: property?.displayName ?? (address.trim() || t('home.untitled')), consentAck });
     setSetup(false); setQuery(''); setContactId(null); setSubjectId(null); setAddress(''); setConsentAck(false);
   };
   return <View style={styles.page}>
-    <View style={styles.header}><Text style={styles.title}>{t('home.title')}</Text><Pressable onPress={props.onLogout}><Text style={styles.logout}>{t('home.signOut')}</Text></Pressable></View>
+    <View style={styles.header}><Text style={styles.title}>{t('home.title')}</Text><Pressable onPress={logout}><Text style={styles.logout}>{t('home.signOut')}</Text></Pressable></View>
+    {props.account && <Text style={styles.account} numberOfLines={1}>{t('home.signedInAs', { account: props.account.name?.trim() || props.account.email })}</Text>}
     <PrimaryButton label={t('home.start')} onPress={() => setSetup(true)} style={styles.start} />
     <SecondaryButton label={t('home.syncNow')} onPress={props.onRefresh} style={styles.sync} />
     <Text style={styles.section}>{t('home.recent')}</Text>
@@ -56,7 +69,7 @@ function Choice({ label, selected, onPress }: { label: string; selected: boolean
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: colors.cream, paddingTop: 58 }, header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 22 },
-  title: { fontSize: 27, fontWeight: '800', color: colors.ink }, logout: { color: colors.green, fontWeight: '700' }, start: { margin: 22, marginBottom: 10, minHeight: 92, borderRadius: 24 }, sync: { marginHorizontal: 22, marginBottom: 22 },
+  title: { fontSize: 27, fontWeight: '800', color: colors.ink }, logout: { color: colors.green, fontWeight: '700' }, account: { color: colors.muted, paddingHorizontal: 22, paddingTop: 6 }, start: { margin: 22, marginBottom: 10, minHeight: 92, borderRadius: 24 }, sync: { marginHorizontal: 22, marginBottom: 22 },
   section: { marginHorizontal: 22, marginBottom: 10, color: colors.ink, fontSize: 19, fontWeight: '700' }, list: { paddingHorizontal: 22, paddingBottom: 40, gap: 12 }, empty: { color: colors.muted, textAlign: 'center', paddingTop: 40, lineHeight: 24 },
   showing: { gap: 12 }, row: { flexDirection: 'row', alignItems: 'center', gap: 12 }, grow: { flex: 1 }, showingTitle: { fontSize: 17, fontWeight: '700', color: colors.ink }, date: { color: colors.muted, marginTop: 4 },
   badge: { backgroundColor: colors.greenSoft, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 6 }, failed: { backgroundColor: colors.redSoft }, badgeText: { color: colors.ink, fontWeight: '600', fontSize: 12 }, error: { color: colors.red }, reportButton: { alignSelf: 'flex-start' },

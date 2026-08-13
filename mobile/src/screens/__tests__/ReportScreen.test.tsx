@@ -1,7 +1,9 @@
 import '../../i18n';
+import { Alert } from 'react-native';
 import { render, waitFor } from '@testing-library/react-native';
 import { ReportScreen } from '../ReportScreen';
 import { api } from '../../api/client';
+import { readShowingDetail, readVerticalConfig, writeShowingDetail } from '../../storage/cache';
 import type { ShowingDetail, VerticalConfig } from '../../types';
 
 jest.mock('../../api/client', () => ({
@@ -14,8 +16,19 @@ jest.mock('../../api/client', () => ({
     createShareLink: jest.fn(),
   },
 }));
+jest.mock('../../storage/cache', () => ({
+  readShowingDetail: jest.fn(async () => null),
+  readVerticalConfig: jest.fn(async () => null),
+  writeShowingDetail: jest.fn(async () => undefined),
+  writeVerticalConfig: jest.fn(async () => undefined),
+}));
 
 const mockedApi = jest.mocked(api);
+const mockedCache = {
+  readShowingDetail: readShowingDetail as jest.Mock,
+  readVerticalConfig: readVerticalConfig as jest.Mock,
+  writeShowingDetail: writeShowingDetail as jest.Mock,
+};
 
 const detail: ShowingDetail = {
   id: 'visit-1', status: 'draft', processingStatus: 'ready', createdAt: '2026-08-10T00:00:00Z', consentAck: true,
@@ -42,6 +55,8 @@ describe('ReportScreen vertical labels', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockedApi.getShowing.mockResolvedValue(detail);
+    mockedCache.readShowingDetail.mockResolvedValue(null);
+    mockedCache.readVerticalConfig.mockResolvedValue(null);
   });
 
   test('renders configured zone and observation labels', async () => {
@@ -70,5 +85,51 @@ describe('ReportScreen vertical labels', () => {
     expect(screen.getByText('Future category')).toBeTruthy();
     expect(screen.queryByText('future_zone')).toBeNull();
     expect(screen.queryByText('future_category')).toBeNull();
+  });
+});
+
+describe('ReportScreen offline behaviour', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockedApi.getVerticalConfig.mockResolvedValue(config);
+    mockedCache.readShowingDetail.mockResolvedValue(null);
+    mockedCache.readVerticalConfig.mockResolvedValue(null);
+  });
+
+  test('renders the last synced report read-only when the fetch fails', async () => {
+    mockedCache.readShowingDetail.mockResolvedValue(detail);
+    mockedApi.getShowing.mockRejectedValue(new Error('offline'));
+
+    const screen = await render(<ReportScreen visitId="visit-1" onBack={() => undefined} />);
+
+    await waitFor(() => expect(screen.getByText('A concise summary.')).toBeTruthy());
+    expect(screen.getByText(/Offline — showing the last synced copy/)).toBeTruthy();
+    // Every mutation needs the server, so none of them may be offered.
+    expect(screen.queryByText('Fix typo')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Delete observation' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Confirm report' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Review on desktop' })).toBeNull();
+  });
+
+  test('restores the editable report once the fetch succeeds', async () => {
+    mockedCache.readShowingDetail.mockResolvedValue(detail);
+    mockedApi.getShowing.mockResolvedValue(detail);
+
+    const screen = await render(<ReportScreen visitId="visit-1" onBack={() => undefined} />);
+
+    await waitFor(() => expect(screen.getAllByText('Fix typo').length).toBeGreaterThan(0));
+    expect(screen.queryByText(/Offline — showing the last synced copy/)).toBeNull();
+    expect(mockedCache.writeShowingDetail).toHaveBeenCalledWith(detail);
+  });
+
+  test('still reports an error when nothing is cached and the fetch fails', async () => {
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    mockedCache.readShowingDetail.mockResolvedValue(null);
+    mockedApi.getShowing.mockRejectedValue(new Error('offline'));
+
+    await render(<ReportScreen visitId="visit-1" onBack={() => undefined} />);
+
+    await waitFor(() => expect(alert).toHaveBeenCalledWith('Something went wrong.'));
+    alert.mockRestore();
   });
 });
