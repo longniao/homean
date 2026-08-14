@@ -45,7 +45,8 @@
         {
           "configureAndroidBackup": true
         }
-      ]
+      ],
+      "expo-asset"
     ],
     "scheme": "homean"
   }
