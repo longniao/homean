@@ -1,5 +1,7 @@
 from datetime import UTC, datetime
 
+import pytest
+
 from app.storage import FakeStorageProvider
 from scripts.purge_expired_media import cutoff_for
 
@@ -39,3 +41,24 @@ async def test_deleting_removes_the_bytes_and_the_metadata() -> None:
 
     assert await storage.head_object("media/tour.m4a") is None
     assert await storage.get_object_bytes("media/tour.m4a") is None
+
+
+class _FailingDeleteStorage(FakeStorageProvider):
+    """Storage whose delete always fails, standing in for an unreachable bucket."""
+
+    async def delete_object(self, object_key: str) -> None:
+        raise RuntimeError("storage is unreachable")
+
+
+async def test_a_failed_delete_leaves_the_row_unmarked_for_a_later_retry() -> None:
+    storage = _FailingDeleteStorage()
+    storage.put_object_bytes("media/tour.m4a", "audio/mp4", b"audio")
+
+    with pytest.raises(RuntimeError):
+        await storage.delete_object("media/tour.m4a")
+
+    # The object survives, so a record marking it purged would be asserting a
+    # deletion that never happened — the failure that actually matters on a
+    # retention feature. Marking only after a successful delete keeps the row
+    # eligible for the next run instead.
+    assert await storage.head_object("media/tour.m4a") is not None

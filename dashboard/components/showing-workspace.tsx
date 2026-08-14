@@ -44,6 +44,7 @@ import {
 } from "@/lib/api";
 import { copyTextToClipboard } from "@/lib/clipboard";
 import { cn } from "@/lib/utils";
+import { tourDate } from "@/lib/tour-date";
 
 type Tab = "report" | "observations" | "transcript";
 type ShareLink = Delivery["share_links"][number];
@@ -752,7 +753,7 @@ export function ShowingWorkspace({ id }: { id: string }) {
       <Link className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-stone-500 hover:text-stone-950" href="/"><ArrowLeft className="size-4" /> {t("back")}</Link>
       <div className="mb-7 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
         <div className="min-w-0">
-          <div className="mb-3 flex flex-wrap items-center gap-3"><StatusBadge showing={showing} /><span className="text-xs text-stone-400">{new Intl.DateTimeFormat(undefined, { dateStyle: "long" }).format(new Date(showing.created_at))}</span></div>
+          <div className="mb-3 flex flex-wrap items-center gap-3"><StatusBadge showing={showing} /><span className="text-xs text-stone-400">{new Intl.DateTimeFormat(undefined, { dateStyle: "long" }).format(tourDate(showing))}</span></div>
           <h1 className="page-title truncate">{showing.property?.display_name ?? t("unassignedTitle")}</h1>
           <p className="mt-2 text-stone-500">{showing.property?.address ?? t("unassignedBody")}{showing.contact ? ` · ${showing.contact.name}` : ""}</p>
         </div>

@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import and_, or_, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -18,6 +18,19 @@ from app.models import (
     VisitMarker,
     Zone,
 )
+
+
+def visit_toured_at() -> object:
+    """When the tour happened, for filtering, ordering and pagination.
+
+    ``created_at`` is when the row reached the server, which for an offline
+    capture is whenever it next found signal — a Monday showing synced on
+    Wednesday sorts and filters as Wednesday, and disagrees with the date its
+    own report prints. ``started_at`` is the capture time the client reports,
+    falling back to insertion for rows that never carried one.
+    """
+
+    return func.coalesce(Visit.started_at, Visit.created_at)
 
 
 class ShowingRepository:
@@ -129,10 +142,11 @@ class ShowingRepository:
         date_from: datetime | None,
         date_to: datetime | None,
         query: str | None,
-        cursor_created_at: datetime | None,
+        cursor_toured_at: datetime | None,
         cursor_id: uuid.UUID | None,
         limit: int,
     ) -> list[tuple[Visit, Subject | None, Contact | None]]:
+        toured_at = visit_toured_at()
         statement = (
             select(Visit, Subject, Contact)
             .outerjoin(
@@ -160,9 +174,9 @@ class ShowingRepository:
         if status is not None:
             statement = statement.where(Visit.status == status)
         if date_from is not None:
-            statement = statement.where(Visit.created_at >= date_from)
+            statement = statement.where(toured_at >= date_from)
         if date_to is not None:
-            statement = statement.where(Visit.created_at <= date_to)
+            statement = statement.where(toured_at <= date_to)
         if query:
             pattern = f"%{query}%"
             statement = statement.where(
@@ -172,18 +186,18 @@ class ShowingRepository:
                     Contact.name.ilike(pattern),
                 )
             )
-        if cursor_created_at is not None and cursor_id is not None:
+        if cursor_toured_at is not None and cursor_id is not None:
             statement = statement.where(
                 or_(
-                    Visit.created_at < cursor_created_at,
+                    toured_at < cursor_toured_at,
                     and_(
-                        Visit.created_at == cursor_created_at,
+                        toured_at == cursor_toured_at,
                         Visit.id < cursor_id,
                     ),
                 )
             )
         result = await self.session.execute(
-            statement.order_by(Visit.created_at.desc(), Visit.id.desc()).limit(limit)
+            statement.order_by(toured_at.desc(), Visit.id.desc()).limit(limit)
         )
         return list(result.tuples())
 

@@ -655,7 +655,7 @@ class RealEstateShowingService:
     ) -> ShowingPage:
         if date_from is not None and date_to is not None and date_from > date_to:
             raise DomainValidationError("date_from must be before date_to")
-        cursor_created_at, cursor_id = self._decode_cursor(cursor)
+        cursor_toured_at, cursor_id = self._decode_cursor(cursor)
         rows = await self._repository.list(
             context.workspace.id,
             contact_id=contact_id,
@@ -665,7 +665,7 @@ class RealEstateShowingService:
             date_from=date_from,
             date_to=date_to,
             query=query.strip() if query else None,
-            cursor_created_at=cursor_created_at,
+            cursor_toured_at=cursor_toured_at,
             cursor_id=cursor_id,
             limit=limit + 1,
         )
@@ -675,7 +675,11 @@ class RealEstateShowingService:
         next_cursor = None
         if has_more and items:
             last = items[-1].visit
-            next_cursor = self._encode_cursor(last.created_at, last.id)
+            # Must match the column the query sorts by, or a page boundary
+            # silently drops or repeats rows.
+            next_cursor = self._encode_cursor(
+                last.started_at or last.created_at, last.id
+            )
         return ShowingPage(items=items, next_cursor=next_cursor)
 
     async def get_media_download(
