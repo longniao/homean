@@ -474,8 +474,16 @@ class RealEstateDeliveryService:
             raise ResourceConflictError("showing must be confirmed before delivery")
         if not report.rendered_html:
             branding = await self._review_repository.get_branding(workspace_id)
+            subject = await self._review_repository.get_subject(
+                workspace_id, visit.subject_id
+            )
             report.rendered_html = await self._renderer.render_html(
-                report.content, branding, consent_ack=visit.consent_ack
+                report.content,
+                branding,
+                consent_ack=visit.consent_ack,
+                subject=subject,
+                toured_on=visit.started_at,
+                timezone=visit.capture_timezone,
             )
             await self._repository.flush()
         return visit, report

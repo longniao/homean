@@ -16,11 +16,17 @@ describe("showings API client", () => {
 
     await api.showings.create({ contact_id: null, consent_ack: true });
 
+    // The browser zone rides along so the report prints the local tour date
+    // rather than the server's UTC one.
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/backend/showings",
       expect.objectContaining({
         method: "POST",
-        body: JSON.stringify({ contact_id: null, consent_ack: true }),
+        body: JSON.stringify({
+          contact_id: null,
+          consent_ack: true,
+          capture_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        }),
       }),
     );
   });

@@ -172,10 +172,14 @@ export class ApiClient {
     const body = z.object({ items: z.array(showingSchema) }).parse(await (await this.request('/showings?limit=50')).json());
     return body.items.map(showingFromWire);
   }
-  async createShowing(input: { subjectId: string | null; address: string | null; contactId: string | null; consentAck?: boolean; captureClientId?: string }): Promise<ShowingSummary> {
-    const payload: { subject_id?: string; address?: string; contact_id: string | null; consent_ack?: boolean; capture_client_id?: string } = { contact_id: input.contactId };
+  async createShowing(input: { subjectId: string | null; address: string | null; contactId: string | null; consentAck?: boolean; captureClientId?: string; startedAt?: number; captureTimezone?: string }): Promise<ShowingSummary> {
+    const payload: { subject_id?: string; address?: string; contact_id: string | null; consent_ack?: boolean; capture_client_id?: string; started_at?: string; capture_timezone?: string } = { contact_id: input.contactId };
     if (input.consentAck !== undefined) payload.consent_ack = input.consentAck;
     if (input.captureClientId !== undefined) payload.capture_client_id = input.captureClientId;
+    // An offline showing reaches the server long after the tour, so the report
+    // date has to come from when it was actually captured, not from sync time.
+    if (input.startedAt !== undefined) payload.started_at = new Date(input.startedAt).toISOString();
+    if (input.captureTimezone) payload.capture_timezone = input.captureTimezone;
     if (input.subjectId) payload.subject_id = input.subjectId;
     else if (input.address) payload.address = input.address;
     const body = showingSchema.parse(await (await this.request('/showings', { method: 'POST', body: JSON.stringify(payload) })).json());

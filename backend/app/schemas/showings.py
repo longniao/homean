@@ -1,8 +1,9 @@
 import uuid
 from datetime import datetime
 from typing import Literal
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from app.models import (
     Observation,
@@ -27,12 +28,35 @@ class ShowingCreate(BaseModel):
     contact_id: uuid.UUID | None = None
     consent_ack: bool = False
     capture_client_id: uuid.UUID | None = None
+    # Offline captures reach the server long after the tour, so the client
+    # reports when it actually happened and in which zone.  Both are optional;
+    # a visit created without them falls back to server time in UTC.
+    started_at: datetime | None = None
+    capture_timezone: str | None = Field(default=None, min_length=1, max_length=64)
 
     @model_validator(mode="after")
     def validate_subject_source(self) -> "ShowingCreate":
         if self.subject_id is not None and self.address is not None:
             raise ValueError("provide at most one of subject_id or address")
         return self
+
+    @field_validator("started_at")
+    @classmethod
+    def require_aware_start(cls, value: datetime | None) -> datetime | None:
+        if value is not None and value.tzinfo is None:
+            raise ValueError("started_at must include a UTC offset")
+        return value
+
+    @field_validator("capture_timezone")
+    @classmethod
+    def require_known_zone(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        try:
+            ZoneInfo(value)
+        except (ZoneInfoNotFoundError, ValueError) as exc:
+            raise ValueError("capture_timezone must be an IANA time zone") from exc
+        return value
 
 
 class ShowingUpdate(BaseModel):

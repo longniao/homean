@@ -293,6 +293,9 @@ class Visit(UUIDTimestampMixin, Base):
     )
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # IANA zone the capture device was in. Reports print the tour date, and a
+    # UTC instant renders the wrong day for evening showings west of Greenwich.
+    capture_timezone: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[str] = mapped_column(
         Text, nullable=False, default="draft", server_default="draft", index=True
     )

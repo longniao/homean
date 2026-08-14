@@ -68,13 +68,18 @@ describe('SyncEngine', () => {
   test('syncs a property-free showing through create, upload, and finish', async () => {
     const propertyFree = showing({ subjectId: null, address: null });
     const store = new MemoryStore([propertyFree], [media('audio', 1)]); const calls: string[] = [];
-    const syncTransport = transport(calls); const inputs: { subjectId: string | null; address: string | null; contactId: string | null; captureClientId?: string }[] = [];
+    const syncTransport = transport(calls); const inputs: Parameters<typeof syncTransport.createShowing>[0][] = [];
     const createShowing = syncTransport.createShowing;
     syncTransport.createShowing = async (input) => { inputs.push(input); return createShowing(input); };
 
     await new SyncEngine(store, syncTransport, { isOnline: async () => true }).run();
 
-    expect(inputs).toEqual([{ subjectId: null, address: null, contactId: null, captureClientId: 'local-1' }]);
+    // The tour time is the locally recorded start, not the moment this sync
+    // ran, so a showing captured offline still reports the day it happened.
+    expect(inputs).toEqual([{
+      subjectId: null, address: null, contactId: null, captureClientId: 'local-1',
+      startedAt: propertyFree.startedAt, captureTimezone: expect.any(String),
+    }]);
     expect(calls).toEqual(['create', 'presign:0', 'put:0', 'complete:0', 'finish']);
     expect(propertyFree).toMatchObject({ remoteId: 'remote-1', syncState: 'processing' });
   });

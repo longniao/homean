@@ -186,7 +186,8 @@ class RealEstateShowingService:
             created_by=context.user.id,
             contact_id=contact.id if contact else None,
             professional_profile_id=profile.id,
-            started_at=datetime.now(UTC),
+            started_at=self._capture_start(payload.started_at),
+            capture_timezone=payload.capture_timezone,
             status="draft",
             processing_status="not_started",
             consent_ack=payload.consent_ack,
@@ -221,6 +222,20 @@ class RealEstateShowingService:
             contact = await self._optional_contact(workspace_id, existing.contact_id)
             return ShowingRecord(visit=existing, subject=subject, contact=contact)
         return ShowingRecord(visit=visit, subject=subject, contact=contact)
+
+    @staticmethod
+    def _capture_start(reported: datetime | None) -> datetime:
+        """Trust the capture device's clock, but never accept a future tour.
+
+        A queued offline showing must sync no matter what the device clock
+        says, so a skewed future timestamp is clamped rather than rejected —
+        stranding a real recording would be far worse than a wrong date.
+        """
+
+        now = datetime.now(UTC)
+        if reported is None:
+            return now
+        return min(reported, now)
 
     async def update_showing(
         self,
