@@ -133,6 +133,7 @@ class RealEstatePipelineService:
                     timestamp_start=piece.start_ms + offset_ms,
                     timestamp_end=piece.end_ms + offset_ms,
                     confidence=piece.confidence,
+                    speaker=piece.speaker,
                 )
                 for index, piece in enumerate(pieces)
             ]
