@@ -176,6 +176,9 @@ class TranscriptSegmentResponse(BaseModel):
     timestamp_start: float | None
     timestamp_end: float | None
     confidence: float | None
+    # Anonymous voice index within this recording. Null for segments captured
+    # before diarization, which must read as unknown rather than as one voice.
+    speaker: int | None
 
     @classmethod
     def from_segment(cls, segment: TranscriptSegment) -> "TranscriptSegmentResponse":

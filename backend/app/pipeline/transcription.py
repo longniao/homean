@@ -14,6 +14,9 @@ class TranscriptionPiece(BaseModel):
     start_ms: float = Field(ge=0)
     end_ms: float = Field(ge=0)
     confidence: float = Field(ge=0, le=1)
+    # Provider-assigned speaker index. Stable within one recording only, and
+    # anonymous: it separates voices, it does not identify anyone.
+    speaker: int | None = Field(default=None, ge=0)
 
 
 class TranscriptionProvider(ABC):
@@ -41,6 +44,10 @@ class DeepgramProvider(TranscriptionProvider):
             punctuate=True,
             utterances=True,
             smart_format=True,
+            # Who said something is a first-order question once observations
+            # are used as evidence, and it cannot be recovered later from a
+            # recording already transcribed without it.
+            diarize=True,
             request_options={"max_retries": 4, "timeout_in_seconds": 300},
         )
         utterances = getattr(response.results, "utterances", None) or []
@@ -55,9 +62,23 @@ class DeepgramProvider(TranscriptionProvider):
                     start_ms=float(utterance.start or 0) * 1000,
                     end_ms=float(utterance.end or utterance.start or 0) * 1000,
                     confidence=float(utterance.confidence or 0),
+                    speaker=_speaker_index(utterance),
                 )
             )
         return pieces
+
+
+def _speaker_index(utterance: object) -> int | None:
+    """Read the diarized speaker, tolerating a provider that omits it."""
+
+    raw = getattr(utterance, "speaker", None)
+    if raw is None:
+        return None
+    try:
+        index = int(raw)
+    except (TypeError, ValueError):
+        return None
+    return index if index >= 0 else None
 
 
 class FakeTranscriptionProvider(TranscriptionProvider):
