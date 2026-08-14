@@ -43,7 +43,7 @@ async def test_real_estate_renderer_snapshot() -> None:
     assert "@media print" in rendered
     assert "@media (max-width: 640px)" in rendered
     assert hashlib.sha256(rendered.encode("utf-8")).hexdigest() == (
-        "35ddcef864308cb4b9628a8d73a0885194ffbca1b061547f9c3adfa8b135c712"
+        "9979b364ac1ab78151314e3721a4ed61aad2ea9caeec0313ce044544f086f7e5"
     )
 
 
@@ -132,6 +132,17 @@ async def test_empty_sections_state_absence_instead_of_rendering_a_dash() -> Non
     assert rendered.count("None recorded") == 3
     # An empty room list is degenerate rather than informative, so it is omitted.
     assert "Room-by-room observations" not in rendered
+
+
+async def test_actions_precede_the_evidence_that_supports_them() -> None:
+    content = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    renderer = ReportRenderer(FakeStorageProvider(), VerticalConfigService())
+
+    rendered = await renderer.render_html(content, _branding())
+
+    # A reader acts on the summary, the trade-off and the follow-ups; the
+    # room-by-room detail is what backs them up.
+    assert rendered.index("Follow-up items") < rendered.index("Room-by-room")
 
 
 def _jpeg(width: int = 1600, height: int = 1200) -> bytes:
