@@ -145,6 +145,11 @@
       </section>
     </div>
 
+    <section class="panel todo">
+      <h2>{{ labels.follow_ups }}</h2>
+      {% if report.follow_ups %}<ul>{% for bullet in report.follow_ups %}<li>{{ bullet.text }}</li>{% endfor %}</ul>{% else %}<p class="none">{{ labels.none_recorded }}</p>{% endif %}
+    </section>
+
     {% if report.room_by_room %}
     <section>
       <h2>{{ labels.room_by_room }}</h2>
@@ -158,10 +163,6 @@
     </section>
     {% endif %}
 
-    <section class="panel todo">
-      <h2>{{ labels.follow_ups }}</h2>
-      {% if report.follow_ups %}<ul>{% for bullet in report.follow_ups %}<li>{{ bullet.text }}</li>{% endfor %}</ul>{% else %}<p class="none">{{ labels.none_recorded }}</p>{% endif %}
-    </section>
 
     <footer>{{ closing_note() }}</footer>
   </main>
