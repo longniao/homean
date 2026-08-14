@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends
 from app.api.dependencies import get_current_context
 from app.schemas.vertical import (
     VerticalConfigResponse,
+    VerticalConsentResponse,
     VerticalDisplayLabelsResponse,
 )
 from app.services import CurrentContext
@@ -26,5 +27,8 @@ async def get_vertical_config(
         display_labels=VerticalDisplayLabelsResponse(
             zones=pack.display_labels.zones,
             observations=pack.display_labels.observations,
+        ),
+        consent=VerticalConsentResponse(
+            version=pack.consent.version, text=pack.consent.text
         ),
     )

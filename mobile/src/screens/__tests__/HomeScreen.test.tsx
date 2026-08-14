@@ -10,6 +10,7 @@ describe('HomeScreen recording consent', () => {
     const screen = await render(
       <HomeScreen
         account={null}
+        consent={null}
         contacts={[]}
         onLogout={() => undefined}
         onOpenReport={() => undefined}
@@ -31,6 +32,9 @@ describe('HomeScreen recording consent', () => {
     expect(onStart).toHaveBeenCalledWith({
       address: null,
       consentAck: true,
+      // No cached policy in this test, so the wording the agent saw is the
+      // bundled fallback and its version is recorded as unknown.
+      consentTextVersion: null,
       contactId: null,
       subjectId: null,
       title: 'Untitled showing',
@@ -56,6 +60,7 @@ function renderHome(props: Partial<React.ComponentProps<typeof HomeScreen>> = {}
   return render(
     <HomeScreen
       account={null}
+      consent={null}
       contacts={[]}
       onLogout={() => undefined}
       onOpenReport={() => undefined}

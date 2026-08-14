@@ -33,6 +33,20 @@ class ReportTemplate(BaseModel):
     labels: dict[str, str]
 
 
+class ConsentPolicy(BaseModel):
+    """The attestation wording a capture client must show, and its version.
+
+    Versioning exists for evidence: a visit records which wording was agreed
+    to, so the exact text can still be resolved long after it changes.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    version: str = Field(min_length=1)
+    text: str = Field(min_length=1)
+    counsel_review_status: Literal["pending", "reviewed"]
+
+
 class VerticalPack(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -50,6 +64,7 @@ class VerticalPack(BaseModel):
     zone_speech_aliases: dict[str, list[str]] = Field(default_factory=dict)
     prompt_templates: PromptTemplates
     report_template: ReportTemplate
+    consent: ConsentPolicy
 
     @model_validator(mode="after")
     def validate_pack_completeness(self) -> "VerticalPack":
@@ -66,6 +81,12 @@ class VerticalPack(BaseModel):
                 raise ValueError(f"{name} must reference a Jinja2 template")
         if not set(self.report_template.sections) <= set(self.report_template.labels):
             raise ValueError("every report section must have a configured label")
+        # The scope limit is unconditional, so a pack without it would ship
+        # reports that read as inspection findings with nothing saying they
+        # are not.
+        for required in ("scope_disclosure", "recording_disclosure"):
+            if not self.report_template.labels.get(required, "").strip():
+                raise ValueError(f"{required} must be configured")
         return self
 
 

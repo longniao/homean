@@ -13,7 +13,7 @@ export interface SyncStore {
 }
 
 export interface SyncTransport {
-  createShowing(input: { subjectId: string | null; address: string | null; contactId: string | null; consentAck?: boolean; captureClientId?: string; startedAt?: number; captureTimezone?: string }): Promise<{ id: string }>;
+  createShowing(input: { subjectId: string | null; address: string | null; contactId: string | null; consentAck?: boolean; consentTextVersion?: string | null; captureClientId?: string; startedAt?: number; captureTimezone?: string }): Promise<{ id: string }>;
   presignMedia(visitId: string, media: { clientId: string; mediaId?: string; kind: MediaKind; contentType: string; timestampOffsetMs: number }): Promise<{ media_id: string; upload_url: string; headers: Record<string, string>; expires_at?: string; expires_in?: number }>;
   uploadFile(url: string, headers: Record<string, string>, fileUri: string): Promise<void>;
   completeMedia(visitId: string, mediaId: string): Promise<void>;
@@ -79,6 +79,7 @@ export class SyncEngine {
           startedAt: current.startedAt,
           captureTimezone: this.timezone(),
           ...(current.consentAck === undefined ? {} : { consentAck: current.consentAck }),
+          ...(current.consentTextVersion ? { consentTextVersion: current.consentTextVersion } : {}),
         };
         remoteId = (await this.transport.createShowing(input)).id;
         // If a user mutation occurred while the request was in flight, leave

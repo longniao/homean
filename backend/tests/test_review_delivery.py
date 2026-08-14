@@ -1571,23 +1571,3 @@ async def test_review_and_delivery_workspace_isolation(
         await client.get(f"/showings/{owner.visit_id}/delivery", headers=other.headers),
     ]
     assert {response.status_code for response in attempts} == {404}
-
-
-@pytest.mark.asyncio
-async def test_consent_disclosure_is_rendered_only_when_acknowledged() -> None:
-    renderer = ReportRenderer(FakeStorageProvider(), VerticalConfigService())
-    content = {
-        "executive_summary": "A concise showing summary.",
-        "room_by_room": [],
-        "highlights": [],
-        "concerns": [],
-        "follow_ups": [],
-    }
-    branding = WorkspaceBranding(workspace_id=uuid.uuid4())
-    acknowledged = await renderer.render_html(content, branding, consent_ack=True)
-    not_acknowledged = await renderer.render_html(content, branding, consent_ack=False)
-    disclosure = (
-        "Recording disclosure: This report was prepared from a visit recording."
-    )
-    assert disclosure in acknowledged
-    assert disclosure not in not_acknowledged

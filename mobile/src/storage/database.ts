@@ -21,6 +21,7 @@ async function database(): Promise<SQLite.SQLiteDatabase> {
       sync_state TEXT NOT NULL, processing_status TEXT, finish_requested INTEGER NOT NULL DEFAULT 0,
       last_error TEXT, updated_at INTEGER NOT NULL, generation INTEGER NOT NULL DEFAULT 0
       , consent_ack INTEGER NOT NULL DEFAULT 0
+      , consent_text_version TEXT
     );
     CREATE TABLE IF NOT EXISTS local_media (
       id TEXT PRIMARY KEY NOT NULL, showing_id TEXT NOT NULL REFERENCES local_showings(id) ON DELETE CASCADE,
@@ -46,6 +47,7 @@ async function database(): Promise<SQLite.SQLiteDatabase> {
     CREATE INDEX IF NOT EXISTS idx_local_media_showing ON local_media(showing_id, created_at);
   `);
   try { await db.execAsync('ALTER TABLE local_showings ADD COLUMN consent_ack INTEGER NOT NULL DEFAULT 0'); } catch { /* already present */ }
+  try { await db.execAsync('ALTER TABLE local_showings ADD COLUMN consent_text_version TEXT'); } catch { /* already present */ }
   try { await db.execAsync('ALTER TABLE local_showings ADD COLUMN generation INTEGER NOT NULL DEFAULT 0'); } catch { /* already present */ }
   try { await db.execAsync('ALTER TABLE local_media ADD COLUMN upload_expires_at INTEGER'); } catch { /* already present */ }
   try { await db.execAsync('ALTER TABLE local_media ADD COLUMN recovery_key TEXT'); } catch { /* already present */ }
@@ -66,7 +68,7 @@ type ShowingRow = {
   id: string; remote_id: string | null; contact_id: string | null; subject_id: string | null; address: string | null;
   title: string; started_at: number; ended_at: number | null; elapsed_ms: number; sync_state: SyncState;
   processing_status: string | null; finish_requested: number; last_error: string | null; updated_at: number;
-  generation: number; consent_ack: number;
+  generation: number; consent_ack: number; consent_text_version: string | null;
 };
 type MediaRow = {
   id: string; showing_id: string; remote_media_id: string | null; kind: MediaKind; file_uri: string;
@@ -84,7 +86,7 @@ const toShowing = (row: ShowingRow): LocalShowing => ({
   title: row.title, startedAt: row.started_at, endedAt: row.ended_at, elapsedMs: row.elapsed_ms,
   syncState: row.sync_state, processingStatus: row.processing_status, finishRequested: Boolean(row.finish_requested),
   lastError: row.last_error, updatedAt: row.updated_at, generation: row.generation,
-  consentAck: Boolean(row.consent_ack),
+  consentAck: Boolean(row.consent_ack), consentTextVersion: row.consent_text_version,
 });
 const toMedia = (row: MediaRow): LocalMedia => ({
   id: row.id, showingId: row.showing_id, remoteMediaId: row.remote_media_id, kind: row.kind,
@@ -101,9 +103,9 @@ const toMarker = (row: MarkerRow): LocalMarker => ({
 });
 
 export class CaptureRepository implements SyncStore {
-  async createShowing(input: { contactId: string | null; subjectId: string | null; address: string | null; title: string; consentAck?: boolean }): Promise<LocalShowing> {
+  async createShowing(input: { contactId: string | null; subjectId: string | null; address: string | null; title: string; consentAck?: boolean; consentTextVersion?: string | null }): Promise<LocalShowing> {
     const now = Date.now(); const id = Crypto.randomUUID(); const db = await database();
-    await db.runAsync('INSERT INTO local_showings (id, contact_id, subject_id, address, title, started_at, sync_state, updated_at, generation, consent_ack) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', id, input.contactId, input.subjectId, input.address, input.title, now, 'local', now, 0, input.consentAck ? 1 : 0);
+    await db.runAsync('INSERT INTO local_showings (id, contact_id, subject_id, address, title, started_at, sync_state, updated_at, generation, consent_ack, consent_text_version) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', id, input.contactId, input.subjectId, input.address, input.title, now, 'local', now, 0, input.consentAck ? 1 : 0, input.consentTextVersion ?? null);
     return (await this.getShowing(id))!;
   }
   async getShowing(id: string): Promise<LocalShowing | null> {

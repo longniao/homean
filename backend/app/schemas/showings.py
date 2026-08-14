@@ -27,6 +27,10 @@ class ShowingCreate(BaseModel):
     address: str | None = Field(default=None, min_length=1, max_length=1000)
     contact_id: uuid.UUID | None = None
     consent_ack: bool = False
+    # The version of the consent wording the client actually displayed. Absent
+    # when a client attested from bundled text it could not verify against the
+    # server, which is recorded as unknown rather than assumed current.
+    consent_text_version: str | None = Field(default=None, min_length=1, max_length=64)
     capture_client_id: uuid.UUID | None = None
     # Offline captures reach the server long after the tour, so the client
     # reports when it actually happened and in which zone.  Both are optional;

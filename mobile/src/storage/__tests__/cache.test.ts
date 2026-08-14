@@ -62,6 +62,7 @@ describe('offline reference cache', () => {
     const config = {
       zoneTaxonomy: ['primary_bedroom'], observationSchema: ['concern'],
       displayLabels: { zones: { primary_bedroom: 'Primary bedroom' }, observations: { concern: 'Buyer concern' } },
+  consent: null,
     };
     await writeVerticalConfig(config);
     repository.readCache.mockResolvedValue(config);

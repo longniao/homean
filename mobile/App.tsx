@@ -10,10 +10,10 @@ import { HomeScreen } from './src/screens/HomeScreen';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { RecordingScreen } from './src/screens/RecordingScreen';
 import { ReportScreen } from './src/screens/ReportScreen';
-import { clearCache, readDirectory, writeDirectory } from './src/storage/cache';
+import { clearCache, readDirectory, readVerticalConfig, writeDirectory, writeVerticalConfig } from './src/storage/cache';
 import { captureRepository } from './src/storage/database';
 import { SyncEngine, syncStateFromProcessing } from './src/sync/engine';
-import type { Account, Contact, LocalShowing, Property, ShowingSummary } from './src/types';
+import type { Account, ConsentPolicy, Contact, LocalShowing, Property, ShowingSummary } from './src/types';
 
 type Screen = { name: 'home' } | { name: 'recording'; showing: LocalShowing; recovered: boolean } | { name: 'report'; visitId: string };
 
@@ -22,6 +22,7 @@ export default function App() {
   const [localShowings, setLocalShowings] = useState<LocalShowing[]>([]); const [remoteShowings, setRemoteShowings] = useState<ShowingSummary[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]); const [properties, setProperties] = useState<Property[]>([]); const [refreshing, setRefreshing] = useState(false);
   const [account, setAccount] = useState<Account | null>(null); const accountLoaded = useRef(false);
+  const [consent, setConsent] = useState<ConsentPolicy | null>(null);
 
   const engine = useMemo(() => new SyncEngine(captureRepository, api, {
     isOnline: async () => { const state = await Network.getNetworkStateAsync(); return Boolean(state.isConnected && state.isInternetReachable !== false); },
@@ -38,6 +39,10 @@ export default function App() {
         // Mirror the picker data so the next cold start can offer clients and
         // properties without a network round trip.
         await writeDirectory({ contacts: nextContacts, properties: nextProperties });
+        // The attestation wording is server-owned; mirror it so an offline
+        // showing still displays and records the authoritative version.
+        const verticalConfig = await api.getVerticalConfig();
+        setConsent(verticalConfig.consent); await writeVerticalConfig(verticalConfig);
         for (const local of locals) {
           const remote = showings.find((item) => item.id === local.remoteId); if (!remote) continue;
           const syncState = syncStateFromProcessing(remote.processingStatus, local.syncState);
@@ -54,12 +59,13 @@ export default function App() {
   }, [engine]);
 
   useEffect(() => {
-    api.onSessionExpired(() => { setAuthenticated(false); setAccount(null); setContacts([]); setProperties([]); setRemoteShowings([]); setScreen({ name: 'home' }); void clearCache(); });
+    api.onSessionExpired(() => { setAuthenticated(false); setAccount(null); setContacts([]); setProperties([]); setRemoteShowings([]); setConsent(null); setScreen({ name: 'home' }); void clearCache(); });
     return () => { api.onSessionExpired(null); };
   }, []);
 
   useEffect(() => { void (async () => {
-    const [tokens, storedAccount, directory] = await Promise.all([getTokens(), getAccount(), readDirectory()]);
+    const [tokens, storedAccount, directory, cachedConfig] = await Promise.all([getTokens(), getAccount(), readDirectory(), readVerticalConfig()]);
+    if (cachedConfig) setConsent(cachedConfig.consent);
     setAuthenticated(Boolean(tokens)); setAccount(storedAccount);
     if (directory) { setContacts(directory.contacts); setProperties(directory.properties); }
     const active = await captureRepository.activeShowing();
@@ -89,7 +95,7 @@ export default function App() {
   if (!authenticated) return <><LoginScreen onAuthenticated={() => { accountLoaded.current = false; setAuthenticated(true); void getAccount().then(setAccount); void refresh(); }} /><StatusBar style="dark" /></>;
   if (screen.name === 'recording') return <><RecordingScreen showing={screen.showing} recovered={screen.recovered} onFinished={() => { setScreen({ name: 'home' }); void refresh(); }} /><StatusBar style="dark" /></>;
   if (screen.name === 'report') return <><ReportScreen visitId={screen.visitId} onBack={() => setScreen({ name: 'home' })} /><StatusBar style="dark" /></>;
-  return <><HomeScreen showings={recent} contacts={contacts} properties={properties} account={account} refreshing={refreshing} onRefresh={() => { void refresh(); }} onLogout={() => { void api.logout(); void clearCache(); accountLoaded.current = false; setAccount(null); setContacts([]); setProperties([]); setRemoteShowings([]); setAuthenticated(false); }} onOpenReport={(visitId) => setScreen({ name: 'report', visitId })} onStart={(input) => { void (async () => { const showing = await captureRepository.createShowing(input); setLocalShowings((items) => [showing, ...items]); setScreen({ name: 'recording', showing, recovered: false }); })(); }} /><StatusBar style="dark" /></>;
+  return <><HomeScreen showings={recent} contacts={contacts} properties={properties} account={account} consent={consent} refreshing={refreshing} onRefresh={() => { void refresh(); }} onLogout={() => { void api.logout(); void clearCache(); accountLoaded.current = false; setAccount(null); setContacts([]); setProperties([]); setRemoteShowings([]); setConsent(null); setAuthenticated(false); }} onOpenReport={(visitId) => setScreen({ name: 'report', visitId })} onStart={(input) => { void (async () => { const showing = await captureRepository.createShowing(input); setLocalShowings((items) => [showing, ...items]); setScreen({ name: 'recording', showing, recovered: false }); })(); }} /><StatusBar style="dark" /></>;
 }
 
 const styles = StyleSheet.create({ boot: { flex: 1, backgroundColor: '#F5F3EA' } });

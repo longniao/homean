@@ -33,6 +33,9 @@ describe('ApiClient vertical config', () => {
     await expect(new ApiClient().getVerticalConfig()).resolves.toEqual({
       zoneTaxonomy: ['primary_bedroom'], observationSchema: ['concern'],
       displayLabels: { zones: { primary_bedroom: 'Primary bedroom' }, observations: { concern: 'Buyer concern' } },
+      // An API that predates versioned consent parses to a null policy rather
+      // than failing, so the client falls back to its bundled wording.
+      consent: null,
     });
     expect(fetchMock).toHaveBeenCalledWith('http://localhost:8000/vertical-config', expect.objectContaining({
       headers: expect.objectContaining({ Authorization: 'Bearer access-token' }),

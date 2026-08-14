@@ -3,13 +3,13 @@ import { Alert, Modal, Pressable, RefreshControl, ScrollView, StyleSheet, Text, 
 import { useTranslation } from 'react-i18next';
 import { Card, PrimaryButton, SecondaryButton } from '../components/ui';
 import { colors } from '../theme';
-import type { Account, Contact, LocalShowing, Property } from '../types';
+import type { Account, ConsentPolicy, Contact, LocalShowing, Property } from '../types';
 
 interface Props {
   showings: LocalShowing[]; contacts: Contact[]; properties: Property[]; refreshing: boolean;
-  account: Account | null;
+  account: Account | null; consent: ConsentPolicy | null;
   onRefresh: () => void; onLogout: () => void;
-  onStart: (input: { contactId: string | null; subjectId: string | null; address: string | null; title: string; consentAck: boolean }) => void;
+  onStart: (input: { contactId: string | null; subjectId: string | null; address: string | null; title: string; consentAck: boolean; consentTextVersion: string | null }) => void;
   onOpenReport: (remoteId: string) => void;
 }
 
@@ -31,7 +31,7 @@ export function HomeScreen(props: Props) {
   };
   const begin = () => {
     const property = props.properties.find((item) => item.id === subjectId);
-    props.onStart({ contactId, subjectId, address: subjectId ? null : address.trim() || null, title: property?.displayName ?? (address.trim() || t('home.untitled')), consentAck });
+    props.onStart({ contactId, subjectId, address: subjectId ? null : address.trim() || null, title: property?.displayName ?? (address.trim() || t('home.untitled')), consentAck, consentTextVersion: props.consent?.version ?? null });
     setSetup(false); setQuery(''); setContactId(null); setSubjectId(null); setAddress(''); setConsentAck(false);
   };
   return <View style={styles.page}>
@@ -56,7 +56,7 @@ export function HomeScreen(props: Props) {
         <Text style={styles.label}>{t('setup.property')}</Text><Choice selected={subjectId === null && !address} label={t('setup.noProperty')} onPress={() => { setSubjectId(null); setAddress(''); }} />
         {properties.map((item) => <Choice key={item.id} selected={subjectId === item.id} label={`${item.displayName} · ${item.address}`} onPress={() => { setSubjectId(item.id); setAddress(''); }} />)}
         <Text style={styles.label}>{t('setup.address')}</Text><TextInput style={styles.input} placeholder={t('setup.addressPlaceholder')} value={address} onChangeText={(value) => { setAddress(value); if (value) setSubjectId(null); }} />
-        <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: consentAck }} onPress={() => setConsentAck((value) => !value)} style={styles.consent}><View style={[styles.checkbox, consentAck && styles.checkboxChecked]} /><Text style={styles.consentText}>{t('setup.consent')}</Text></Pressable>
+        <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: consentAck }} onPress={() => setConsentAck((value) => !value)} style={styles.consent}><View style={[styles.checkbox, consentAck && styles.checkboxChecked]} /><Text style={styles.consentText}>{props.consent?.text ?? t('setup.consent')}</Text></Pressable>
         <PrimaryButton label={t('setup.begin')} onPress={begin} style={styles.begin} disabled={!consentAck} />
       </ScrollView>
     </Modal>

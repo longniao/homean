@@ -20,6 +20,9 @@ const verticalConfigSchema = z.object({
     zones: z.record(z.string(), z.string()),
     observations: z.record(z.string(), z.string()),
   }),
+  // Cached so an offline showing can still display the authoritative consent
+  // wording rather than falling back to the bundled copy.
+  consent: z.object({ version: z.string(), text: z.string() }).nullable().catch(null),
 });
 const bulletSchema = z.object({ text: z.string(), observation_ids: z.array(z.string()) });
 const showingDetailSchema = z.object({
