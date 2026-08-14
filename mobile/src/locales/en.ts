@@ -29,6 +29,7 @@ export const en = {
     cameraPermission: 'Camera access is required to attach photos or videos.', video: 'Video',
     startVideo: 'Record video', stopVideo: 'Stop video', videoSaved: 'Video saved',
     tagged: 'Voice tag saved', photoSaved: 'Photo saved', recovering: 'Recovering the previous audio segment…',
+    photoHint: 'Say the room name, then take the photo — that is how each photo lands in the right room of the report.',
     notificationPermission: 'Android notification access is required to keep showing audio recording active in the background. Recording did not start.',
     recoveryFailed: 'Homean could not safely recover the previous audio segment. Keep this showing open and try again before continuing.',
   },

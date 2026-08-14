@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import (
     Observation,
+    RawMedia,
     Report,
     ReportRevision,
     Subject,
@@ -248,6 +249,25 @@ class ReviewRepository:
                 WorkspaceBranding.workspace_id == workspace_id
             )
         )
+
+    async def placed_photos(
+        self, workspace_id: uuid.UUID, visit_id: uuid.UUID
+    ) -> list[RawMedia]:
+        """Uploaded photos that were placed in a room, in capture order."""
+
+        result = await self.session.scalars(
+            select(RawMedia)
+            .join(Visit, Visit.id == RawMedia.visit_id)
+            .where(
+                RawMedia.visit_id == visit_id,
+                RawMedia.type == "photo",
+                RawMedia.status == "uploaded",
+                RawMedia.zone_id.is_not(None),
+                Visit.workspace_id == workspace_id,
+            )
+            .order_by(RawMedia.timestamp_offset_ms, RawMedia.created_at, RawMedia.id)
+        )
+        return list(result)
 
     async def get_subject(
         self, workspace_id: uuid.UUID, subject_id: uuid.UUID | None

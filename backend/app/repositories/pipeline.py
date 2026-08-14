@@ -44,6 +44,22 @@ class PipelineRepository:
         )
         return list(result)
 
+    async def uploaded_photos(
+        self, workspace_id: uuid.UUID, visit_id: uuid.UUID
+    ) -> list[RawMedia]:
+        result = await self.session.scalars(
+            select(RawMedia)
+            .join(Visit, Visit.id == RawMedia.visit_id)
+            .where(
+                RawMedia.visit_id == visit_id,
+                RawMedia.type == "photo",
+                RawMedia.status == "uploaded",
+                Visit.workspace_id == workspace_id,
+            )
+            .order_by(RawMedia.timestamp_offset_ms, RawMedia.created_at, RawMedia.id)
+        )
+        return list(result)
+
     async def media_has_transcript(
         self, workspace_id: uuid.UUID, visit_id: uuid.UUID, media_id: uuid.UUID
     ) -> bool:

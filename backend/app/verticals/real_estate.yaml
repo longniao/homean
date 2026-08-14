@@ -30,6 +30,24 @@ observation_schema:
   - general
 prompt_version: re_v1
 report_template_id: real_estate_v1
+# Spoken cues that place a photo in a room. The agent names the room, then
+# shoots. Longer phrases win, so "primary bedroom" never collapses to "bedroom".
+# Display labels and the zone key itself are always accepted; list only extras.
+zone_speech_aliases:
+  kitchen: [kitchen]
+  living_room: [living room, lounge, front room, sitting room, family room]
+  dining_room: [dining room, dining area]
+  primary_bedroom: [primary bedroom, master bedroom, main bedroom, primary suite]
+  bedroom: [bedroom, second bedroom, guest room, spare room]
+  bathroom: [bathroom, ensuite, powder room, washroom]
+  basement: [basement, cellar, lower level]
+  garage: [garage, carport]
+  backyard: [backyard, back yard, back garden, rear yard]
+  front_exterior: [front exterior, front yard, curb, front of the house]
+  balcony: [balcony, terrace, deck, patio]
+  laundry: [laundry, laundry room, utility room, mud room]
+  office: [office, study, den]
+  hallway: [hallway, hall, landing, entryway, foyer]
 display_labels:
   zones:
     kitchen: Kitchen

@@ -369,6 +369,23 @@ class RawMedia(UUIDTimestampMixin, Base):
         DateTime(timezone=True)
     )
     size_bytes: Mapped[int | None] = mapped_column(BigInteger)
+    # The room this capture belongs to, and how that was decided. Cleared when
+    # reprocessing rebuilds zones, so a stale link never survives a re-run.
+    # use_alter breaks the metadata sort cycle this closes: zones reference
+    # transcript segments, which reference raw media, which now references
+    # zones. The constraint is emitted separately rather than inline.
+    zone_id: Mapped[uuid.UUID | None] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey(
+            "zones.id",
+            ondelete="SET NULL",
+            use_alter=True,
+            name="fk_raw_media_zone_id_zones",
+        ),
+        nullable=True,
+        index=True,
+    )
+    zone_source: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
 class VisitMarker(UUIDTimestampMixin, Base):

@@ -26,6 +26,9 @@ export function RecordingControls({ state, onResume, onPhoto, onVideo, onVoiceTa
           <Pressable accessibilityRole="button" accessibilityLabel={t('recording.voiceTag')} style={styles.tag} onPress={onVoiceTag}><Text style={styles.icon}>＋</Text><Text>{t('recording.voiceTag')}</Text></Pressable>
         </View>
       )}
+      {/* Photos are filed by the room named on the recording, so the habit has
+          to be taught where the shutter is. */}
+      {!interrupted && <Text style={styles.hint}>{t('recording.photoHint')}</Text>}
       <Pressable accessibilityRole="button" style={styles.end} onPress={onEnd}><Text style={styles.endText}>{t('recording.end')}</Text></Pressable>
     </View>
   );
@@ -33,6 +36,7 @@ export function RecordingControls({ state, onResume, onPhoto, onVideo, onVoiceTa
 
 const styles = StyleSheet.create({
   wrap: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, padding: 24 },
+  hint: { color: colors.muted, textAlign: 'center', lineHeight: 20, paddingHorizontal: 12 },
   pulse: { width: 18, height: 18, borderRadius: 9, backgroundColor: colors.red },
   status: { fontSize: 18, color: colors.muted }, timer: { fontSize: 64, fontWeight: '300', color: colors.ink, fontVariant: ['tabular-nums'] },
   actions: { flexDirection: 'row', gap: 8, marginTop: 24 },
