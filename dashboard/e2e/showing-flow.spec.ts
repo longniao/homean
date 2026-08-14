@@ -153,7 +153,13 @@ test("captures without a property and attaches one before confirmation", async (
       return route.fulfill({ json: [] });
     }
     if (path === "/showings" && route.request().method() === "POST") {
-      expect(route.request().postDataJSON()).toEqual({ contact_id: null, consent_ack: true });
+      // The browser zone rides along so the report prints the local tour date;
+      // its value depends on where the test runs.
+      expect(route.request().postDataJSON()).toEqual({
+        contact_id: null,
+        consent_ack: true,
+        capture_timezone: expect.any(String),
+      });
       return route.fulfill({ json: summary });
     }
     if (/^\/showings\/[^/]+\/media\/presign$/.test(path)) {

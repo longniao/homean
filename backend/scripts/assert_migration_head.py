@@ -5,7 +5,7 @@ from pathlib import Path
 from alembic.config import Config
 from alembic.script import ScriptDirectory
 
-EXPECTED_ALEMBIC_HEAD = "20260811_0015"
+EXPECTED_ALEMBIC_HEAD = "20260813_0016"
 
 
 def main() -> None:
