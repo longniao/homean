@@ -102,7 +102,7 @@ export class SyncEngine {
       if (!current || current.generation !== generation) return;
       const media = await this.store.mediaForShowing(snapshot.id);
       const markers = await this.store.markersForShowing(snapshot.id);
-      if (media.some((item) => item.state !== 'completed') || markers.some((item) => item.state !== 'synced')) return;
+      if (media.some((item) => item.state !== 'completed' && item.state !== 'rejected') || markers.some((item) => item.state !== 'synced')) return;
 
       if (current.finishRequested) {
         if (!media.some((item) => item.kind === 'audio' && item.state === 'completed')) {
@@ -129,7 +129,7 @@ export class SyncEngine {
   private async syncPendingMedia(visitId: string, showingId: string): Promise<void> {
     for (;;) {
       const media = (await this.store.mediaForShowing(showingId)).sort((a, b) => a.createdAt - b.createdAt);
-      const pending = media.filter((item) => item.state !== 'completed');
+      const pending = media.filter((item) => item.state !== 'completed' && item.state !== 'rejected');
       if (!pending.length) return;
       for (const item of pending) {
         if (item.nextAttemptAt > this.now()) throw new DeferredRetryError();
@@ -179,6 +179,13 @@ export class SyncEngine {
       await this.transport.completeMedia(visitId, mediaId);
       await this.store.patchMedia(item.id, { state: 'completed', nextAttemptAt: 0, uploadExpiresAt });
     } catch (error) {
+      if (this.isPermanentRejection(error)) {
+        // The server will never accept this file — oversized, wrong type. It
+        // stays on the device for inspection, but retrying forever would keep
+        // the whole showing from ever finishing over one bad capture.
+        await this.store.patchMedia(item.id, { state: 'rejected', nextAttemptAt: 0 });
+        return;
+      }
       const attempts = item.attemptCount + 1;
       await this.store.patchMedia(item.id, {
         state: 'failed', attemptCount: attempts,
@@ -186,6 +193,14 @@ export class SyncEngine {
       });
       throw error;
     }
+  }
+
+  /** 4xx the server will repeat forever; auth and rate limits are not that. */
+  private isPermanentRejection(error: unknown): boolean {
+    const status = (error as { status?: unknown })?.status;
+    if (typeof status !== 'number') return false;
+    if (status === 401 || status === 403 || status === 408 || status === 429) return false;
+    return status >= 400 && status < 500;
   }
 
   private async presignMedia(visitId: string, item: LocalMedia, mediaId?: string): Promise<{ mediaId: string; uploadUrl: string; headers: Record<string, string>; uploadExpiresAt: number }> {

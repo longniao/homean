@@ -1,5 +1,5 @@
 export type SyncState = 'local' | 'syncing' | 'synced' | 'processing' | 'ready' | 'failed';
-export type MediaState = 'queued' | 'presigned' | 'uploading' | 'uploaded' | 'completed' | 'failed';
+export type MediaState = 'queued' | 'presigned' | 'uploading' | 'uploaded' | 'completed' | 'failed' | 'rejected';
 export type MediaKind = 'audio' | 'photo' | 'video';
 export type MarkerState = 'queued' | 'syncing' | 'synced' | 'failed';
 
