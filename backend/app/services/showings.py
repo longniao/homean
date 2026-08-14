@@ -191,6 +191,10 @@ class RealEstateShowingService:
             status="draft",
             processing_status="not_started",
             consent_ack=payload.consent_ack,
+            consent_text_version=(
+                payload.consent_text_version if payload.consent_ack else None
+            ),
+            consent_recorded_at=datetime.now(UTC) if payload.consent_ack else None,
             capture_client_id=payload.capture_client_id,
         )
         self._repository.add(visit)

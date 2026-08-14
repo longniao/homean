@@ -49,6 +49,7 @@ const detail: ShowingDetail = {
 const config: VerticalConfig = {
   zoneTaxonomy: ['primary_bedroom'], observationSchema: ['concern'],
   displayLabels: { zones: { primary_bedroom: 'Primary bedroom' }, observations: { concern: 'Buyer concern' } },
+  consent: null,
 };
 
 describe('ReportScreen vertical labels', () => {

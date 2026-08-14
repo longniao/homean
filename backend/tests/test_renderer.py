@@ -43,7 +43,7 @@ async def test_real_estate_renderer_snapshot() -> None:
     assert "@media print" in rendered
     assert "@media (max-width: 640px)" in rendered
     assert hashlib.sha256(rendered.encode("utf-8")).hexdigest() == (
-        "0e97c55808d406f8fe2dc94732dbd0986bf62304e2d996ba1c3672e88d3b6ff9"
+        "35ddcef864308cb4b9628a8d73a0885194ffbca1b061547f9c3adfa8b135c712"
     )
 
 

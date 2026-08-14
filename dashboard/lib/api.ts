@@ -158,6 +158,9 @@ export const verticalConfigSchema = z.object({
     zones: z.record(z.string(), z.string()),
     observations: z.record(z.string(), z.string()),
   }),
+  // Optional so an older API still parses; the form then falls back to its
+  // bundled wording and records the version as unknown.
+  consent: z.object({ version: z.string(), text: z.string() }).optional(),
 });
 
 export const deliverySchema = z.object({
@@ -347,7 +350,7 @@ export const api = {
     },
     listAll: (filters: ShowingFilters = {}) => listAllShowings(filters),
     get: (id: string) => request(`/showings/${id}`, showingDetailSchema),
-    create: (body: { subject_id?: string; address?: string; contact_id?: string | null; consent_ack: boolean }) =>
+    create: (body: { subject_id?: string; address?: string; contact_id?: string | null; consent_ack: boolean; consent_text_version?: string }) =>
       // The report prints the tour date, so it must be the browser's calendar
       // date rather than the server's UTC one.
       request("/showings", showingSchema, json("POST", { ...body, capture_timezone: browserTimezone() })),

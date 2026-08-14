@@ -98,7 +98,10 @@
 </head>
 <body>
   {%- macro closing_note() -%}
-  {{ labels.generated_by }}{% if consent_ack %}<span class="disclosure">{{ labels.consent_disclosure }}</span>{% endif %}
+  {{ labels.generated_by }}
+  {#- The scope limit is unconditional: a report can be mistaken for an
+      inspection finding whether or not the visit was recorded. -#}
+  <span class="disclosure">{{ labels.scope_disclosure }}{% if consent_ack %} {{ labels.recording_disclosure }}{% endif %}</span>
   {%- endmacro -%}
   <div class="pagefoot">{{ closing_note() }}</div>
   <main class="report">

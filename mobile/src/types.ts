@@ -16,10 +16,12 @@ export interface VerticalDisplayLabels {
   zones: Record<string, string>;
   observations: Record<string, string>;
 }
+export interface ConsentPolicy { version: string; text: string }
 export interface VerticalConfig {
   zoneTaxonomy: string[];
   observationSchema: string[];
   displayLabels: VerticalDisplayLabels;
+  consent: ConsentPolicy | null;
 }
 export interface Observation {
   id: string; zoneId: string | null; category: string; content: string;
@@ -48,6 +50,7 @@ export interface LocalShowing {
   finishRequested: boolean; lastError: string | null; updatedAt: number;
   generation: number;
   consentAck?: boolean;
+  consentTextVersion?: string | null;
 }
 export interface LocalMedia {
   id: string; showingId: string; remoteMediaId: string | null; kind: MediaKind;

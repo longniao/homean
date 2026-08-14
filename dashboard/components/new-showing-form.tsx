@@ -27,6 +27,9 @@ export function NewShowingForm() {
   const toast = useToast();
   const properties = useQuery({ queryKey: ["properties"], queryFn: api.properties.list });
   const contacts = useQuery({ queryKey: ["contacts"], queryFn: api.contacts.list });
+  // The attestation wording is server-owned so the visit can record which
+  // text was agreed to, not merely that something was.
+  const vertical = useQuery({ queryKey: ["vertical-config"], queryFn: api.vertical });
   const [propertyQuery, setPropertyQuery] = useState("");
   const [subjectId, setSubjectId] = useState("");
   const [propertySelection, setPropertySelection] = useState<PropertySelection>("assigned");
@@ -87,6 +90,7 @@ export function NewShowingForm() {
             : { address: propertyQuery.trim() }),
         contact_id: contactId || null,
         consent_ack: consentAck,
+        ...(vertical.data?.consent ? { consent_text_version: vertical.data.consent.version } : {}),
       });
       for (let index = 0; index < uploads.length; index += 1) {
         const item = uploads[index];
@@ -305,7 +309,7 @@ export function NewShowingForm() {
               required
               type="checkbox"
             />
-            <span className="text-sm font-semibold leading-6 text-stone-800">{t("consentLabel")}</span>
+            <span className="text-sm font-semibold leading-6 text-stone-800">{vertical.data?.consent?.text ?? t("consentLabel")}</span>
           </label>
           {consentError && <p className="mt-2 text-sm text-red-700" id="consent-error" role="alert">{consentError}</p>}
         </fieldset>

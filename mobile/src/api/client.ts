@@ -35,6 +35,9 @@ export const verticalConfigSchema = z.object({
     zones: z.record(z.string(), z.string()),
     observations: z.record(z.string(), z.string()),
   }),
+  // Optional so an older API still parses; the client then falls back to its
+  // bundled wording and records the version as unknown.
+  consent: z.object({ version: z.string(), text: z.string() }).optional(),
 });
 const showingSchema = z.object({
   id: z.string(), status: z.string(), processing_status: z.string(), created_at: z.string(),
@@ -71,7 +74,7 @@ function accountFromWire(value: z.infer<typeof meSchema>): Account {
   };
 }
 function verticalConfigFromWire(value: z.infer<typeof verticalConfigSchema>): VerticalConfig {
-  return { zoneTaxonomy: value.zone_taxonomy, observationSchema: value.observation_schema, displayLabels: value.display_labels };
+  return { zoneTaxonomy: value.zone_taxonomy, observationSchema: value.observation_schema, displayLabels: value.display_labels, consent: value.consent ?? null };
 }
 
 async function responseDetail(response: Response): Promise<string> {
@@ -172,9 +175,10 @@ export class ApiClient {
     const body = z.object({ items: z.array(showingSchema) }).parse(await (await this.request('/showings?limit=50')).json());
     return body.items.map(showingFromWire);
   }
-  async createShowing(input: { subjectId: string | null; address: string | null; contactId: string | null; consentAck?: boolean; captureClientId?: string; startedAt?: number; captureTimezone?: string }): Promise<ShowingSummary> {
-    const payload: { subject_id?: string; address?: string; contact_id: string | null; consent_ack?: boolean; capture_client_id?: string; started_at?: string; capture_timezone?: string } = { contact_id: input.contactId };
+  async createShowing(input: { subjectId: string | null; address: string | null; contactId: string | null; consentAck?: boolean; consentTextVersion?: string | null; captureClientId?: string; startedAt?: number; captureTimezone?: string }): Promise<ShowingSummary> {
+    const payload: { subject_id?: string; address?: string; contact_id: string | null; consent_ack?: boolean; consent_text_version?: string; capture_client_id?: string; started_at?: string; capture_timezone?: string } = { contact_id: input.contactId };
     if (input.consentAck !== undefined) payload.consent_ack = input.consentAck;
+    if (input.consentTextVersion) payload.consent_text_version = input.consentTextVersion;
     if (input.captureClientId !== undefined) payload.capture_client_id = input.captureClientId;
     // An offline showing reaches the server long after the tour, so the report
     // date has to come from when it was actually captured, not from sync time.

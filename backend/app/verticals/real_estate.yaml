@@ -30,6 +30,19 @@ observation_schema:
   - general
 prompt_version: re_v1
 report_template_id: real_estate_v1
+consent:
+  # Clients render this exact wording and send the version back, so a visit
+  # records which text was attested to rather than only that something was.
+  # Bump the version whenever the wording changes; old visits keep resolving
+  # to the wording their agent actually saw.
+  version: re_consent_v1
+  text: >-
+    I attest that I have the consent of every party required to record this
+    showing.
+  # PLACEHOLDER WORDING. This value is asserted by a test so the placeholder
+  # cannot ship silently: set it to "reviewed" only when counsel has approved
+  # consent.text, scope_disclosure and recording_disclosure together.
+  counsel_review_status: pending
 # Spoken cues that place a photo in a room. The agent names the room, then
 # shoots. Longer phrases win, so "primary bedroom" never collapses to "bedroom".
 # Display labels and the zone key itself are always accepted; list only extras.
@@ -101,4 +114,14 @@ report_template:
     toured_on: Toured
     none_recorded: None recorded
     generated_by: Prepared with Homean
-    consent_disclosure: "Recording disclosure: This report was prepared from a visit recording. TODO: counsel review required."
+    # Two distinct disclosures. The scope limit applies to every report because
+    # the risk of it being read as an inspection finding exists whether or not
+    # anything was recorded. The recording notice applies only when the visit
+    # carries a recording attestation.
+    # PLACEHOLDER WORDING — see consent.counsel_review_status below.
+    scope_disclosure: >-
+      This report summarizes observations and notes from a property tour. It is
+      not a professional home inspection, appraisal, legal opinion, or property
+      condition assessment, and it should not be relied on as one.
+    recording_disclosure: >-
+      This report was prepared from a recording of the visit.

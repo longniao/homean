@@ -312,6 +312,14 @@ class Visit(UUIDTimestampMixin, Base):
     consent_ack: Mapped[bool] = mapped_column(
         nullable=False, default=False, server_default="false"
     )
+    # Which wording was attested to. A bare boolean cannot answer "what did
+    # they actually agree to" once the wording has changed.
+    consent_text_version: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Server receipt time, not the moment the agent tapped. The device clock is
+    # client-asserted; this one is not, so it is the defensible timestamp.
+    consent_recorded_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True)
+    )
 
 
 class Zone(UUIDTimestampMixin, Base):
