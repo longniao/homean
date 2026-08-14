@@ -36,3 +36,7 @@ class StorageProvider(ABC):
     @abstractmethod
     async def get_object_bytes(self, object_key: str) -> StoredObjectBody | None:
         """Read a private object for server-side rendering."""
+
+    @abstractmethod
+    async def delete_object(self, object_key: str) -> None:
+        """Remove a stored object. Deleting an absent object is not an error."""

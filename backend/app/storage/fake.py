@@ -28,6 +28,10 @@ class FakeStorageProvider(StorageProvider):
     async def get_object_bytes(self, object_key: str) -> StoredObjectBody | None:
         return self.object_bodies.get(object_key)
 
+    async def delete_object(self, object_key: str) -> None:
+        self.objects.pop(object_key, None)
+        self.object_bodies.pop(object_key, None)
+
     def put_object(self, object_key: str, content_type: str, size_bytes: int) -> None:
         self.objects[object_key] = StoredObject(
             size_bytes=size_bytes, content_type=content_type

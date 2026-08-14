@@ -49,6 +49,10 @@ class Settings(BaseSettings):
     stripe_webhook_secret: SecretStr | None = None
     stripe_solo_monthly_price_id: str | None = None
     stripe_api_base_url: str = "https://api.stripe.com/v1"
+    # Days to keep captured media objects. 0 disables purging entirely, which
+    # is the default: evidence wants long retention and privacy law wants
+    # minimisation, and that number is a policy decision, not a code one.
+    media_retention_days: int = Field(default=0, ge=0)
     anthropic_input_cost_per_million: float = Field(default=0.0, ge=0)
     anthropic_output_cost_per_million: float = Field(default=0.0, ge=0)
 
