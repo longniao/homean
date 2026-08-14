@@ -159,6 +159,9 @@ test("captures without a property and attaches one before confirmation", async (
         contact_id: null,
         consent_ack: true,
         capture_timezone: expect.any(String),
+        // Matched loosely: the attestation version is server config and is
+        // meant to change whenever the wording is revised.
+        consent_text_version: expect.any(String),
       });
       return route.fulfill({ json: summary });
     }
