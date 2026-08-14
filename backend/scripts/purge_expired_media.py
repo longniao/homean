@@ -75,28 +75,39 @@ async def collect(cutoff: datetime) -> list[PurgeCandidate]:
         await engine.dispose()
 
 
-async def purge(candidates: list[PurgeCandidate]) -> int:
+async def purge(candidates: list[PurgeCandidate]) -> tuple[int, int]:
     settings = get_settings()
     storage = S3Client(settings)
     engine = _create_purge_engine(settings.database_url)
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
     purged = 0
+    failed = 0
     try:
         async with session_factory() as session:
             for candidate in candidates:
-                # Mark first, then delete. A crash between the two leaves an
-                # orphaned object, which costs storage; the reverse would leave
-                # a row claiming media that is already gone.
                 media = await session.get(RawMedia, candidate.media_id)
                 if media is None or media.purged_at is not None:
                     continue
+                # Delete first, mark second. Marking first leaves a row
+                # claiming the object is gone when the delete failed, and later
+                # runs skip marked rows — so the record asserts a deletion that
+                # never happened and never retries it. On a retention feature
+                # that is the failure that matters, far more than a leaked
+                # object. This order self-heals: the delete is idempotent, so
+                # an unmarked row is simply purged again next run.
+                try:
+                    await storage.delete_object(candidate.object_key)
+                except Exception:
+                    # One unreachable object must not end the run. It stays
+                    # unmarked, so the next run retries it.
+                    failed += 1
+                    continue
                 media.purged_at = datetime.now(UTC)
                 await session.commit()
-                await storage.delete_object(candidate.object_key)
                 purged += 1
     finally:
         await engine.dispose()
-    return purged
+    return purged, failed
 
 
 def main() -> None:
@@ -122,7 +133,7 @@ def main() -> None:
         )
         return
     candidates = asyncio.run(collect(cutoff))
-    purged = asyncio.run(purge(candidates)) if args.apply else 0
+    purged, failed = asyncio.run(purge(candidates)) if args.apply else (0, 0)
     print(
         json.dumps(
             {
@@ -130,6 +141,7 @@ def main() -> None:
                 "cutoff": cutoff.isoformat(),
                 "candidates": len(candidates),
                 "purged": purged,
+                "failed": failed,
                 "status": "applied" if args.apply else "dry-run",
             },
             indent=2,

@@ -12,6 +12,7 @@ import { useOptionalToast } from "@/components/toast-provider";
 import { Button } from "@/components/ui/button";
 import { api, dedupeShowingsById, type Showing } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { tourDate } from "@/lib/tour-date";
 
 type ViewMode = "client" | "property";
 const SHOWINGS_PAGE_SIZE = 25;
@@ -249,7 +250,7 @@ export function ShowingsDashboard() {
                           </div>
                           <p className="truncate text-sm text-stone-500">{showing.property?.address ?? t("unassignedProperty")}</p>
                           <p className="mt-1 text-xs text-stone-400">
-                            {showing.contact?.name ?? t("unassignedClient")} · {new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(new Date(showing.created_at))}
+                            {showing.contact?.name ?? t("unassignedClient")} · {new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(tourDate(showing))}
                           </p>
                         </div>
                         <span className="text-sm font-semibold text-[#1f6f5b] opacity-0 transition group-hover:opacity-100">
