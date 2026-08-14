@@ -63,10 +63,14 @@ MEDIA_RULES: dict[str, dict[str, tuple[str, int]]] = {
         "image/heif": ("heif", 25 * 1024 * 1024),
         "image/webp": ("webp", 25 * 1024 * 1024),
     },
+    # Video is capture-only for now: nothing reads it yet. The former 1 GB
+    # ceiling was sized for five-minute clips, which is a punishing upload from
+    # a phone on cellular. This comfortably fits the sixty seconds the recorder
+    # now allows at phone bitrates.
     "video": {
-        "video/mp4": ("mp4", 1024 * 1024 * 1024),
-        "video/quicktime": ("mov", 1024 * 1024 * 1024),
-        "video/webm": ("webm", 1024 * 1024 * 1024),
+        "video/mp4": ("mp4", 200 * 1024 * 1024),
+        "video/quicktime": ("mov", 200 * 1024 * 1024),
+        "video/webm": ("webm", 200 * 1024 * 1024),
     },
 }
 

@@ -144,7 +144,9 @@ export function RecordingScreen({ showing, recovered, onFinished }: { showing: L
     if (videoRecording || !camera.current || !cameraReady) return;
     const offset = state.elapsedMs; setVideoRecording(true);
     try {
-      const result = await camera.current.recordAsync({ maxDuration: 300 });
+      // Sixty seconds documents a defect. Five minutes produced files large
+      // enough to make the upload itself the failure mode.
+      const result = await camera.current.recordAsync({ maxDuration: 60 });
       if (!result) throw new Error(t('common.error'));
       await saveVideo(result.uri, offset); setCameraOpen(false);
     } catch (error) {

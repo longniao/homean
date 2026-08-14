@@ -65,6 +65,72 @@ describe('SyncEngine', () => {
     expect(calls.filter((call) => call === 'finish')).toHaveLength(1);
   });
 
+  test('a permanently rejected photo does not block the showing from finishing', async () => {
+    const audio = media('audio', 1);
+    const oversized = media('video', 2, { kind: 'video', contentType: 'video/mp4', timestampOffsetMs: 9_000 });
+    const store = new MemoryStore([showing()], [audio, oversized]); const calls: string[] = [];
+    const rejecting = transport(calls);
+    rejecting.completeMedia = async (_visit, id) => {
+      calls.push(`complete:${id.split('-').pop()}`);
+      if (id.endsWith('9000')) throw Object.assign(new Error('media exceeds the limit'), { status: 422 });
+    };
+
+    await new SyncEngine(store, rejecting, { isOnline: async () => true }).run();
+
+    // One unacceptable capture must not strand every other one behind it.
+    expect(oversized.state).toBe('rejected');
+    expect(calls).toContain('finish');
+    expect(store.showings[0]!.syncState).toBe('processing');
+  });
+
+  test('stops retrying a rejected item instead of queueing it forever', async () => {
+    const oversized = media('video', 1, { kind: 'video', contentType: 'video/mp4', timestampOffsetMs: 9_000 });
+    const store = new MemoryStore([showing()], [media('audio', 0), oversized]); const calls: string[] = [];
+    const rejecting = transport(calls);
+    rejecting.completeMedia = async (_visit, id) => {
+      calls.push(`complete:${id.split('-').pop()}`);
+      if (id.endsWith('9000')) throw Object.assign(new Error('nope'), { status: 422 });
+    };
+    const engine = new SyncEngine(store, rejecting, { isOnline: async () => true });
+
+    await engine.run();
+    const afterFirst = calls.filter((call) => call.startsWith('put:')).length;
+    await engine.run();
+
+    expect(calls.filter((call) => call.startsWith('put:')).length).toBe(afterFirst);
+    expect(oversized.attemptCount).toBe(0);
+  });
+
+  test('keeps retrying a rate limit rather than discarding the capture', async () => {
+    const throttled = media('photo', 2, { kind: 'photo', contentType: 'image/jpeg', timestampOffsetMs: 4_000 });
+    const store = new MemoryStore([showing()], [media('audio', 1), throttled]); const calls: string[] = [];
+    const limited = transport(calls);
+    limited.completeMedia = async (_visit, id) => {
+      calls.push(`complete:${id.split('-').pop()}`);
+      if (id.endsWith('4000')) throw Object.assign(new Error('slow down'), { status: 429 });
+    };
+
+    await new SyncEngine(store, limited, { isOnline: async () => true }).run();
+
+    // A rate limit is transient; discarding a real capture over one would be
+    // data loss, not resilience.
+    expect(throttled.state).toBe('failed');
+    expect(throttled.attemptCount).toBe(1);
+  });
+
+  test('a rejected audio still blocks finishing, because it is the recording', async () => {
+    const audio = media('audio', 1);
+    const store = new MemoryStore([showing()], [audio]); const calls: string[] = [];
+    const rejecting = transport(calls);
+    rejecting.completeMedia = async () => { throw Object.assign(new Error('bad audio'), { status: 415 }); };
+
+    await new SyncEngine(store, rejecting, { isOnline: async () => true }).run();
+
+    expect(audio.state).toBe('rejected');
+    expect(calls).not.toContain('finish');
+    expect(store.showings[0]!.lastError).toBe('missing_audio');
+  });
+
   test('syncs a property-free showing through create, upload, and finish', async () => {
     const propertyFree = showing({ subjectId: null, address: null });
     const store = new MemoryStore([propertyFree], [media('audio', 1)]); const calls: string[] = [];
