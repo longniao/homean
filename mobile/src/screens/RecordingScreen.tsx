@@ -12,6 +12,10 @@ import { recoverInterruptedSegment } from '../recording/recovery';
 import { captureRepository } from '../storage/database';
 import type { LocalShowing } from '../types';
 
+// Kept under the API's 200 MB ceiling so the recorder stops on its own rather
+// than uploading a file the server will refuse.
+const VIDEO_MAX_BYTES = 180 * 1024 * 1024;
+
 export function RecordingScreen({ showing, recovered, onFinished }: { showing: LocalShowing; recovered: boolean; onFinished: () => void }) {
   const { t } = useTranslation();
   const [state, dispatch] = useReducer(recordingReducer, recovered ? { ...initialRecordingState, phase: 'interrupted', elapsedMs: showing.elapsedMs, segmentStartedAtMs: showing.elapsedMs } : initialRecordingState);
@@ -144,9 +148,16 @@ export function RecordingScreen({ showing, recovered, onFinished }: { showing: L
     if (videoRecording || !camera.current || !cameraReady) return;
     const offset = state.elapsedMs; setVideoRecording(true);
     try {
-      // Sixty seconds documents a defect. Five minutes produced files large
-      // enough to make the upload itself the failure mode.
-      const result = await camera.current.recordAsync({ maxDuration: 60 });
+      const result = await camera.current.recordAsync({
+        // Bound the actual problem — bytes — rather than guessing a duration.
+        // A hard time limit truncates whoever is still explaining a defect,
+        // and that explanation is the evidence. Set below the server's ceiling
+        // so the recorder stops before an upload could be rejected.
+        maxFileSize: VIDEO_MAX_BYTES,
+        // Only a runaway guard: the recorder is modal and stopping is manual,
+        // but a phone pocketed mid-recording should not film until it dies.
+        maxDuration: 600,
+      });
       if (!result) throw new Error(t('common.error'));
       await saveVideo(result.uri, offset); setCameraOpen(false);
     } catch (error) {
@@ -161,7 +172,7 @@ export function RecordingScreen({ showing, recovered, onFinished }: { showing: L
     <Text style={styles.title}>{t('recording.title')}</Text><Text style={styles.address}>{showing.title}</Text>
     <RecordingControls state={state} resumeDisabled={recoveryStatus !== 'ready'} onResume={() => { void startSegment(); }} onPhoto={() => { void openCamera('photo'); }} onVideo={() => { void openCamera('video'); }} onVoiceTag={tag} onEnd={end} />
     <Modal visible={cameraOpen} animationType="slide" onRequestClose={closeCamera}>
-      <CameraView ref={camera} style={styles.camera} facing="back" mode={cameraMode} mute={cameraMode === 'video'} onCameraReady={() => setCameraReady(true)} />
+      <CameraView ref={camera} style={styles.camera} facing="back" mode={cameraMode} videoQuality="720p" mute={cameraMode === 'video'} onCameraReady={() => setCameraReady(true)} />
       <View style={styles.cameraBar}>
         <Pressable onPress={closeCamera} disabled={videoRecording}><Text style={styles.cameraText}>{t('common.cancel')}</Text></Pressable>
         {cameraMode === 'picture' ? <Pressable accessibilityRole="button" accessibilityLabel={t('recording.photo')} style={styles.shutter} onPress={() => { void takePhoto(); }} disabled={!cameraReady} /> : <Pressable accessibilityRole="button" accessibilityLabel={videoRecording ? t('recording.stopVideo') : t('recording.startVideo')} style={[styles.shutter, videoRecording && styles.videoShutter]} onPress={videoRecording ? stopVideo : () => { void startVideo(); }} disabled={!cameraReady} />}
