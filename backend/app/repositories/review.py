@@ -7,6 +7,7 @@ from app.models import (
     Observation,
     Report,
     ReportRevision,
+    Subject,
     TranscriptSegment,
     Visit,
     WorkspaceBranding,
@@ -245,5 +246,17 @@ class ReviewRepository:
         return await self.session.scalar(
             select(WorkspaceBranding).where(
                 WorkspaceBranding.workspace_id == workspace_id
+            )
+        )
+
+    async def get_subject(
+        self, workspace_id: uuid.UUID, subject_id: uuid.UUID | None
+    ) -> Subject | None:
+        if subject_id is None:
+            return None
+        return await self.session.scalar(
+            select(Subject).where(
+                Subject.id == subject_id,
+                Subject.workspace_id == workspace_id,
             )
         )

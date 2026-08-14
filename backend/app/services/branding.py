@@ -1,10 +1,11 @@
 import uuid
 from dataclasses import dataclass
+from datetime import UTC, datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
-from app.models import WorkspaceBranding
+from app.models import Subject, WorkspaceBranding
 from app.repositories import ReviewRepository
 from app.schemas.branding import BrandingUpdate
 from app.services.context import CurrentContext
@@ -42,6 +43,13 @@ PREVIEW_REPORT = {
     "concerns": [],
     "follow_ups": [],
 }
+
+PREVIEW_SUBJECT = Subject(
+    subject_type="property",
+    display_name="1428 Maple Grove Lane",
+    location="Vancouver, BC",
+)
+PREVIEW_TOURED_ON = datetime(2026, 5, 16, tzinfo=UTC)
 
 
 @dataclass(frozen=True)
@@ -103,4 +111,11 @@ class RealEstateBrandingService:
 
     async def render_preview(self, context: CurrentContext) -> str:
         branding = await self.get(context)
-        return await self._renderer.render_html(PREVIEW_REPORT, branding)
+        # Preview a representative document rather than a headerless one, so the
+        # accent colour is judged where it actually appears.
+        return await self._renderer.render_html(
+            PREVIEW_REPORT,
+            branding,
+            subject=PREVIEW_SUBJECT,
+            toured_on=PREVIEW_TOURED_ON,
+        )

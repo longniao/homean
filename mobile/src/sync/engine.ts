@@ -13,7 +13,7 @@ export interface SyncStore {
 }
 
 export interface SyncTransport {
-  createShowing(input: { subjectId: string | null; address: string | null; contactId: string | null; consentAck?: boolean; captureClientId?: string }): Promise<{ id: string }>;
+  createShowing(input: { subjectId: string | null; address: string | null; contactId: string | null; consentAck?: boolean; captureClientId?: string; startedAt?: number; captureTimezone?: string }): Promise<{ id: string }>;
   presignMedia(visitId: string, media: { clientId: string; mediaId?: string; kind: MediaKind; contentType: string; timestampOffsetMs: number }): Promise<{ media_id: string; upload_url: string; headers: Record<string, string>; expires_at?: string; expires_in?: number }>;
   uploadFile(url: string, headers: Record<string, string>, fileUri: string): Promise<void>;
   completeMedia(visitId: string, mediaId: string): Promise<void>;
@@ -35,6 +35,15 @@ export class SyncEngine {
   constructor(private readonly store: SyncStore, private readonly transport: SyncTransport, private readonly options: SyncEngineOptions) {
     this.now = options.now ?? Date.now;
     this.baseRetryMs = options.baseRetryMs ?? 2_000;
+  }
+
+  /** The device zone, which is where the tour happened. Undefined if unresolvable. */
+  private timezone(): string | undefined {
+    try {
+      return Intl.DateTimeFormat().resolvedOptions().timeZone || undefined;
+    } catch {
+      return undefined;
+    }
   }
 
   async run(): Promise<void> {
@@ -65,6 +74,10 @@ export class SyncEngine {
           address: current.address,
           contactId: current.contactId,
           captureClientId: current.id,
+          // Recorded locally when the tour began, which for a queued offline
+          // showing is well before this request.
+          startedAt: current.startedAt,
+          captureTimezone: this.timezone(),
           ...(current.consentAck === undefined ? {} : { consentAck: current.consentAck }),
         };
         remoteId = (await this.transport.createShowing(input)).id;

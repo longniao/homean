@@ -2,10 +2,12 @@ import asyncio
 import base64
 import re
 from dataclasses import dataclass
+from datetime import UTC, datetime
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
 
-from app.models import WorkspaceBranding
+from app.models import Subject, WorkspaceBranding
 from app.pipeline.schemas import RealEstateReportSchema
 from app.storage import StorageProvider
 from app.verticals import VerticalConfigService
@@ -19,6 +21,19 @@ class BrandingRenderData:
     license_no: str | None
     accent_color: str
     logo_data_uri: str | None
+
+
+@dataclass(frozen=True)
+class SubjectRenderData:
+    """Identifies which property the report is about, and when it was toured.
+
+    A report that names neither is materially less useful to a buyer holding
+    several of them, so the template leads with this rather than the brokerage.
+    """
+
+    display_name: str | None
+    location: str | None
+    toured_on: str | None
 
 
 class ReportRenderer:
@@ -39,6 +54,9 @@ class ReportRenderer:
         branding: WorkspaceBranding | None,
         *,
         consent_ack: bool = False,
+        subject: Subject | None = None,
+        toured_on: datetime | None = None,
+        timezone: str | None = None,
     ) -> str:
         report = RealEstateReportSchema.model_validate(content)
         pack = self._verticals.get()
@@ -65,9 +83,46 @@ class ReportRenderer:
         return template.render(
             report=report_data,
             branding=branding_data,
+            subject=self._subject_data(subject, toured_on, timezone),
             labels=pack.report_template.labels,
             consent_ack=consent_ack,
         )
+
+    @classmethod
+    def _subject_data(
+        cls,
+        subject: Subject | None,
+        toured_on: datetime | None,
+        timezone: str | None,
+    ) -> SubjectRenderData | None:
+        if subject is None and toured_on is None:
+            return None
+        return SubjectRenderData(
+            display_name=subject.display_name if subject else None,
+            location=subject.location if subject else None,
+            toured_on=cls._local_date(toured_on, timezone),
+        )
+
+    @staticmethod
+    def _local_date(moment: datetime | None, timezone: str | None) -> str | None:
+        """Render the calendar date as it was where the tour happened.
+
+        An evening showing west of Greenwich falls on the next UTC day, so a
+        UTC-formatted date is simply wrong on the artifact. Visits captured
+        before the zone was recorded fall back to UTC.
+        """
+
+        if moment is None:
+            return None
+        zone = UTC
+        if timezone:
+            try:
+                zone = ZoneInfo(timezone)
+            except (ZoneInfoNotFoundError, ValueError):
+                # A zone the platform cannot resolve must not break delivery.
+                zone = UTC
+        local = moment.astimezone(zone)
+        return f"{local.day} {local.strftime('%B %Y')}"
 
     async def render_pdf(self, html: str) -> bytes:
         return await asyncio.to_thread(self._render_pdf_sync, html)

@@ -284,6 +284,15 @@ function json(method: string, body?: unknown): RequestInit {
   return { method, body: body === undefined ? undefined : JSON.stringify(body) };
 }
 
+/** Undefined when the runtime cannot resolve a zone, which the API treats as UTC. */
+function browserTimezone(): string | undefined {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export type ShowingFilters = {
   status?: string;
   dateFrom?: string;
@@ -339,7 +348,9 @@ export const api = {
     listAll: (filters: ShowingFilters = {}) => listAllShowings(filters),
     get: (id: string) => request(`/showings/${id}`, showingDetailSchema),
     create: (body: { subject_id?: string; address?: string; contact_id?: string | null; consent_ack: boolean }) =>
-      request("/showings", showingSchema, json("POST", body)),
+      // The report prints the tour date, so it must be the browser's calendar
+      // date rather than the server's UTC one.
+      request("/showings", showingSchema, json("POST", { ...body, capture_timezone: browserTimezone() })),
     attachProperty: (id: string, body: { subject_id: string } | { address: string }) =>
       request(`/showings/${id}`, showingSchema, json("PATCH", body)),
     finish: (id: string) => request(`/showings/${id}/finish`, z.unknown(), json("POST")),
