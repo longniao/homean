@@ -174,6 +174,9 @@ class RealEstateReviewService:
             subject = await self._repository.get_subject(
                 context.workspace.id, visit.subject_id
             )
+            photos = await self._repository.placed_photos(
+                context.workspace.id, visit.id
+            )
             report.rendered_html = await self._renderer.render_html(
                 normalized_content,
                 branding,
@@ -181,6 +184,7 @@ class RealEstateReviewService:
                 subject=subject,
                 toured_on=visit.started_at,
                 timezone=visit.capture_timezone,
+                photos=photos,
             )
             report.status = "confirmed"
         else:
@@ -254,6 +258,7 @@ class RealEstateReviewService:
         subject = await self._repository.get_subject(
             context.workspace.id, visit.subject_id
         )
+        photos = await self._repository.placed_photos(context.workspace.id, visit.id)
         report.rendered_html = await self._renderer.render_html(
             report.content,
             branding,
@@ -261,6 +266,7 @@ class RealEstateReviewService:
             subject=subject,
             toured_on=visit.started_at,
             timezone=visit.capture_timezone,
+            photos=photos,
         )
         report.status = "confirmed"
         visit.status = "confirmed"

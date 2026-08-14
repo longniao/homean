@@ -44,6 +44,10 @@ class VerticalPack(BaseModel):
     prompt_version: str
     report_template_id: str
     display_labels: DisplayLabels
+    # Phrases an agent may speak to name a room on camera. Photos are placed by
+    # matching these near the shutter, so the wording is vertical config rather
+    # than anything the matcher knows on its own.
+    zone_speech_aliases: dict[str, list[str]] = Field(default_factory=dict)
     prompt_templates: PromptTemplates
     report_template: ReportTemplate
 
@@ -51,6 +55,8 @@ class VerticalPack(BaseModel):
     def validate_pack_completeness(self) -> "VerticalPack":
         if set(self.display_labels.zones) != set(self.zone_taxonomy):
             raise ValueError("zone labels must exactly match the zone taxonomy")
+        if not set(self.zone_speech_aliases) <= set(self.zone_taxonomy):
+            raise ValueError("zone speech aliases must reference known zones")
         if set(self.display_labels.observations) != set(self.observation_schema):
             raise ValueError(
                 "observation labels must exactly match the observation schema"

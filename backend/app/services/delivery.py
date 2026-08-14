@@ -477,6 +477,7 @@ class RealEstateDeliveryService:
             subject = await self._review_repository.get_subject(
                 workspace_id, visit.subject_id
             )
+            photos = await self._review_repository.placed_photos(workspace_id, visit.id)
             report.rendered_html = await self._renderer.render_html(
                 report.content,
                 branding,
@@ -484,6 +485,7 @@ class RealEstateDeliveryService:
                 subject=subject,
                 toured_on=visit.started_at,
                 timezone=visit.capture_timezone,
+                photos=photos,
             )
             await self._repository.flush()
         return visit, report

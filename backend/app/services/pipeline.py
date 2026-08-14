@@ -15,6 +15,14 @@ from app.models import (
     Zone,
 )
 from app.pipeline.llm import LLMClient, LLMResponse, SchemaT
+from app.pipeline.photo_zones import (
+    ZONE_SOURCE_VOICE,
+    PhotoMoment,
+    SpokenSegment,
+    ZoneWindow,
+    build_alias_index,
+    place_photos,
+)
 from app.pipeline.prompts import PromptRenderer
 from app.pipeline.schemas import (
     ObservationExtractionResult,
@@ -29,6 +37,7 @@ from app.repositories.billing import BillingRepository
 from app.services.exceptions import ResourceConflictError, ResourceNotFoundError
 from app.storage import StorageProvider
 from app.verticals import VerticalConfigService
+from app.verticals.config import VerticalPack
 
 PIPELINE_STEPS = (
     PipelineStep.TRANSCRIBE,
@@ -210,7 +219,65 @@ class RealEstatePipelineService:
                 invocation,
             ),
         )
+        # Zones only exist now, so this is the first point photos can be placed.
+        await self._session.flush()
+        await self._place_photos(workspace_id, visit_id, pack, zones, segments)
         await self._session.commit()
+
+    async def _place_photos(
+        self,
+        workspace_id: uuid.UUID,
+        visit_id: uuid.UUID,
+        pack: VerticalPack,
+        zones: list[Zone],
+        segments: list[TranscriptSegment],
+    ) -> None:
+        photos = await self._repository.uploaded_photos(workspace_id, visit_id)
+        if not photos or not zones:
+            return
+        bounds = {segment.id: segment for segment in segments}
+        windows = []
+        for zone in zones:
+            start = bounds.get(zone.start_transcript_segment_id)
+            end = bounds.get(zone.end_transcript_segment_id)
+            if start is None or end is None:
+                continue
+            windows.append(
+                ZoneWindow(
+                    zone_id=zone.id,
+                    zone_type=zone.zone_type,
+                    start_ms=start.timestamp_start or 0.0,
+                    end_ms=end.timestamp_end or start.timestamp_start or 0.0,
+                )
+            )
+        placements = place_photos(
+            [
+                PhotoMoment(media_id=photo.id, offset_ms=photo.timestamp_offset_ms)
+                for photo in photos
+                if photo.timestamp_offset_ms is not None
+            ],
+            [
+                SpokenSegment(
+                    text=segment.text,
+                    start_ms=segment.timestamp_start or 0.0,
+                    end_ms=segment.timestamp_end or segment.timestamp_start or 0.0,
+                )
+                for segment in segments
+            ],
+            windows,
+            build_alias_index(
+                pack.zone_taxonomy,
+                pack.display_labels.zones,
+                pack.zone_speech_aliases,
+            ),
+        )
+        for photo in photos:
+            # A re-run must not leave a previous placement behind, so every
+            # photo is rewritten from this pass rather than only the matches.
+            if photo.zone_source in (None, ZONE_SOURCE_VOICE):
+                zone_id = placements.get(photo.id)
+                photo.zone_id = zone_id
+                photo.zone_source = ZONE_SOURCE_VOICE if zone_id else None
 
     async def extract_observations(
         self, workspace_id: uuid.UUID, visit_id: uuid.UUID

@@ -56,11 +56,17 @@
     .room { margin-top: 14px; padding: 18px 22px; border: 1px solid var(--hair); border-left: 3px solid var(--accent); border-radius: 0 10px 10px 0; break-inside: avoid; }
     .room h3 { margin: 0 0 9px; font-family: var(--serif); font-size: 17px; font-weight: 600; }
     .room ul { padding-left: 18px; }
+    .shots { display: flex; gap: 10px; margin-top: 14px; }
+    .shots img { flex: 1 1 0; min-width: 0; max-width: 50%; height: 150px; object-fit: cover; border-radius: 8px; border: 1px solid var(--hair); }
 
     .none { margin: 0; color: var(--muted); font-style: italic; font-size: 13.5px; }
 
     footer { margin-top: 52px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--muted); font-size: 10.5px; line-height: 1.6; text-align: center; break-inside: avoid; }
-    footer .disclosure { display: block; margin-top: 6px; max-width: 62ch; margin-left: auto; margin-right: auto; }
+    .disclosure { display: block; margin-top: 6px; max-width: 62ch; margin-left: auto; margin-right: auto; }
+    /* Print-only twin of the footer. It sits at the top of the document
+       because a running element applies from where it occurs onward, so a
+       footer declared last would be missing from every page but the last. */
+    .pagefoot { display: none; }
 
     @page {
       size: Letter; margin: 15mm 15mm 22mm;
@@ -76,8 +82,9 @@
       .masthead { padding-top: 22px; }
       h1 { font-size: 26pt; }
       .summary { font-size: 12.5pt; }
-      footer { position: running(docfooter); margin: 0; padding: 0; border-top: none; font-size: 7.5pt; line-height: 1.45; }
-      footer .disclosure { margin-top: 2px; }
+      footer { display: none; }
+      .pagefoot { display: block; position: running(docfooter); color: var(--muted); font-size: 7.5pt; line-height: 1.45; text-align: center; }
+      .pagefoot .disclosure { margin-top: 2px; }
     }
     @media (max-width: 640px) {
       .report { padding: 0 22px 32px; }
@@ -90,6 +97,10 @@
   </style>
 </head>
 <body>
+  {%- macro closing_note() -%}
+  {{ labels.generated_by }}{% if consent_ack %}<span class="disclosure">{{ labels.consent_disclosure }}</span>{% endif %}
+  {%- endmacro -%}
+  <div class="pagefoot">{{ closing_note() }}</div>
   <main class="report">
     <header>
       <div class="masthead">
@@ -138,6 +149,7 @@
       <article class="room">
         <h3>{{ room.zone_label }}</h3>
         {% if room.bullets %}<ul>{% for bullet in room.bullets %}<li>{{ bullet.text }}</li>{% endfor %}</ul>{% else %}<p class="none">{{ labels.none_recorded }}</p>{% endif %}
+        {% if room.photos %}<div class="shots">{% for photo in room.photos %}<img src="{{ photo }}" alt="{{ room.zone_label }}">{% endfor %}</div>{% endif %}
       </article>
       {% endfor %}
     </section>
@@ -148,10 +160,7 @@
       {% if report.follow_ups %}<ul>{% for bullet in report.follow_ups %}<li>{{ bullet.text }}</li>{% endfor %}</ul>{% else %}<p class="none">{{ labels.none_recorded }}</p>{% endif %}
     </section>
 
-    <footer>
-      {{ labels.generated_by }}
-      {% if consent_ack %}<span class="disclosure">{{ labels.consent_disclosure }}</span>{% endif %}
-    </footer>
+    <footer>{{ closing_note() }}</footer>
   </main>
 </body>
 </html>
