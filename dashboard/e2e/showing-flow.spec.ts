@@ -71,7 +71,7 @@ test("signup, upload, confirm, and deliver a share link", async ({ page, context
   await page.getByRole("link", { name: "New showing" }).first().click();
   await page.getByPlaceholder("Start typing an address or property name").fill("42 Pipeline Avenue");
   await page.locator('input[type="file"]').setInputFiles({ name: "showing.m4a", mimeType: "audio/mp4", buffer: Buffer.from("fake-audio") });
-  await page.getByRole("checkbox", { name: "I attest that I have consent to record this showing" }).check();
+  await page.locator("#consent-attestation").check();
   const captureRequest = page.waitForRequest((request) => request.method() === "POST" && new URL(request.url()).pathname.endsWith("/showings"));
   await page.getByRole("button", { name: "Upload and process" }).click();
   expect((await captureRequest).postDataJSON()).toEqual(expect.objectContaining({ consent_ack: true }));
@@ -210,7 +210,7 @@ test("captures without a property and attaches one before confirmation", async (
   await expect(page.getByText("This showing will be created without a property or address.")).toBeVisible();
   await expect(page.getByPlaceholder("Start typing an address or property name")).toHaveCount(0);
   await page.locator('input[type="file"]').setInputFiles({ name: "subjectless.m4a", mimeType: "audio/mp4", buffer: Buffer.from("fake-audio") });
-  await page.getByRole("checkbox", { name: "I attest that I have consent to record this showing" }).check();
+  await page.locator("#consent-attestation").check();
   await page.getByRole("button", { name: "Upload and process" }).click();
 
   await expect(page.getByRole("heading", { name: "Unassigned showing" })).toBeVisible();
