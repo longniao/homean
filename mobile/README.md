@@ -56,6 +56,12 @@ Signing in for the first time still requires a connection.
 
 Video capture is intentionally muted because the continuous `expo-audio` recorder remains the single source for showing audio and its evidence chain.
 
+Video recording is modal and stopped by hand: while it runs, no other capture
+action is reachable and the recording cannot be cancelled out from under
+itself. It is bounded by file size rather than by a time limit, at 720p and
+under the API's ceiling, so the recorder stops on its own instead of cutting
+off an explanation part-way or uploading a file the server would refuse.
+
 If the app is reopened with an unfinished showing, it first recovers the persisted
 audio segment into the durable media queue and only then clears the recovery row.
 The **Resume recording** action stays unavailable during that operation; ending the
