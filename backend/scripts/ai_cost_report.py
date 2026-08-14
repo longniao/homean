@@ -8,6 +8,7 @@ Run from backend/: ``uv run python scripts/ai_cost_report.py``.
 import argparse
 import asyncio
 import json
+import sys
 import uuid
 from dataclasses import dataclass
 
@@ -25,7 +26,10 @@ class VisitCost:
     workspace_id: uuid.UUID
     tokens_in: int
     tokens_out: int
-    estimated_cost_usd: float
+    #: None when no rates are configured. Reporting 0.0 in that case reads as
+    #: "these tours were free" rather than "we have not priced them", which is
+    #: the more expensive mistake to leave sitting in a dashboard.
+    estimated_cost_usd: float | None
 
 
 def estimate_cost(
@@ -37,6 +41,12 @@ def estimate_cost(
     return (tokens_in / 1_000_000 * input_rate_per_million) + (
         tokens_out / 1_000_000 * output_rate_per_million
     )
+
+
+def rates_configured(
+    input_rate_per_million: float, output_rate_per_million: float
+) -> bool:
+    return input_rate_per_million > 0 or output_rate_per_million > 0
 
 
 async def collect(visit_id: uuid.UUID | None = None) -> list[VisitCost]:
@@ -59,20 +69,28 @@ async def collect(visit_id: uuid.UUID | None = None) -> list[VisitCost]:
             if visit_id is not None:
                 statement = statement.where(PipelineRun.visit_id == visit_id)
             rows = await session.execute(statement)
+            priced = rates_configured(
+                settings.anthropic_input_cost_per_million,
+                settings.anthropic_output_cost_per_million,
+            )
             return [
                 VisitCost(
                     visit_id=visit,
                     workspace_id=workspace,
                     tokens_in=int(tokens_in),
                     tokens_out=int(tokens_out),
-                    estimated_cost_usd=round(
-                        estimate_cost(
-                            int(tokens_in),
-                            int(tokens_out),
-                            settings.anthropic_input_cost_per_million,
-                            settings.anthropic_output_cost_per_million,
-                        ),
-                        6,
+                    estimated_cost_usd=(
+                        round(
+                            estimate_cost(
+                                int(tokens_in),
+                                int(tokens_out),
+                                settings.anthropic_input_cost_per_million,
+                                settings.anthropic_output_cost_per_million,
+                            ),
+                            6,
+                        )
+                        if priced
+                        else None
                     ),
                 )
                 for visit, workspace, tokens_in, tokens_out in rows.tuples()
@@ -90,6 +108,13 @@ def main() -> None:
     parser.add_argument("--visit-id", type=uuid.UUID)
     args = parser.parse_args()
     result = asyncio.run(collect(args.visit_id))
+    if any(item.estimated_cost_usd is None for item in result):
+        print(
+            "warning: ANTHROPIC_INPUT_COST_PER_MILLION and "
+            "ANTHROPIC_OUTPUT_COST_PER_MILLION are unset, so cost is reported as "
+            "null rather than zero. Token counts below are still accurate.",
+            file=sys.stderr,
+        )
     payload = [
         {
             "visit_id": str(item.visit_id),

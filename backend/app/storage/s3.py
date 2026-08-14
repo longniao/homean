@@ -62,6 +62,13 @@ class S3Client(StorageProvider):
             ExpiresIn=expires_in,
         )
 
+    async def delete_object(self, object_key: str) -> None:
+        # S3 delete is idempotent, so a retry after a partial purge run is
+        # safe and an already-absent object is not an error.
+        await asyncio.to_thread(
+            self._client.delete_object, Bucket=self._bucket, Key=object_key
+        )
+
     async def get_object_bytes(self, object_key: str) -> StoredObjectBody | None:
         def get_object() -> StoredObjectBody:
             response = self._client.get_object(Bucket=self._bucket, Key=object_key)

@@ -394,6 +394,9 @@ class RawMedia(UUIDTimestampMixin, Base):
         index=True,
     )
     zone_source: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Set when retention removed the stored object. The row deliberately
+    # survives so the evidence chain still shows the media existed.
+    purged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class VisitMarker(UUIDTimestampMixin, Base):
