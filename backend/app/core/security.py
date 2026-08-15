@@ -263,7 +263,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
     @staticmethod
     def _category(path: str) -> tuple[str, int] | None:
-        if path in {"/auth/login", "/auth/signup", "/auth/refresh"}:
+        if path in {"/auth/login", "/auth/signup", "/auth/refresh", "/auth/logout"}:
             return "auth", 0
         if path == "/r" or path.startswith("/r/"):
             return "public_share", 0

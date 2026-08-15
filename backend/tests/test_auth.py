@@ -1,6 +1,7 @@
 import uuid
 from datetime import timedelta
 
+import pytest
 from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import get_settings
 from app.models import Membership, ProfessionalProfile, User, Vertical, Workspace
 from app.services import TokenService
+from app.services.exceptions import InvalidTokenError
 
 
 async def signup(client: AsyncClient, email: str) -> dict[str, object]:
@@ -59,9 +61,12 @@ async def test_login_and_refresh_round_trip(client: AsyncClient) -> None:
     login_tokens = login_response.json()
     token_service = TokenService(get_settings())
     access_claims = token_service.decode(login_tokens["access_token"], "access")
-    refresh_claims = token_service.decode(login_tokens["refresh_token"], "refresh")
     assert access_claims.exp - access_claims.iat == timedelta(minutes=15)
-    assert refresh_claims.exp - refresh_claims.iat == timedelta(days=30)
+    # The refresh token is opaque now: authority lives in the session row it
+    # hashes to, which is what makes it revocable.
+    assert access_claims.sid is not None
+    with pytest.raises(InvalidTokenError):
+        token_service.decode(login_tokens["refresh_token"])
 
     me_response = await client.get(
         "/me",
@@ -83,7 +88,10 @@ async def test_login_and_refresh_round_trip(client: AsyncClient) -> None:
     assert refresh_response.status_code == 200
     refreshed_tokens = refresh_response.json()
     assert refreshed_tokens["access_token"] != login_tokens["access_token"]
-    assert refreshed_tokens["refresh_token"] != login_tokens["refresh_token"]
+    # Deliberately not rotated in Phase 1: parallel dashboard refreshes would
+    # race over which rotation wins. Rotation with reuse detection is a later
+    # hardening step, once that behaviour is designed.
+    assert refreshed_tokens["refresh_token"] == login_tokens["refresh_token"]
 
     refreshed_me = await client.get(
         "/me",
@@ -124,10 +132,8 @@ async def test_cross_workspace_context_returns_not_found(client: AsyncClient) ->
     first_user_id = uuid.UUID(first_me.json()["user"]["id"])
     second_workspace_id = uuid.UUID(second_me.json()["workspace"]["id"])
 
-    cross_workspace_token = (
-        TokenService(get_settings())
-        .create_pair(first_user_id, second_workspace_id)
-        .access_token
+    cross_workspace_token, _ = TokenService(get_settings()).issue_access_token(
+        first_user_id, second_workspace_id, uuid.uuid4()
     )
     response = await client.get(
         "/me",

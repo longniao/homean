@@ -38,6 +38,7 @@ def _run_alembic(database_url: str, revision: str, *, downgrade: bool = False) -
 
 
 EXPECTED_TABLES = {
+    "auth_sessions",
     "alembic_version",
     "contacts",
     "memberships",
@@ -77,7 +78,7 @@ async def test_migration_up_from_empty_database(database_url: str) -> None:
         await engine.dispose()
 
     assert schema["tables"] == EXPECTED_TABLES
-    assert revision == "20260814_0020"
+    assert revision == "20260814_0021"
     for table in EXPECTED_TABLES - {"alembic_version"}:
         assert {"id", "created_at", "updated_at"} <= schema["columns"][table]
     assert {

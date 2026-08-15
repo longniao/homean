@@ -26,6 +26,11 @@ from app.verticals import VerticalConfigService
 # test ordering.
 _TEST_RATE_LIMIT_KEY_PREFIX = f"homean:test:{uuid.uuid4().hex}"
 os.environ["RATE_LIMIT_KEY_PREFIX"] = _TEST_RATE_LIMIT_KEY_PREFIX
+# Every test shares one client address, so the production auth limit is a
+# whole-suite budget rather than a per-test one, and adding auth tests
+# eventually starves unrelated ones of sign-ups. The limiter itself is covered
+# in test_m7_security.py, which configures its own limit explicitly.
+os.environ.setdefault("AUTH_RATE_LIMIT", "10000")
 
 
 class FakeReportRenderer(ReportRenderer):

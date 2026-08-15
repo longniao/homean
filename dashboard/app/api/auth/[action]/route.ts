@@ -50,6 +50,22 @@ export async function POST(
 ) {
   const { action } = await params;
   if (action === "logout") {
+    // Revoke server-side before clearing cookies. Dropping the cookie alone
+    // would leave a refresh token that still works for anyone holding a copy.
+    const refreshToken = request.cookies.get(REFRESH_COOKIE)?.value
+      ?? request.cookies.get(LEGACY_REFRESH_COOKIE)?.value;
+    if (refreshToken) {
+      try {
+        await fetch(`${backendUrl()}/auth/logout`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ refresh_token: refreshToken }),
+        });
+      } catch {
+        // A browser must still be able to sign out when the API is
+        // unreachable; the session then lapses at its absolute expiry.
+      }
+    }
     const response = NextResponse.json({ ok: true });
     clearTokenCookies(response);
     return response;
