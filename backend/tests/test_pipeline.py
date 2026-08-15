@@ -695,3 +695,91 @@ async def test_failure_marks_visit_and_reprocess_recovers_from_failed_step(
         )
         == 1
     )
+
+
+async def test_voice_tags_bookmark_evidence_without_bypassing_review(
+    client: AsyncClient,
+    session: AsyncSession,
+    storage: FakeStorageProvider,
+    pipeline: FakePipelineEnqueuer,
+) -> None:
+    headers, workspace_id, visit_id = await create_finished_showing(
+        client, storage, "voice-tag@example.com"
+    )
+    # The agent tapped inside the first transcript segment, which the fake
+    # transcription places at 0-2500ms.
+    marker = await client.post(
+        f"/showings/{visit_id}/markers",
+        headers=headers,
+        json={
+            "client_id": str(uuid.uuid4()),
+            "marker_type": "voice_tag",
+            "timestamp_offset_ms": 1_200,
+        },
+    )
+    assert marker.status_code in {200, 201}, marker.text
+
+    service = pipeline_service(
+        session,
+        storage,
+        FakeTranscriptionProvider(),
+        FakeLLMClient([zone_fixture, observation_fixture, report_fixture]),
+    )
+    await service.transcribe(workspace_id, visit_id)
+    await service.detect_zones(workspace_id, visit_id)
+    await service.extract_observations(workspace_id, visit_id)
+    session.expire_all()
+
+    detail = await client.get(f"/showings/{visit_id}", headers=headers)
+    body = detail.json()
+    tagged = body["markers"][0]
+    segments = {segment["id"]: segment for segment in body["transcript"]}
+
+    # The tap resolves to real evidence, so the review UI can jump to it.
+    assert tagged["transcript_segment_id"] in segments
+
+    marked = [
+        observation
+        for observation in body["observations"]
+        if observation["source_transcript_segment_id"]
+        == tagged["transcript_segment_id"]
+    ]
+    for observation in marked:
+        # Recorded as a flag, so the vertical's category set is untouched...
+        assert observation["flags"].get("voice_tagged") is True
+        assert (
+            observation["category"] in VerticalConfigService().get().observation_schema
+        )
+        # ...and being marked changes nothing else: the normal evidence chain
+        # stands and it still has to be reviewed like anything else.
+        assert observation["source_transcript_segment_id"] is not None
+        assert observation["review_status"] == "pending"
+
+
+async def test_an_unmarked_observation_carries_no_voice_tag_flag(
+    client: AsyncClient,
+    session: AsyncSession,
+    storage: FakeStorageProvider,
+    pipeline: FakePipelineEnqueuer,
+) -> None:
+    headers, workspace_id, visit_id = await create_finished_showing(
+        client, storage, "no-voice-tag@example.com"
+    )
+    service = pipeline_service(
+        session,
+        storage,
+        FakeTranscriptionProvider(),
+        FakeLLMClient([zone_fixture, observation_fixture, report_fixture]),
+    )
+    await service.transcribe(workspace_id, visit_id)
+    await service.detect_zones(workspace_id, visit_id)
+    await service.extract_observations(workspace_id, visit_id)
+    session.expire_all()
+
+    body = (await client.get(f"/showings/{visit_id}", headers=headers)).json()
+
+    assert body["markers"] == []
+    assert all(
+        "voice_tagged" not in observation["flags"]
+        for observation in body["observations"]
+    )

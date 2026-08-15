@@ -520,10 +520,13 @@ workspace-isolated; all suites green. (Full Codex prompt issued alongside this p
 Small items found during the build, parked deliberately. Revisit during M7 hardening or the
 first post-validation iteration — none block putting the product in front of trial agents.
 
-- **Voice-tag marker sync** (from M6): markers are durable *local* metadata only — no backend
-  endpoint persists them. Acceptable for MVP because the spoken "note: …" is already captured
-  in audio and transcribed; the marker is a redundant future-use signal. Add a marker field +
-  sync if you later want to weight or jump to those moments.
+- ~~**Voice-tag marker sync** (from M6)~~ — **done.** Markers persist through the visit
+  marker API and sync idempotently from the mobile queue. They are no longer a redundant
+  signal: each tag resolves to the transcript segment it bookmarks, the review UI offers
+  those as jump points, and extraction receives the marked segment as agent-emphasized
+  evidence. An observation drawn from one is flagged `voice_tagged` in `Observation.flags`
+  — not a new category, not auto-promoted into the report, and still subject to the normal
+  review gate.
 - **Migration formatting nit** in `20260804_0004_review_delivery.py` (flagged M3.5) — cosmetic,
   sweep up in hardening.
 - **`og.png` social-card copy** is Codex-invented English marketing text; align with the real
