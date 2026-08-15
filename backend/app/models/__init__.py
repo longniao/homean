@@ -1,5 +1,6 @@
 from app.models.base import Base
 from app.models.entities import (
+    AuthSession,
     Contact,
     Membership,
     Observation,
@@ -26,6 +27,7 @@ from app.models.entities import (
 )
 
 __all__ = [
+    "AuthSession",
     "Base",
     "Contact",
     "Membership",

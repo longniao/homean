@@ -29,6 +29,38 @@ class User(UUIDTimestampMixin, Base):
     name: Mapped[str | None] = mapped_column(Text)
 
 
+class AuthSession(UUIDTimestampMixin, Base):
+    """A revocable login. One row per sign-in, so one device can be cut off.
+
+    The refresh token itself is never stored — only its digest — so a leaked
+    database backup cannot be replayed as working credentials.
+    """
+
+    __tablename__ = "auth_sessions"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("workspaces.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    refresh_token_hash: Mapped[str] = mapped_column(
+        Text, nullable=False, unique=True, index=True
+    )
+    # Fixed at login and never moved by a refresh. Continuous use must not be
+    # able to keep a session — or a stolen token — alive forever.
+    expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
 class Workspace(UUIDTimestampMixin, Base):
     __tablename__ = "workspaces"
 

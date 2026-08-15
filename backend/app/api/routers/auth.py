@@ -67,3 +67,18 @@ async def refresh(
             headers={"WWW-Authenticate": "Bearer"},
         ) from exc
     return TokenResponse.from_token_pair(tokens)
+
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+async def logout(
+    payload: RefreshRequest,
+    service: Annotated[AuthService, Depends(get_auth_service)],
+) -> None:
+    """Revoke the session behind a refresh token.
+
+    Deliberately unauthenticated and idempotent: a client must be able to end
+    its session even when its access token has already expired, and an unknown
+    token reveals nothing by succeeding.
+    """
+
+    await service.logout(payload.refresh_token)

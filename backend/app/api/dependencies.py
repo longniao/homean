@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from functools import lru_cache
 from typing import Annotated
 
@@ -144,7 +145,27 @@ async def get_current_context(
             headers={"WWW-Authenticate": "Bearer"},
         ) from exc
 
-    context = await AuthRepository(session).get_context(claims.sub, claims.workspace_id)
+    context = await AuthRepository(session).get_context(
+        claims.sub,
+        claims.workspace_id,
+        session_id=claims.sid,
+        now=datetime.now(UTC),
+    )
     if context is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+        # The joined lookup can miss for two very different reasons, and they
+        # must not be conflated: a dead session is an authentication failure,
+        # while a workspace the caller has no membership in stays a 404 so the
+        # response does not confirm that workspace exists.
+        membership = await AuthRepository(session).get_context(
+            claims.sub, claims.workspace_id
+        )
+        if membership is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Not found"
+            )
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Session is no longer valid",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     return CurrentContext(*context)

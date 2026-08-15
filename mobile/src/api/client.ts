@@ -108,10 +108,33 @@ export class ApiClient {
     try { await this.loadAccount(); } catch { /* identity fills in on the next sync */ }
   }
 
-  async logout(): Promise<void> { await Promise.all([clearTokens(), clearAccount()]); }
+  async logout(): Promise<void> {
+    // Revoke the session server-side before dropping the local copy. Clearing
+    // only the device would leave a refresh token that still works for anyone
+    // who has it, which is the whole point of session-backed auth.
+    const tokens = await getTokens();
+    if (tokens) {
+      try {
+        await fetch(`${API_URL}/auth/logout`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token: tokens.refreshToken }),
+        });
+      } catch {
+        // Signing out offline must still clear the device. The session then
+        // lapses at its absolute expiry rather than never.
+      }
+    }
+    await this.clearLocalCredentials();
+  }
+
+  private async clearLocalCredentials(): Promise<void> {
+    await Promise.all([clearTokens(), clearAccount()]);
+  }
 
   private async endSession(): Promise<void> {
-    await this.logout();
+    // The server has already rejected this session, so there is nothing left
+    // to revoke — only the local copy to drop.
+    await this.clearLocalCredentials();
     this.sessionExpiredHandler?.();
   }
 

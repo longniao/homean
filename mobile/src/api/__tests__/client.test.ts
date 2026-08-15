@@ -133,3 +133,33 @@ describe('ApiClient session durability', () => {
     expect(expired).not.toHaveBeenCalled();
   });
 });
+
+describe('ApiClient sign-out', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+    tokenStore.clearTokens.mockClear();
+    tokenStore.getTokens.mockResolvedValue({ accessToken: 'access-token', refreshToken: 'refresh-token', expiresAt: Date.now() + 60_000 });
+  });
+
+  test('revokes the session server-side before clearing the device', async () => {
+    const fetchMock = jest.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, status: 204, json: async () => ({}) } as Response);
+
+    await new ApiClient().logout();
+
+    // Clearing only the device would leave a refresh token that still works
+    // for whoever else holds a copy.
+    expect(fetchMock).toHaveBeenCalledWith('http://localhost:8000/auth/logout', expect.objectContaining({
+      method: 'POST', body: JSON.stringify({ refresh_token: 'refresh-token' }),
+    }));
+    expect(tokenStore.clearTokens).toHaveBeenCalled();
+  });
+
+  test('still clears the device when the revoke call cannot be made', async () => {
+    jest.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('Network request failed'));
+
+    await expect(new ApiClient().logout()).resolves.toBeUndefined();
+
+    // Signing out offline must work; the session lapses at its absolute expiry.
+    expect(tokenStore.clearTokens).toHaveBeenCalled();
+  });
+});
