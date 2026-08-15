@@ -99,8 +99,10 @@ in this document.
 - **Checks:**
   - [ ] Every pilot device performed a fresh sign-in after the auth-session migration; do not reuse pre-migration local credentials.
   - [ ] Access tokens expire after 15 minutes and refresh does not extend the absolute 30-day session expiry.
-  - [ ] Logout revokes the server-side session before local credentials are cleared when online.
-  - [ ] A revoked session cannot use an otherwise unexpired access token.
+  - [ ] Using a fresh sign-in/session, successful online logout revokes the server-side session before local credentials are cleared; the revoked session cannot use an otherwise unexpired access token.
+  - [ ] Using a separate fresh sign-in/session, simulate an offline/network failure during logout and verify local credentials still clear.
+  - [ ] Using a third fresh sign-in/session, simulate a non-success HTTP response during logout and verify local credentials still clear.
+  - [ ] For each failed revocation case, record that the remote session may remain live until its absolute 30-day expiry, plus the pilot risk owner and mitigation in Notes.
   - [ ] No refresh token or credential value was recorded in the evidence.
 - **Notes:**
 
@@ -116,7 +118,13 @@ in this document.
   - [ ] Anthropic zone detection, observation extraction, and report generation completed.
   - [ ] Every sampled observation links to its transcript segment, raw media, timestamps, model, prompt version, confidence, and review status.
   - [ ] Voice-tag links resolve only within the configured maximum forward gap; long-silence and post-final tags remain unresolved.
-  - [ ] `uv run python scripts/ai_cost_report.py` was run for the Visit and the cost result is attached.
+  - [ ] From the repository root, replace the visibly invalid placeholder with the staging Visit UUID, then run:
+    ```sh
+    cd backend
+    VISIT_ID='REPLACE_WITH_STAGING_VISIT_UUID'
+    uv run python scripts/ai_cost_report.py --visit-id "$VISIT_ID"
+    ```
+    Require the output to identify that same Visit UUID and contain its recorded token usage and estimated cost result; attach the output as evidence.
 - **Notes:**
 
 ### 7. Stripe test-mode billing

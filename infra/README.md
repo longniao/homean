@@ -48,8 +48,15 @@ to record the result, evidence, and approval for each gate:
 3. Sign up a new workspace and verify the 14-day trial, Checkout redirect, signed Stripe
    webhook activation, duplicate-event idempotency, and customer-portal redirect.
 4. Upload one real English showing recording, confirm Deepgram and Anthropic processing,
-   review the evidence links, and run `uv run python scripts/ai_cost_report.py` for that
-   Visit.
+   and review the evidence links. From the repository root, replace the visibly invalid
+   placeholder with the staging Visit UUID, then run:
+   ```sh
+   cd backend
+   VISIT_ID='REPLACE_WITH_STAGING_VISIT_UUID'
+   uv run python scripts/ai_cost_report.py --visit-id "$VISIT_ID"
+   ```
+   Require the output to identify that same Visit UUID and contain its recorded token
+   usage and estimated cost result.
 5. Edit and explicitly confirm the report, send it by email, open the private share link,
    verify PDF rendering, revoke the link, and confirm the revoked URL returns `404`.
 6. Apply the private-bucket CORS policy below and verify uploads from the dashboard origin

@@ -32,12 +32,13 @@ Voice tags are stored locally with exact offsets and sync through the visit mark
 Access tokens expire after 15 minutes. Refresh tokens are opaque and deliberately
 non-rotating; the server stores only their hashes. Each sign-in creates one
 revocable server-side session with an absolute 30-day expiry that refresh never
-extends. Logout attempts server-side revocation before clearing local credentials,
-and revocation immediately invalidates access through the session-aware request
-context. If logout cannot reach the server, the device still clears its local
-credentials and the session expires at the same absolute deadline. The signed-in
-account is persisted alongside the tokens and is shown on Home, including on an
-offline cold start.
+extends. Logout attempts server-side revocation before clearing local credentials.
+When revocation succeeds, the session-aware request context invalidates access
+immediately. If revocation cannot be confirmed — because the device is offline,
+the network fails, or the server returns a non-success response — the device still
+clears its local credentials, and the remote session may remain live until its
+absolute 30-day expiry. The signed-in account is persisted alongside the tokens
+and is shown on Home, including on an offline cold start.
 
 Signing out needs a network round trip to reverse, so the app warns first when
 captures are still queued on the device.
