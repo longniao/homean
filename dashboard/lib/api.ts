@@ -130,7 +130,7 @@ const showingDetailSchema = showingSchema.extend({
   zones: z.array(zoneSchema),
   observations: z.array(observationSchema),
   transcript: z.array(transcriptSchema),
-  markers: z.array(markerSchema),
+  markers: z.array(markerSchema).default([]),
   report: reportSchema.nullable(),
 });
 
