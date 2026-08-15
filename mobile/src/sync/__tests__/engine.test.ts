@@ -4,7 +4,7 @@ import type { LocalMarker, LocalMedia, LocalShowing } from '../../types';
 const showing = (patch: Partial<LocalShowing> = {}): LocalShowing => ({
   id: 'local-1', remoteId: null, contactId: null, subjectId: 'subject-1', address: null, title: '123 Main',
   startedAt: 1, endedAt: 2, elapsedMs: 10_000, syncState: 'local', processingStatus: null,
-  finishRequested: true, lastError: null, updatedAt: 1, generation: 0, ...patch,
+  finishRequested: true, lastError: null, updatedAt: 1, generation: 0, rejectedMediaCount: 0, ...patch,
 });
 const media = (id: string, createdAt: number, patch: Partial<LocalMedia> = {}): LocalMedia => ({
   id, showingId: 'local-1', remoteMediaId: null, kind: 'audio', fileUri: `file:///${id}.m4a`,
@@ -81,6 +81,16 @@ describe('SyncEngine', () => {
     expect(oversized.state).toBe('rejected');
     expect(calls).toContain('finish');
     expect(store.showings[0]!.syncState).toBe('processing');
+    // ...but the agent has to be told the report is missing it.
+    expect(store.showings[0]!.rejectedMediaCount).toBe(1);
+  });
+
+  test('records nothing dropped when every capture is accepted', async () => {
+    const store = new MemoryStore([showing()], [media('audio', 1)]); const calls: string[] = [];
+
+    await new SyncEngine(store, transport(calls), { isOnline: async () => true }).run();
+
+    expect(store.showings[0]!.rejectedMediaCount).toBe(0);
   });
 
   test('stops retrying a rejected item instead of queueing it forever', async () => {

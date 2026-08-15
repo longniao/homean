@@ -51,6 +51,8 @@ export interface LocalShowing {
   generation: number;
   consentAck?: boolean;
   consentTextVersion?: string | null;
+  /** Captures the server refused. They stay on the device; the report lacks them. */
+  rejectedMediaCount?: number;
 }
 export interface LocalMedia {
   id: string; showingId: string; remoteMediaId: string | null; kind: MediaKind;

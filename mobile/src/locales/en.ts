@@ -36,6 +36,8 @@ export const en = {
   sync: {
     local: 'Local', syncing: 'Syncing', synced: 'Synced', processing: 'Processing', ready: 'Ready',
     failed: 'Needs retry', offline: 'Offline — saved safely on this device',
+    mediaDropped_one: '{{count}} capture could not be uploaded and is not in the report. It is still on this device.',
+    mediaDropped_other: '{{count}} captures could not be uploaded and are not in the report. They are still on this device.',
   },
   report: {
     title: 'Draft report', summary: 'Executive summary', rooms: 'Room by room',

@@ -91,6 +91,22 @@ describe('HomeScreen signed-in identity', () => {
   });
 });
 
+describe('HomeScreen dropped captures', () => {
+  test('tells the agent when a capture never made it into the report', async () => {
+    const screen = await renderHome({ showings: [showing({ syncState: 'ready', rejectedMediaCount: 2 })] });
+
+    // A succeeded showing with a silently missing photo is the failure mode
+    // worth naming, especially once the report is used as evidence.
+    expect(screen.getByText(/2 captures could not be uploaded/)).toBeTruthy();
+  });
+
+  test('says nothing when every capture was accepted', async () => {
+    const screen = await renderHome({ showings: [showing({ syncState: 'ready' })] });
+
+    expect(screen.queryByText(/could not be uploaded/)).toBeNull();
+  });
+});
+
 describe('HomeScreen sign-out guard', () => {
   afterEach(() => { jest.restoreAllMocks(); });
 
