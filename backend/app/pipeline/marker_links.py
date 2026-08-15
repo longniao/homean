@@ -29,7 +29,10 @@ class SegmentSpan:
 
 
 def link_markers(
-    markers: list[MarkerMoment], segments: list[SegmentSpan]
+    markers: list[MarkerMoment],
+    segments: list[SegmentSpan],
+    *,
+    max_forward_gap_ms: float,
 ) -> dict[uuid.UUID, uuid.UUID]:
     """Map marker ids to the segment each one bookmarks."""
 
@@ -39,7 +42,7 @@ def link_markers(
     links: dict[uuid.UUID, uuid.UUID] = {}
     for marker in markers:
         span = _containing(marker.offset_ms, ordered) or _following(
-            marker.offset_ms, ordered
+            marker.offset_ms, ordered, max_forward_gap_ms
         )
         if span is not None:
             links[marker.marker_id] = span.segment_id
@@ -55,9 +58,18 @@ def _containing(offset_ms: float, ordered: list[SegmentSpan]) -> SegmentSpan | N
     return None
 
 
-def _following(offset_ms: float, ordered: list[SegmentSpan]) -> SegmentSpan | None:
+def _following(
+    offset_ms: float,
+    ordered: list[SegmentSpan],
+    max_forward_gap_ms: float,
+) -> SegmentSpan | None:
     for span in ordered:
-        if span.start_ms > offset_ms:
+        if (
+            span.start_ms > offset_ms
+            and span.start_ms - offset_ms <= max_forward_gap_ms
+        ):
             return span
+        if span.start_ms > offset_ms:
+            break
     # Tapped after the last word, so there is nothing it can point at.
     return None

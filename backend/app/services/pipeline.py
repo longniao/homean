@@ -176,6 +176,7 @@ class RealEstatePipelineService:
                 )
                 for segment in segments
             ],
+            max_forward_gap_ms=self._config.voice_tag_max_forward_gap_ms,
         )
         for marker in markers:
             # Rewritten wholesale so a re-run cannot leave a link to a segment

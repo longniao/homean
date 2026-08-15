@@ -744,6 +744,7 @@ async def test_voice_tags_bookmark_evidence_without_bypassing_review(
         if observation["source_transcript_segment_id"]
         == tagged["transcript_segment_id"]
     ]
+    assert marked, "a resolved voice tag should flag at least one observation"
     for observation in marked:
         # Recorded as a flag, so the vertical's category set is untouched...
         assert observation["flags"].get("voice_tagged") is True

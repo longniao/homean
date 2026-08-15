@@ -28,6 +28,11 @@ class PipelineConfig(BaseSettings):
     deepgram_model: str = "nova-3"
     output_language: Literal["en"] = "en"
     max_tokens: int = Field(default=16000, ge=1, le=64000)
+    # A tag is normally tapped just before the agent starts a short thought.
+    # Five seconds covers that handoff while preventing a later, unrelated
+    # utterance from becoming evidence.  This is configurable because it is a
+    # product policy, not an invariant of transcript timestamps.
+    voice_tag_max_forward_gap_ms: int = Field(default=5_000, ge=0)
 
     def model_for(self, step: PipelineStep) -> str:
         models = {
