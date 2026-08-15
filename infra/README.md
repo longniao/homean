@@ -39,7 +39,8 @@ build context. Keep those paths aligned in `infra/docker-compose.yml` and
 ## Staging acceptance gate
 
 Do not promote staging to production until every item below has an owner and recorded
-result:
+result. Use the executable [pilot acceptance checklist](../docs/Homean_Pilot_Acceptance_Checklist.md)
+to record the result, evidence, and approval for each gate:
 
 1. Confirm CI is green for backend, dashboard, mobile, dependency audit, and Playwright.
 2. Validate the Blueprint, provision secrets, deploy, and confirm both `/health` and
