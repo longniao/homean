@@ -1,6 +1,6 @@
 import type { LocalMarker, LocalMedia, LocalShowing, MediaKind, SyncState } from '../types';
 
-type ShowingPatch = Partial<Pick<LocalShowing, 'remoteId' | 'syncState' | 'processingStatus' | 'lastError' | 'updatedAt'>>;
+type ShowingPatch = Partial<Pick<LocalShowing, 'remoteId' | 'syncState' | 'processingStatus' | 'lastError' | 'updatedAt' | 'rejectedMediaCount'>>;
 
 export interface SyncStore {
   getShowing(id: string): Promise<LocalShowing | null>;
@@ -104,15 +104,19 @@ export class SyncEngine {
       const markers = await this.store.markersForShowing(snapshot.id);
       if (media.some((item) => item.state !== 'completed' && item.state !== 'rejected') || markers.some((item) => item.state !== 'synced')) return;
 
+      // Anything the server refused is absent from the report. Record how
+      // much, so the agent is told rather than left to notice a missing photo
+      // later — the showing succeeding is not the same as everything arriving.
+      const rejectedMediaCount = media.filter((item) => item.state === 'rejected').length;
       if (current.finishRequested) {
         if (!media.some((item) => item.kind === 'audio' && item.state === 'completed')) {
-          await this.store.patchShowing(snapshot.id, { syncState: 'failed', lastError: 'missing_audio', updatedAt: this.now() }, generation);
+          await this.store.patchShowing(snapshot.id, { syncState: 'failed', lastError: 'missing_audio', rejectedMediaCount, updatedAt: this.now() }, generation);
           return;
         }
         await this.transport.finishShowing(remoteId);
-        await this.store.patchShowing(snapshot.id, { syncState: 'processing', processingStatus: 'queued', lastError: null, updatedAt: this.now() }, generation);
+        await this.store.patchShowing(snapshot.id, { syncState: 'processing', processingStatus: 'queued', lastError: null, rejectedMediaCount, updatedAt: this.now() }, generation);
       } else {
-        await this.store.patchShowing(snapshot.id, { syncState: 'synced', lastError: null, updatedAt: this.now() }, generation);
+        await this.store.patchShowing(snapshot.id, { syncState: 'synced', lastError: null, rejectedMediaCount, updatedAt: this.now() }, generation);
       }
     } catch (error) {
       const patch: ShowingPatch = {

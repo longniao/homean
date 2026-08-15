@@ -10,7 +10,7 @@ export function LoginScreen({ onAuthenticated }: { onAuthenticated: () => void }
   const [loading, setLoading] = useState(false); const [error, setError] = useState(false);
   const submit = async () => { setLoading(true); setError(false); try { await api.login(email.trim(), password); onAuthenticated(); } catch { setError(true); } finally { setLoading(false); } };
   return <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.page}>
-    <View style={styles.mark}><Text style={styles.markText}>K</Text></View>
+    <View style={styles.mark}><Text style={styles.markText}>H</Text></View>
     <Text style={styles.title}>{t('auth.title')}</Text><Text style={styles.subtitle}>{t('auth.subtitle')}</Text>
     <Text style={styles.label}>{t('auth.email')}</Text><TextInput autoCapitalize="none" autoComplete="email" keyboardType="email-address" value={email} onChangeText={setEmail} style={styles.input} />
     <Text style={styles.label}>{t('auth.password')}</Text><TextInput secureTextEntry autoComplete="current-password" value={password} onChangeText={setPassword} style={styles.input} />
