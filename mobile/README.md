@@ -29,12 +29,15 @@ Voice tags are stored locally with exact offsets and sync through the visit mark
 
 ## Signed-in session
 
-Tokens live in SecureStore and the session slides: every refresh mints a new
-30-day refresh token, so an agent who keeps using the app stays signed in
-indefinitely. Only a rejected refresh token (401/403) ends the session — a rate
-limit, a 5xx, or a lost connection leaves the stored session intact so the next
-attempt recovers it. The signed-in account is persisted alongside the tokens and
-is shown on Home, including on an offline cold start.
+Access tokens expire after 15 minutes. Refresh tokens are opaque and deliberately
+non-rotating; the server stores only their hashes. Each sign-in creates one
+revocable server-side session with an absolute 30-day expiry that refresh never
+extends. Logout attempts server-side revocation before clearing local credentials,
+and revocation immediately invalidates access through the session-aware request
+context. If logout cannot reach the server, the device still clears its local
+credentials and the session expires at the same absolute deadline. The signed-in
+account is persisted alongside the tokens and is shown on Home, including on an
+offline cold start.
 
 Signing out needs a network round trip to reverse, so the app warns first when
 captures are still queued on the device.
