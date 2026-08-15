@@ -36,8 +36,11 @@ def refresh_token_hash(token: str) -> str:
     down over, and lookup has to stay a single indexed read.
     """
 
+    # Request payloads are UTF-8 text, while issued opaque tokens happen to be
+    # URL-safe ASCII.  Hash the boundary value as UTF-8 so malformed input is
+    # still an ordinary cache miss rather than an encoding exception.
     return hashlib.sha256(
-        _REFRESH_TOKEN_HASH_PREFIX + token.encode("ascii")
+        _REFRESH_TOKEN_HASH_PREFIX + token.encode("utf-8", errors="surrogatepass")
     ).hexdigest()
 
 

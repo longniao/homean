@@ -73,6 +73,13 @@ async def test_logout_revokes_the_session_and_refresh_stops_working(
     )
     assert refused.status_code == 401
 
+    # Logout is idempotent even after the session has already been revoked.
+    assert (
+        await client.post(
+            "/auth/logout", json={"refresh_token": tokens["refresh_token"]}
+        )
+    ).status_code == 204
+
 
 async def test_a_stolen_refresh_token_is_worthless_once_the_user_logs_out(
     client: AsyncClient,
@@ -237,10 +244,19 @@ async def test_a_legacy_stateless_refresh_token_is_refused(
     assert refused.status_code == 401
 
 
-@pytest.mark.parametrize("token", ["", " ", "x" * 500])
+@pytest.mark.parametrize("token", ["☃", "", " ", "x" * 500])
 async def test_malformed_refresh_tokens_are_refused_cleanly(
     client: AsyncClient, token: str
 ) -> None:
     response = await client.post("/auth/refresh", json={"refresh_token": token})
 
-    assert response.status_code in {401, 422}
+    assert response.status_code == 401
+
+
+@pytest.mark.parametrize("token", ["☃", "", " ", "x" * 500])
+async def test_logout_accepts_unknown_malformed_and_unicode_tokens(
+    client: AsyncClient, token: str
+) -> None:
+    response = await client.post("/auth/logout", json={"refresh_token": token})
+
+    assert response.status_code == 204
