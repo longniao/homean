@@ -65,7 +65,7 @@ const showing: ShowingDetail = {
       reviewed_at: "2026-08-04T11:00:00Z",
     },
   ],
-  transcript: [],
+  transcript: [], markers: [],
   report: null,
 };
 

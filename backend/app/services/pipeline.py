@@ -15,6 +15,7 @@ from app.models import (
     Zone,
 )
 from app.pipeline.llm import LLMClient, LLMResponse, SchemaT
+from app.pipeline.marker_links import MarkerMoment, SegmentSpan, link_markers
 from app.pipeline.photo_zones import (
     ZONE_SOURCE_VOICE,
     PhotoMoment,
@@ -151,7 +152,35 @@ class RealEstatePipelineService:
                     status="success",
                 ),
             )
+        await self._session.flush()
+        await self._link_markers(workspace_id, visit_id)
         await self._session.commit()
+
+    async def _link_markers(self, workspace_id: uuid.UUID, visit_id: uuid.UUID) -> None:
+        """Resolve each voice tag to the transcript segment it bookmarks."""
+
+        markers = await self._repository.markers(workspace_id, visit_id)
+        if not markers:
+            return
+        segments = await self._repository.transcripts(workspace_id, visit_id)
+        links = link_markers(
+            [
+                MarkerMoment(marker_id=marker.id, offset_ms=marker.timestamp_offset_ms)
+                for marker in markers
+            ],
+            [
+                SegmentSpan(
+                    segment_id=segment.id,
+                    start_ms=segment.timestamp_start or 0.0,
+                    end_ms=segment.timestamp_end or segment.timestamp_start or 0.0,
+                )
+                for segment in segments
+            ],
+        )
+        for marker in markers:
+            # Rewritten wholesale so a re-run cannot leave a link to a segment
+            # that no longer exists.
+            marker.transcript_segment_id = links.get(marker.id)
 
     async def detect_zones(self, workspace_id: uuid.UUID, visit_id: uuid.UUID) -> None:
         visit = await self._require_draft_visit(workspace_id, visit_id)
@@ -299,7 +328,13 @@ class RealEstatePipelineService:
         if not segments:
             raise ValueError("observation extraction requires transcript segments")
         pack = self._verticals.get()
-        batches = self._zone_batches(zones, segments)
+        markers = await self._repository.markers(workspace_id, visit_id)
+        emphasized = {
+            marker.transcript_segment_id
+            for marker in markers
+            if marker.transcript_segment_id is not None
+        }
+        batches = self._zone_batches(zones, segments, emphasized)
         prompt = self._prompts.render(
             pack,
             "observation_extraction",
@@ -348,7 +383,7 @@ class RealEstatePipelineService:
                     ai_model=invocation.response.model,
                     prompt_version=pack.prompt_version,
                     confidence=extracted.confidence,
-                    flags=extracted.flags.model_dump(exclude_none=True),
+                    flags=self._observation_flags(extracted, source.id, emphasized),
                     review_status="pending",
                 )
             )
@@ -591,16 +626,43 @@ class RealEstatePipelineService:
         return f"{type(error).__name__}: {error}"[:4000]
 
     @staticmethod
-    def _segment_payload(segment: TranscriptSegment) -> dict[str, object]:
-        return {
+    def _segment_payload(
+        segment: TranscriptSegment, emphasized: set[uuid.UUID] | None = None
+    ) -> dict[str, object]:
+        payload: dict[str, object] = {
             "id": str(segment.id),
             "text": segment.text,
             "start_ms": segment.timestamp_start,
             "end_ms": segment.timestamp_end,
         }
+        if emphasized and segment.id in emphasized:
+            # The agent tapped here during the tour. It is a hint about what
+            # mattered, not an instruction to extract something.
+            payload["agent_emphasized"] = True
+        return payload
+
+    @staticmethod
+    def _observation_flags(
+        extracted: object, source_id: uuid.UUID, emphasized: set[uuid.UUID]
+    ) -> dict[str, object]:
+        """Model flags, plus a note when the agent had marked this moment.
+
+        Recorded as a flag rather than a category so the vertical's observation
+        schema is untouched, and it changes nothing else: the observation keeps
+        its normal transcript and media evidence, stays pending review, and is
+        not promoted into the report by being marked.
+        """
+
+        flags = extracted.flags.model_dump(exclude_none=True)
+        if source_id in emphasized:
+            flags["voice_tagged"] = True
+        return flags
 
     def _zone_batches(
-        self, zones: list[Zone], segments: list[TranscriptSegment]
+        self,
+        zones: list[Zone],
+        segments: list[TranscriptSegment],
+        emphasized: set[uuid.UUID] | None = None,
     ) -> list[dict[str, object]]:
         segment_positions = {
             segment.id: position for position, segment in enumerate(segments)
@@ -618,7 +680,9 @@ class RealEstatePipelineService:
                 {
                     "zone_id": str(zone.id),
                     "zone_type": zone.zone_type,
-                    "segments": [self._segment_payload(item) for item in evidence],
+                    "segments": [
+                        self._segment_payload(item, emphasized) for item in evidence
+                    ],
                 }
             )
         unzoned = [segment for segment in segments if segment.id not in covered]
@@ -627,7 +691,9 @@ class RealEstatePipelineService:
                 {
                     "zone_id": None,
                     "zone_type": None,
-                    "segments": [self._segment_payload(item) for item in unzoned],
+                    "segments": [
+                        self._segment_payload(item, emphasized) for item in unzoned
+                    ],
                 }
             )
         return batches

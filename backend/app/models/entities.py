@@ -460,6 +460,14 @@ class VisitMarker(UUIDTimestampMixin, Base):
         Text, nullable=False, default="voice_tag", server_default="voice_tag"
     )
     timestamp_offset_ms: Mapped[float] = mapped_column(Float, nullable=False)
+    # The segment this tap bookmarks. Derived, so reprocessing recomputes it;
+    # the tap itself is the agent's and is never rebuilt.
+    transcript_segment_id: Mapped[uuid.UUID | None] = mapped_column(
+        PGUUID(as_uuid=True),
+        ForeignKey("transcript_segments.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
 
 
 class TranscriptSegment(UUIDTimestampMixin, Base):

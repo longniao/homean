@@ -54,7 +54,7 @@ function showing(): ShowingDetail {
       reviewed_by: null,
       reviewed_at: null,
     }],
-    transcript: [],
+    transcript: [], markers: [],
     report: {
       id: reportId,
       template_id: "real_estate_v1",

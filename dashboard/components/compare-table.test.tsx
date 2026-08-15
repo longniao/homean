@@ -48,7 +48,7 @@ function showing(id: string, name: string, highlights: number, concerns: number,
       reviewed_by: null,
       reviewed_at: null,
     }],
-    transcript: [],
+    transcript: [], markers: [],
     report: {
       id: `${id.slice(0, 8)}-4444-4444-8444-444444444444`,
       template_id: "real_estate_v1",

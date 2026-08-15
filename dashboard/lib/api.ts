@@ -116,11 +116,21 @@ export const reportSchema = z.object({
   status: z.string(),
 });
 
-export const showingDetailSchema = showingSchema.extend({
+export const markerSchema = z.object({
+  id: z.string(),
+  marker_type: z.literal("voice_tag"),
+  timestamp_offset_ms: z.number(),
+  // Null when the tap fell after the last thing said, so it bookmarks nothing.
+  transcript_segment_id: z.string().nullable().catch(null),
+  created_at: dateString,
+});
+
+const showingDetailSchema = showingSchema.extend({
   media: z.array(mediaSchema),
   zones: z.array(zoneSchema),
   observations: z.array(observationSchema),
   transcript: z.array(transcriptSchema),
+  markers: z.array(markerSchema),
   report: reportSchema.nullable(),
 });
 

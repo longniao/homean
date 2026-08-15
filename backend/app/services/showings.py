@@ -89,6 +89,7 @@ class ShowingDetail:
     zones: list[Zone]
     observations: list[Observation]
     transcript: list[TranscriptSegment]
+    markers: list[VisitMarker]
     report: Report | None
 
 
@@ -636,6 +637,7 @@ class RealEstateShowingService:
             transcript=await self._repository.detail_transcript(
                 context.workspace.id, visit_id
             ),
+            markers=await self._repository.list_markers(context.workspace.id, visit_id),
             report=await self._repository.detail_report(context.workspace.id, visit_id),
         )
 

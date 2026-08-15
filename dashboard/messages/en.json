@@ -213,7 +213,9 @@
     "original": "Original transcript",
     "audioTitle": "Showing audio",
     "audioUnavailable": "Audio playback is unavailable.",
-    "audioHint": "Open evidence from any observation to jump to the exact moment in the recording."
+    "audioHint": "Open evidence from any observation to jump to the exact moment in the recording.",
+    "voiceTags": "Voice tags",
+    "voiceTagLabel": "Tag {index} · {time}"
   },
   "Delivery": {
     "eyebrow": "Client delivery",

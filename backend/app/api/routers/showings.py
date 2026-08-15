@@ -67,6 +67,7 @@ def showing_detail_response(detail: ShowingDetail) -> ShowingDetailResponse:
         transcript=[
             TranscriptSegmentResponse.from_segment(item) for item in detail.transcript
         ],
+        markers=[MarkerResponse.from_marker(item) for item in detail.markers],
         report=ReportResponse.from_report(detail.report) if detail.report else None,
     )
 

@@ -126,6 +126,9 @@ class MarkerResponse(BaseModel):
     client_id: uuid.UUID
     marker_type: MarkerType
     timestamp_offset_ms: float
+    # The segment this tap bookmarks, so the review UI can jump straight to it.
+    # Null when the tap fell after the last thing said.
+    transcript_segment_id: uuid.UUID | None = None
     created_at: datetime
 
     @classmethod
@@ -217,6 +220,7 @@ class ShowingDetailResponse(ShowingResponse):
     zones: list[ZoneResponse]
     observations: list[ObservationResponse]
     transcript: list[TranscriptSegmentResponse]
+    markers: list[MarkerResponse]
     report: ReportResponse | None
 
 

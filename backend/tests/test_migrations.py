@@ -78,7 +78,7 @@ async def test_migration_up_from_empty_database(database_url: str) -> None:
         await engine.dispose()
 
     assert schema["tables"] == EXPECTED_TABLES
-    assert revision == "20260814_0021"
+    assert revision == "20260814_0022"
     for table in EXPECTED_TABLES - {"alembic_version"}:
         assert {"id", "created_at", "updated_at"} <= schema["columns"][table]
     assert {

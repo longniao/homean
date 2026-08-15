@@ -10,6 +10,7 @@ from app.models import (
     Report,
     TranscriptSegment,
     Visit,
+    VisitMarker,
     Zone,
 )
 
@@ -57,6 +58,20 @@ class PipelineRepository:
                 Visit.workspace_id == workspace_id,
             )
             .order_by(RawMedia.timestamp_offset_ms, RawMedia.created_at, RawMedia.id)
+        )
+        return list(result)
+
+    async def markers(
+        self, workspace_id: uuid.UUID, visit_id: uuid.UUID
+    ) -> list[VisitMarker]:
+        result = await self.session.scalars(
+            select(VisitMarker)
+            .join(Visit, Visit.id == VisitMarker.visit_id)
+            .where(
+                VisitMarker.visit_id == visit_id,
+                Visit.workspace_id == workspace_id,
+            )
+            .order_by(VisitMarker.timestamp_offset_ms, VisitMarker.created_at)
         )
         return list(result)
 

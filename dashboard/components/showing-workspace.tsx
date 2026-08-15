@@ -335,6 +335,9 @@ function TranscriptTab({
       void audioRef.current.play();
     }
   };
+  // A tag that resolved to nothing has no evidence to jump to, so it is not
+  // offered as a jump point.
+  const bookmarks = showing.markers.filter((marker) => marker.transcript_segment_id !== null);
   useEffect(() => {
     const segment = showing.transcript.find((item) => item.id === targetSegmentId);
     if (segment) window.setTimeout(() => play(segment.id, segment.timestamp_start), 100);
@@ -345,6 +348,23 @@ function TranscriptTab({
   return (
     <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
       <div className="space-y-2">
+        {bookmarks.length > 0 && (
+          <div className="panel p-4">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-stone-400">{t("voiceTags")}</p>
+            <div className="flex flex-wrap gap-2">
+              {bookmarks.map((bookmark, index) => (
+                <button
+                  className="rounded-full border border-stone-200 px-3 py-1.5 text-sm font-semibold text-[#1f6f5b] transition hover:bg-emerald-50"
+                  key={bookmark.id}
+                  onClick={() => play(bookmark.transcript_segment_id!, bookmark.timestamp_offset_ms)}
+                  type="button"
+                >
+                  {t("voiceTagLabel", { index: index + 1, time: new Date(bookmark.timestamp_offset_ms).toISOString().slice(14, 19) })}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         {showing.transcript.map((segment) => (
           <article className={cn("panel scroll-mt-28 p-4 transition", segment.id === targetSegmentId && "border-emerald-500 ring-4 ring-emerald-500/10")} id={`segment-${segment.id}`} key={segment.id}>
             <div className="flex gap-3">
