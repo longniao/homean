@@ -89,6 +89,24 @@ npm run build
 npm run test:e2e
 ```
 
+## Marketing site
+
+The agent-facing pilot website is a separate static-export app in `marketing/`; it does
+not alter dashboard authentication or depend on the backend. See `marketing/README.md` for
+local setup and the counsel-gated publishing checklist.
+
+Run its checks with:
+
+```sh
+cd marketing
+npm ci
+npm audit --audit-level=high
+npm test
+npm run typecheck
+npm run lint
+npm run build
+```
+
 The end-to-end test requires the local PostgreSQL service and a Playwright Chromium
 installation (`npx playwright install chromium`).
 

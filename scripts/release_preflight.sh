@@ -27,7 +27,7 @@ else
   )
 fi
 
-echo "==> Validating Render Blueprint structure and Docker paths"
+echo "==> Validating Render Blueprint structure, Docker paths, and marketing export"
 run_backend_script validate_render_blueprint.py
 
 echo "==> Validating Docker Compose configuration"

@@ -1,0 +1,8 @@
+.next/
+out/
+*.tsbuildinfo
+node_modules/
+.env
+.env.local
+.env.*.local
+!.env.example

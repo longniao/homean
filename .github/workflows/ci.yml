@@ -63,6 +63,32 @@ jobs:
         env:
           NEXT_TELEMETRY_DISABLED: "1"
 
+  marketing:
+    name: Marketing site
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: marketing
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: marketing/package-lock.json
+      - run: npm ci
+      - run: npm audit --audit-level=high
+      - run: npm test
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+          NEXT_PUBLIC_SITE_URL: "https://marketing.ci.invalid"
+          NEXT_PUBLIC_APP_URL: "https://app.ci.invalid"
+          NEXT_PUBLIC_PILOT_EMAIL: "pilot@marketing.ci.invalid"
+          NEXT_PUBLIC_SITE_INDEXABLE: "false"
+
   mobile:
     name: Mobile
     runs-on: ubuntu-latest

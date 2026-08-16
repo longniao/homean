@@ -122,6 +122,24 @@ services:
           type: web
           name: homean-api
           envVarKey: RENDER_EXTERNAL_URL
+  - type: web
+    name: homean-marketing
+    runtime: static
+    autoDeployTrigger: checksPass
+    buildCommand: cd marketing && npm ci && npm run build
+    staticPublishPath: ./marketing/out
+    envVars:
+      - key: NEXT_PUBLIC_SITE_URL
+        sync: false
+      - key: NEXT_PUBLIC_APP_URL
+        fromService:
+          type: web
+          name: homean-dashboard
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: NEXT_PUBLIC_PILOT_EMAIL
+        sync: false
+      - key: NEXT_PUBLIC_SITE_INDEXABLE
+        value: "false"
   - type: keyvalue
     name: homean-redis
     plan: starter

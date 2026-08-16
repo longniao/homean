@@ -17,7 +17,39 @@ def test_render_blueprint_uses_existing_release_docker_paths() -> None:
         "homean-api",
         "homean-worker",
         "homean-dashboard",
+        "homean-marketing",
     )
+
+
+def test_render_blueprint_declares_static_marketing_export() -> None:
+    blueprint = yaml.safe_load(BLUEPRINT_PATH.read_text(encoding="utf-8"))
+    marketing = next(
+        service
+        for service in blueprint["services"]
+        if service["name"] == "homean-marketing"
+    )
+
+    assert marketing == {
+        "type": "web",
+        "name": "homean-marketing",
+        "runtime": "static",
+        "autoDeployTrigger": "checksPass",
+        "buildCommand": "cd marketing && npm ci && npm run build",
+        "staticPublishPath": "./marketing/out",
+        "envVars": [
+            {"key": "NEXT_PUBLIC_SITE_URL", "sync": False},
+            {
+                "key": "NEXT_PUBLIC_APP_URL",
+                "fromService": {
+                    "type": "web",
+                    "name": "homean-dashboard",
+                    "envVarKey": "RENDER_EXTERNAL_URL",
+                },
+            },
+            {"key": "NEXT_PUBLIC_PILOT_EMAIL", "sync": False},
+            {"key": "NEXT_PUBLIC_SITE_INDEXABLE", "value": "false"},
+        ],
+    }
 
 
 def test_compose_uses_the_same_canonical_backend_builds() -> None:
