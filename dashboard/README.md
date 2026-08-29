@@ -75,8 +75,7 @@ npm run cf:preview
 npm run cf:deploy
 ```
 
-The deployed Cloudflare preview is
-<https://homean-dashboard.longniao.workers.dev>. The API origin is non-secret server
+The deployed Cloudflare dashboard is <https://app.homean.com>. The API origin is non-secret server
 configuration. Keep provider keys and other
 secrets out of `wrangler.jsonc`; provision secrets with Wrangler if the dashboard gains
 server-side integrations that require them.

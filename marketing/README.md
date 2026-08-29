@@ -54,15 +54,11 @@ build-time values when previewing or deploying; keep the publication gate false 
 approval above is recorded.
 
 ```sh
-NEXT_PUBLIC_SITE_URL=https://example.workers.dev \
-NEXT_PUBLIC_APP_URL=https://example-dashboard.workers.dev \
-NEXT_PUBLIC_PILOT_EMAIL=pilot@example.com \
-NEXT_PUBLIC_SITE_INDEXABLE=false \
 npm run cf:deploy
 ```
 
-After the first deployment, rebuild with the exact assigned hostname so canonical,
-Open Graph, sitemap, and robots metadata agree with the deployed URL.
+The checked-in `.env.production` contains Homean's non-secret public deployment values,
+so canonical, Open Graph, sitemap, and cross-site links stay aligned with production.
 
-The current non-indexable Cloudflare deployment is
-<https://homean-marketing.longniao.workers.dev> and links to the dashboard Worker above.
+The current non-indexable Cloudflare deployment is <https://homean.com> and links to the
+dashboard at <https://app.homean.com>.
