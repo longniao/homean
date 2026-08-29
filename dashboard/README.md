@@ -62,6 +62,25 @@ cd ..
 bash scripts/release_preflight.sh
 ```
 
+## Cloudflare deployment
+
+The dashboard is adapted for Cloudflare Workers with OpenNext. The checked-in
+`wrangler.jsonc` intentionally uses an invalid API origin until a real Homean backend is
+provisioned; replace `HOMEAN_API_URL` before treating the deployment as functional.
+
+```sh
+npm ci
+npm run cf:typegen
+npm run cf:preview
+npm run cf:deploy
+```
+
+The deployed Cloudflare preview is
+<https://homean-dashboard.longniao.workers.dev>. The API origin is non-secret server
+configuration. Keep provider keys and other
+secrets out of `wrangler.jsonc`; provision secrets with Wrangler if the dashboard gains
+server-side integrations that require them.
+
 ## End-to-end tests
 
 The Playwright smoke flow uses the real API with fake storage, email, and pipeline

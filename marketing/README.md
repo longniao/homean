@@ -46,3 +46,23 @@ npm run build
 `npm run build` writes the static export to `out/`. Do not publish the site to the public
 domain until the pilot owner records a go decision and counsel approves public recording,
 disclosure, privacy, and retention wording.
+
+## Cloudflare deployment
+
+The static export is configured for Cloudflare Workers Static Assets. Supply all public
+build-time values when previewing or deploying; keep the publication gate false until the
+approval above is recorded.
+
+```sh
+NEXT_PUBLIC_SITE_URL=https://example.workers.dev \
+NEXT_PUBLIC_APP_URL=https://example-dashboard.workers.dev \
+NEXT_PUBLIC_PILOT_EMAIL=pilot@example.com \
+NEXT_PUBLIC_SITE_INDEXABLE=false \
+npm run cf:deploy
+```
+
+After the first deployment, rebuild with the exact assigned hostname so canonical,
+Open Graph, sitemap, and robots metadata agree with the deployed URL.
+
+The current non-indexable Cloudflare deployment is
+<https://homean-marketing.longniao.workers.dev> and links to the dashboard Worker above.

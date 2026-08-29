@@ -26,8 +26,15 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: data.get("email"), password: data.get("password") }),
       });
-      const payload = await response.json();
-      if (!response.ok) throw new Error(payload.detail || t("genericError"));
+      const payload: unknown = await response.json();
+      const detail =
+        typeof payload === "object" &&
+        payload !== null &&
+        "detail" in payload &&
+        typeof payload.detail === "string"
+          ? payload.detail
+          : t("genericError");
+      if (!response.ok) throw new Error(detail);
       router.replace(search.get("next") || "/");
       router.refresh();
     } catch (caught) {
