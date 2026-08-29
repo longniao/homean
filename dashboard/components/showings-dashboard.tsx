@@ -111,7 +111,7 @@ export function ShowingsDashboard() {
         <div>
           <p className="eyebrow mb-3">{t("eyebrow")}</p>
           <h1 className="page-title">{t("title")}</h1>
-          <p className="mt-3 max-w-2xl text-stone-500">{t("subtitle")}</p>
+          <p className="mt-5 max-w-2xl text-base leading-7 text-[#59625f]">{t("subtitle")}</p>
         </div>
         {billing.data?.active === false ? (
           <Button className="h-10 px-4" disabled><Plus /> {t("newShowing")}</Button>
@@ -130,14 +130,14 @@ export function ShowingsDashboard() {
         </div>
       )}
 
-      <div className="panel mb-6 p-4 sm:p-5">
+      <div className="panel mb-8 p-4 sm:p-5">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="inline-flex rounded-xl bg-stone-100 p-1">
+          <div className="inline-flex rounded-full bg-[#e6e8df] p-1">
             {(["client", "property"] as const).map((mode) => (
               <button
                 className={cn(
-                  "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-stone-500 transition",
-                  view === mode && "bg-white text-stone-950 shadow-sm",
+                  "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-[#59625f] transition",
+                  view === mode && "bg-[#102c27] text-[#fffdf7] shadow-sm",
                 )}
                 key={mode}
                 onClick={() => setView(mode)}
@@ -148,7 +148,7 @@ export function ShowingsDashboard() {
               </button>
             ))}
           </div>
-          <span className="flex items-center gap-2 text-xs font-medium text-stone-400">
+          <span className="flex items-center gap-2 text-xs font-semibold text-[#7d8783]">
             <ListFilter className="size-4" /> {t("filterHint")}
           </span>
         </div>
@@ -208,12 +208,14 @@ export function ShowingsDashboard() {
             </div>
           )}
           {groups.length === 0 ? (
-            <div className="panel flex min-h-80 flex-col items-center justify-center p-8 text-center">
-              <div className="mb-5 rounded-2xl bg-emerald-50 p-4 text-[#1f6f5b]">
+            <div className="panel relative flex min-h-96 flex-col items-center justify-center overflow-hidden p-8 text-center">
+              <div aria-hidden="true" className="absolute -right-24 -top-24 size-64 rounded-full border border-[#102c27]/8" />
+              <div aria-hidden="true" className="absolute -right-10 -top-10 size-36 rounded-full border border-[#102c27]/8" />
+              <div className="mb-6 rounded-full bg-[#e6f36a] p-5 text-[#102c27]">
                 <CalendarDays className="size-7" />
               </div>
-              <h2 className="font-serif text-2xl font-semibold">{t("emptyTitle")}</h2>
-              <p className="mt-2 max-w-md text-sm leading-6 text-stone-500">{t("emptyBody")}</p>
+              <h2 className="max-w-lg font-serif text-4xl font-medium leading-none tracking-[-0.045em] text-[#102c27]">{t("emptyTitle")}</h2>
+              <p className="mt-4 max-w-md text-sm leading-6 text-[#59625f]">{t("emptyBody")}</p>
               {billing.data?.active === false ? (
                 <Button className="mt-6" disabled><Plus /> {t("newShowing")}</Button>
               ) : (
@@ -226,23 +228,23 @@ export function ShowingsDashboard() {
                 <section key={id}>
                   <div className="mb-3 flex items-center gap-3">
                     <h2 className="font-serif text-xl font-semibold">{group.label}</h2>
-                    <span className="rounded-full bg-stone-200 px-2 py-0.5 text-xs font-semibold text-stone-600">
+                    <span className="rounded-full bg-[#e6f36a] px-2.5 py-0.5 text-xs font-bold text-[#102c27]">
                       {group.items.length}
                     </span>
                   </div>
                   <div className="grid gap-3 xl:grid-cols-2">
                     {group.items.map((showing) => (
                       <Link
-                        className="panel group flex items-center gap-4 p-4 transition hover:-translate-y-0.5 hover:border-stone-300 hover:shadow-md"
+                        className="panel group flex items-center gap-4 p-4 transition duration-200 hover:-translate-y-1 hover:border-[#a8b1aa] hover:shadow-[0_20px_40px_rgb(16_44_39_/_0.10)]"
                         href={`/showings/${showing.id}`}
                         key={showing.id}
                       >
-                        <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-[#ecece4] text-stone-600">
+                        <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#102c27] text-[#e6f36a]">
                           <Building2 className="size-5" />
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="mb-1 flex flex-wrap items-center gap-2">
-                            <h3 className="truncate font-semibold group-hover:text-[#1f6f5b]">
+                            <h3 className="truncate font-semibold group-hover:text-[#a73b25]">
                               {showing.property?.display_name ?? t("unassignedProperty")}
                             </h3>
                             {!showing.property && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">{t("unassignedBadge")}</span>}
@@ -253,7 +255,7 @@ export function ShowingsDashboard() {
                             {showing.contact?.name ?? t("unassignedClient")} · {new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(tourDate(showing))}
                           </p>
                         </div>
-                        <span className="text-sm font-semibold text-[#1f6f5b] opacity-0 transition group-hover:opacity-100">
+                        <span className="text-sm font-bold text-[#a73b25] opacity-0 transition group-hover:opacity-100">
                           {common("open")}
                         </span>
                       </Link>

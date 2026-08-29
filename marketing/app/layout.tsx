@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { content } from "@/lib/content";
 import { siteConfig } from "@/lib/config";
 import "./globals.css";
+import "./design.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.siteUrl),

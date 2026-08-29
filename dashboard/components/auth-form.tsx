@@ -45,39 +45,48 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   };
 
   return (
-    <div className="grid min-h-screen bg-[#f5f5f0] lg:grid-cols-[1.05fr_.95fr]">
-      <section className="hidden overflow-hidden bg-[#163d34] p-12 text-white lg:flex lg:flex-col">
-        <Link className="font-serif text-3xl font-semibold" href="/">
-          Homean
+    <main className="relative grid min-h-screen overflow-hidden bg-[#f4f3ed] lg:grid-cols-[minmax(480px,1.08fr)_minmax(440px,.92fr)]">
+      <section className="relative hidden min-h-screen overflow-hidden bg-[#102c27] p-8 text-[#fffdf7] lg:flex lg:flex-col xl:p-12">
+        <div aria-hidden="true" className="absolute -right-44 -top-40 size-[34rem] rounded-full border border-[#e6f36a]/15" />
+        <div aria-hidden="true" className="absolute -right-20 -top-12 size-[22rem] rounded-full border border-[#e6f36a]/15" />
+        <div aria-hidden="true" className="absolute bottom-[18%] left-[11%] h-px w-[72%] rotate-[-8deg] bg-[#e6f36a]/20" />
+        <Link className="relative flex items-center gap-3" href="/">
+          <span className="grid size-10 place-items-center rounded-full bg-[#e6f36a] text-sm font-bold text-[#102c27]">H</span>
+          <span className="font-serif text-3xl font-semibold tracking-[-0.045em]">Homean</span>
         </Link>
-        <div className="my-auto max-w-xl">
-          <p className="mb-5 text-sm font-semibold uppercase tracking-[0.18em] text-emerald-200">
+        <div className="relative my-auto max-w-2xl py-16">
+          <p className="mb-8 flex items-center gap-2.5 text-[11px] font-bold uppercase tracking-[0.15em] text-[#e6f36a] before:size-2 before:rounded-full before:bg-current">
             {t("eyebrow")}
           </p>
-          <h1 className="font-serif text-6xl leading-[1.03] tracking-[-0.045em]">
+          <h1 className="max-w-xl font-serif text-[clamp(4.5rem,7vw,7.5rem)] font-medium leading-[0.82] tracking-[-0.065em]">
             {t("brandTitle")}
           </h1>
-          <p className="mt-7 max-w-lg text-lg leading-8 text-emerald-50/75">
-            {t("brandBody")}
-          </p>
+          <div className="mt-12 grid max-w-xl grid-cols-[64px_1fr] gap-5 border-t border-white/15 pt-6">
+            <span className="font-serif text-3xl text-[#e6f36a]">01</span>
+            <p className="text-base leading-7 text-[#b8c8c1]">{t("brandBody")}</p>
+          </div>
         </div>
-        <p className="text-sm text-emerald-100/60">{t("privacy")}</p>
+        <p className="relative max-w-lg border-l-2 border-[#a73b25] pl-4 text-xs leading-5 text-[#91aaa1]">
+          {t("privacy")}
+        </p>
       </section>
-      <section className="flex items-center justify-center p-6 sm:p-10">
-        <div className="w-full max-w-md">
-          <Link className="mb-12 block font-serif text-3xl font-semibold lg:hidden" href="/">
-            Homean
+      <section className="relative flex items-center justify-center px-5 py-10 sm:px-10 lg:px-14">
+        <div aria-hidden="true" className="absolute right-[-8rem] top-[-8rem] size-80 rounded-full bg-[#e6f36a]/55 blur-3xl" />
+        <div className="relative w-full max-w-[31rem] rounded-[1.75rem] border border-[#d2d7cf] bg-[#fffdf7] p-6 shadow-[0_24px_70px_rgb(16_44_39_/_0.12)] sm:p-10 lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none">
+          <Link className="mb-14 flex items-center gap-3 lg:hidden" href="/">
+            <span className="grid size-9 place-items-center rounded-full bg-[#102c27] text-xs font-bold text-[#e6f36a]">H</span>
+            <span className="font-serif text-3xl font-semibold tracking-[-0.045em]">Homean</span>
           </Link>
-          <p className="mb-2 text-sm font-semibold text-[#1f6f5b]">
+          <p className="mb-4 flex items-center gap-2.5 text-[11px] font-bold uppercase tracking-[0.15em] text-[#a73b25] before:size-2 before:rounded-full before:bg-current">
             {mode === "login" ? t("welcomeBack") : t("startTrial")}
           </p>
-          <h2 className="font-serif text-4xl font-semibold tracking-[-0.035em]">
+          <h2 className="max-w-md font-serif text-5xl font-medium leading-[0.9] tracking-[-0.055em] text-[#102c27] sm:text-6xl">
             {mode === "login" ? t("loginTitle") : t("signupTitle")}
           </h2>
-          <p className="mt-3 text-stone-500">
+          <p className="mt-5 max-w-md text-base leading-7 text-[#59625f]">
             {mode === "login" ? t("loginBody") : t("signupBody")}
           </p>
-          <form className="mt-9 space-y-5" onSubmit={submit}>
+          <form className="mt-10 space-y-5" onSubmit={submit}>
             <label className="block text-sm font-medium">
               {t("email")}
               <input
@@ -102,19 +111,19 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
               />
             </label>
             {error && (
-              <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+              <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
                 {error}
               </p>
             )}
-            <Button className="h-11 w-full text-sm" disabled={pending} type="submit">
+            <Button className="h-13 w-full rounded-full bg-[#102c27] text-sm font-bold text-[#fffdf7] shadow-[0_10px_24px_rgb(16_44_39_/_0.16)] hover:-translate-y-0.5 hover:bg-[#a73b25]" disabled={pending} type="submit">
               {pending ? <LoaderCircle className="animate-spin" /> : <ArrowRight />}
               {mode === "login" ? t("loginAction") : t("signupAction")}
             </Button>
           </form>
-          <p className="mt-7 text-sm text-stone-500">
+          <p className="mt-8 border-t border-[#d6d9d2] pt-6 text-sm text-[#59625f]">
             {mode === "login" ? t("noAccount") : t("hasAccount")} {" "}
             <Link
-              className="font-semibold text-[#1f6f5b] hover:underline"
+              className="font-bold text-[#a73b25] underline-offset-4 hover:underline"
               href={mode === "login" ? "/signup" : "/login"}
             >
               {mode === "login" ? t("signupLink") : t("loginLink")}
@@ -122,6 +131,6 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
           </p>
         </div>
       </section>
-    </div>
+    </main>
   );
 }

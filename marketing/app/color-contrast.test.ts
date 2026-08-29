@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const css = readFileSync(
-  resolve(dirname(fileURLToPath(import.meta.url)), "globals.css"),
+  resolve(dirname(fileURLToPath(import.meta.url)), "design.css"),
   "utf8",
 );
 
@@ -39,7 +39,7 @@ function contrastRatio(foreground: string, background: string): number {
   return (bright + 0.05) / (dark + 0.05);
 }
 
-describe("editorial palette contrast", () => {
+describe("field palette contrast", () => {
   it("keeps critical normal-text pairings at WCAG AA", () => {
     const pairings = [
       ["clay", "paper"],
