@@ -86,37 +86,38 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  /* Brand-aligned dark mode — deep forest green base, not flat black */
+  --background: #0c1f1b;
+  --foreground: #e8ede8;
+  --card: #142820;
+  --card-foreground: #e8ede8;
+  --popover: #142820;
+  --popover-foreground: #e8ede8;
+  --primary: #e6f36a;
+  --primary-foreground: #102c27;
+  --secondary: #1d3a31;
+  --secondary-foreground: #c5d5cc;
+  --muted: #1d3a31;
+  --muted-foreground: #7fa898;
+  --accent: #e6f36a;
+  --accent-foreground: #102c27;
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --border: rgb(255 255 255 / 8%);
+  --input: rgb(255 255 255 / 12%);
+  --ring: #a73b25;
+  --chart-1: #e6f36a;
+  --chart-2: #7fa898;
+  --chart-3: #a73b25;
+  --chart-4: #c5d5cc;
+  --chart-5: #1d3a31;
+  --sidebar: #102c27;
+  --sidebar-foreground: #e8ede8;
+  --sidebar-primary: #e6f36a;
+  --sidebar-primary-foreground: #102c27;
+  --sidebar-accent: #1d3a31;
+  --sidebar-accent-foreground: #e8ede8;
+  --sidebar-border: rgb(255 255 255 / 8%);
+  --sidebar-ring: #7fa898;
 }
 
 @layer base {
@@ -127,10 +128,11 @@
     @apply bg-background text-foreground;
     min-width: 320px;
     background-image:
-      radial-gradient(circle at 85% 0%, rgb(230 243 106 / 14%), transparent 27rem),
-      linear-gradient(90deg, rgb(16 44 39 / 2%) 1px, transparent 1px),
-      linear-gradient(rgb(16 44 39 / 2%) 1px, transparent 1px);
-    background-size: auto, 32px 32px, 32px 32px;
+      radial-gradient(ellipse 60% 45% at 92% -5%, rgb(230 243 106 / 22%), transparent),
+      radial-gradient(ellipse 40% 30% at 0% 100%, rgb(167 59 37 / 6%), transparent),
+      linear-gradient(90deg, rgb(16 44 39 / 2.5%) 1px, transparent 1px),
+      linear-gradient(rgb(16 44 39 / 2.5%) 1px, transparent 1px);
+    background-size: auto, auto, 32px 32px, 32px 32px;
   }
   html {
     @apply font-sans;
@@ -139,10 +141,10 @@
 
 @layer components {
   .field {
-    @apply h-12 w-full rounded-xl border border-[#cdd2cb] bg-[#fffdf7] px-4 text-sm text-[#17201d] shadow-[0_1px_0_rgb(16_44_39_/_0.04)] outline-none transition placeholder:text-stone-400 focus:border-[#a73b25] focus:ring-3 focus:ring-[#a73b25]/10;
+    @apply h-12 w-full rounded-xl border border-[#cdd2cb] bg-[#fffdf7] px-4 text-sm text-[#17201d] shadow-[0_1px_0_rgb(16_44_39_/_0.04)] outline-none transition placeholder:text-[#a8b3ae] focus:border-[#a73b25] focus:ring-3 focus:ring-[#a73b25]/10;
   }
   .field-area {
-    @apply min-h-24 w-full resize-y rounded-xl border border-[#cdd2cb] bg-[#fffdf7] px-4 py-3 text-sm text-[#17201d] shadow-[0_1px_0_rgb(16_44_39_/_0.04)] outline-none transition placeholder:text-stone-400 focus:border-[#a73b25] focus:ring-3 focus:ring-[#a73b25]/10;
+    @apply min-h-24 w-full resize-y rounded-xl border border-[#cdd2cb] bg-[#fffdf7] px-4 py-3 text-sm text-[#17201d] shadow-[0_1px_0_rgb(16_44_39_/_0.04)] outline-none transition placeholder:text-[#a8b3ae] focus:border-[#a73b25] focus:ring-3 focus:ring-[#a73b25]/10;
   }
   .panel {
     @apply rounded-[1.25rem] border border-[#d6d9d2] bg-[#fffdf7] shadow-[0_14px_35px_rgb(16_44_39_/_0.055)];
@@ -157,6 +159,28 @@
   .page-title {
     @apply font-serif text-5xl font-medium leading-[0.92] tracking-[-0.055em] text-[#102c27] sm:text-6xl;
   }
+  /* Pill tab bar — shared between dashboard and workspace */
+  .tab-bar {
+    @apply inline-flex rounded-full bg-[#e6e8df] p-1;
+  }
+  .tab-btn {
+    @apply flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-[#59625f] transition-all duration-150;
+  }
+  .tab-btn[aria-selected="true"],
+  .tab-btn.active {
+    @apply bg-[#102c27] text-[#fffdf7] shadow-sm;
+  }
+  /* Observation category colour accents */
+  .obs-pro    { @apply border-l-4 border-l-emerald-500; }
+  .obs-con    { @apply border-l-4 border-l-red-400; }
+  .obs-concern { @apply border-l-4 border-l-amber-400; }
+  .obs-follow_up { @apply border-l-4 border-l-sky-400; }
+  /* Category pill badges */
+  .badge-pro     { @apply bg-emerald-100 text-emerald-800; }
+  .badge-con     { @apply bg-red-100 text-red-800; }
+  .badge-concern { @apply bg-amber-100 text-amber-800; }
+  .badge-follow_up { @apply bg-sky-100 text-sky-800; }
+  .badge-neutral { @apply bg-[#ebece5] text-[#3d4d47]; }
 }
 
 @media print {

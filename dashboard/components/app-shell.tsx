@@ -76,14 +76,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </button>
         </div>
         <Link
-          className="relative mb-8 flex h-12 items-center justify-center gap-2 overflow-hidden rounded-full bg-[#e6f36a] px-4 text-sm font-bold text-[#102c27] shadow-[0_10px_30px_rgb(0_0_0_/_0.16)] transition hover:-translate-y-0.5 hover:bg-white"
+          className="relative mb-8 flex h-12 items-center justify-center gap-2 overflow-hidden rounded-full bg-[#e6f36a] px-4 text-sm font-bold text-[#102c27] shadow-[0_10px_30px_rgb(0_0_0_/_0.20)] transition duration-200 hover:-translate-y-1 hover:bg-white hover:shadow-[0_16px_40px_rgb(0_0_0_/_0.25)]"
           href="/showings/new"
           onClick={() => setOpen(false)}
         >
           <Plus className="size-4" />
           {t("newShowing")}
         </Link>
-        <nav className="relative space-y-1.5">
+        <nav className="relative space-y-1">
           {navigation.map((item, index) => {
             const active =
               item.href === "/"
@@ -92,14 +92,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             return (
               <Link
                 className={cn(
-                  "group flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-[#b8c8c1] transition hover:bg-white/8 hover:text-white",
-                  active && "bg-[#fffdf7] text-[#102c27] shadow-[0_8px_24px_rgb(0_0_0_/_0.18)]",
+                  "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-[#b8c8c1] transition-all duration-150 hover:bg-white/8 hover:text-white",
+                  active && "bg-[#e6f36a]/12 text-[#e6f36a] shadow-[inset_0_0_0_1px_rgb(230_243_106_/_18%)]",
                 )}
                 href={item.href}
                 key={item.href}
                 onClick={() => setOpen(false)}
               >
-                <span className={cn("text-[9px] font-bold tabular-nums text-[#7f9990]", active && "text-[#a73b25]")}>0{index + 1}</span>
+                <span className={cn("text-[9px] font-bold tabular-nums text-[#7f9990]", active && "text-[#e6f36a]")}>{`0${index + 1}`}</span>
                 <item.icon className="size-[17px]" />
                 <span>{item.label}</span>
               </Link>
