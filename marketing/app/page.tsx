@@ -21,7 +21,7 @@ export default function HomePage() {
           <div className="hero-actions reveal reveal-four"><a className="button button-dark" href={pilotMailto()}>{content.hero.primaryCta}<span aria-hidden="true">↗</span></a><a className="text-link" href="#how-it-works">{content.hero.secondaryCta}<span aria-hidden="true">↓</span></a></div>
           <p className="hero-note reveal reveal-four"><span className="tiny-square" aria-hidden="true" />{content.hero.note}</p>
         </div>
-        <div className="hero-composition reveal reveal-three"><ProductComposition /></div>
+        <div className="hero-composition reveal reveal-three"><ProductComposition compact /></div>
         <div className="hero-side-note" aria-hidden="true"><span>{content.hero.sideNote[0]}</span><span>{content.hero.sideNote[1]}</span></div>
       </section>
 

@@ -42,6 +42,15 @@ describe("marketing home page", () => {
     expect(screen.getByRole("main")).toHaveAttribute("id", "main-content");
   });
 
+  it("uses a compact hero preview and a complete proof composition", () => {
+    render(<HomePage />);
+
+    const compositions = screen.getAllByLabelText(/illustrative showing record/i);
+    expect(compositions).toHaveLength(2);
+    expect(compositions[0]).toHaveClass("dossier-compact");
+    expect(compositions[1]).not.toHaveClass("dossier-compact");
+  });
+
   it("keeps social metadata on the supported PNG preview and gates indexing", () => {
     expect(metadata.robots).toEqual({ index: false, follow: false });
     expect(metadata.openGraph?.images).toEqual([

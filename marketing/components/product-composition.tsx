@@ -1,8 +1,15 @@
 import { content } from "@/lib/content";
 
-export function ProductComposition() {
+type ProductCompositionProps = {
+  compact?: boolean;
+};
+
+export function ProductComposition({ compact = false }: ProductCompositionProps) {
   return (
-    <div className="dossier" aria-label={content.productProof.compositionLabel}>
+    <div
+      className={`dossier${compact ? " dossier-compact" : ""}`}
+      aria-label={content.productProof.compositionLabel}
+    >
       <div className="dossier-topline">
         <span>{content.productProof.sampleLabel}</span>
         <span className="dossier-stamp">{content.productProof.sampleCode}</span>

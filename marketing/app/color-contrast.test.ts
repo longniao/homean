@@ -43,9 +43,15 @@ describe("field palette contrast", () => {
   it("keeps critical normal-text pairings at WCAG AA", () => {
     const pairings = [
       ["ink", "bg"],
+      ["ink-2", "bg"],
+      ["ink-3", "bg"],
+      ["ink-2", "bg-raised"],
+      ["ink-3", "bg-raised"],
       ["signal-light", "bg"],
       ["record", "bg"],
       ["ink", "bg-mid"],
+      ["paper-ink", "paper"],
+      ["paper-muted", "paper"],
     ] as const;
 
     for (const [foreground, background] of pairings) {
@@ -54,5 +60,10 @@ describe("field palette contrast", () => {
 
     const pilotNoteForeground = selectorToken("pilot-note");
     expect(pilotNoteForeground).toBe("ink-2");
+  });
+
+  it("keeps primary button text accessible in default and hover states", () => {
+    expect(contrastRatio("#ffffff", token("signal"))).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio("#ffffff", token("signal-hover"))).toBeGreaterThanOrEqual(4.5);
   });
 });

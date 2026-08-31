@@ -11,15 +11,16 @@
 
   /* Text */
   --ink:          #f1f5f9;   /* primary text — cool white */
-  --ink-2:        rgba(241, 245, 249, 0.55);  /* secondary */
-  --ink-3:        rgba(241, 245, 249, 0.28);  /* tertiary / captions */
+  --ink-2:        #a8adb7;   /* secondary — AA on all dark surfaces */
+  --ink-3:        #7f8794;   /* tertiary — AA on all dark surfaces */
 
   /* Borders */
   --line:         rgba(255, 255, 255, 0.07);  /* subtle dividers */
   --line-strong:  rgba(255, 255, 255, 0.14);  /* card borders */
 
   /* Accent — electric indigo */
-  --signal:       #6366f1;                    /* primary accent */
+  --signal:       #4f46e5;                    /* primary accent / accessible button fill */
+  --signal-hover: #4338ca;                    /* darker interactive state */
   --signal-light: #818cf8;                    /* lighter indigo for text on dark */
   --signal-dim:   rgba(99, 102, 241, 0.10);   /* low-opacity fill */
   --signal-glow:  rgba(99, 102, 241, 0.22);   /* shadows / halos */
@@ -27,6 +28,12 @@
   /* Recording / live indicator — orange */
   --record:       #f97316;
   --record-dim:   rgba(249, 115, 22, 0.18);
+
+  /* Client-report paper — a warmer, field-specific counterpoint to the AI surfaces */
+  --paper:        #eee8dc;
+  --paper-ink:    #1d2927;
+  --paper-muted:  #4f5d59;
+  --paper-line:   #cfc7b8;
 
   /* Micro-accent — terracotta (kept for semantic error/review states only) */
   --accent:       #f87171;   /* soft red for review dot */
@@ -199,7 +206,7 @@ img, svg { display: block; }
   box-shadow: 0 0 0 0 transparent;
 }
 .button-dark:hover {
-  background: var(--signal-light);
+  background: var(--signal-hover);
   box-shadow: 0 8px 32px var(--signal-glow);
 }
 
@@ -209,7 +216,7 @@ img, svg { display: block; }
   background: var(--signal);
 }
 .button-signal:hover {
-  background: var(--signal-light);
+  background: var(--signal-hover);
   box-shadow: 0 8px 32px var(--signal-glow);
 }
 
@@ -372,7 +379,11 @@ p { line-height: 1.6; }
   content: "";
   position: absolute;
   inset: 0 0 0 16%;
-  background: var(--bg-raised);
+  background-color: var(--bg-raised);
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 52px 52px;
   border: 1px solid var(--line-strong);
   border-radius: 26px;
   transform: rotate(2.2deg);
@@ -411,10 +422,24 @@ p { line-height: 1.6; }
 .dossier-stamp { color: var(--signal-light); }
 
 .composition-grid {
+  position: relative;
   display: grid;
   grid-template-columns: 0.94fr 1.06fr;
   gap: 8px;
   padding: 10px 0 8px;
+}
+
+/* The capture-to-evidence handoff is Homean's visual signature. */
+.composition-grid::after {
+  content: "";
+  position: absolute;
+  z-index: 3;
+  top: 101px;
+  left: calc(47% - 7px);
+  width: 28px;
+  height: 1px;
+  background: linear-gradient(90deg, var(--record), var(--signal-light));
+  box-shadow: 0 0 10px var(--signal-glow);
 }
 .composition-panel {
   position: relative;
@@ -447,10 +472,16 @@ p { line-height: 1.6; }
   grid-template-columns: 1.15fr 0.72fr;
   grid-template-rows: auto 1fr auto;
   column-gap: 20px;
-  background: var(--bg-mid);
-  border: 1px solid var(--line);
+  color: var(--paper-ink);
+  background:
+    linear-gradient(rgba(29, 41, 39, 0.035) 1px, transparent 1px),
+    var(--paper);
+  background-size: 100% 24px;
+  border: 1px solid var(--paper-line);
   border-radius: 12px;
 }
+
+.report-panel .panel-kicker { color: #9a3412; }
 
 /* Kicker labels */
 .panel-kicker {
@@ -561,10 +592,10 @@ p { line-height: 1.6; }
 .review-ring { width: 7px; height: 7px; background: var(--accent); border-radius: 50%; }
 
 .report-paperclip { display: none; }
-.report-rule { width: 40px; margin-top: 6px; border: 0; border-top: 2px solid var(--signal); }
+.report-rule { width: 40px; margin-top: 6px; border: 0; border-top: 2px solid var(--signal-hover); }
 .report-title {
   margin: 2px 0 5px;
-  color: var(--ink);
+  color: var(--paper-ink);
   font-family: var(--display);
   font-size: 22px;
   letter-spacing: -0.03em;
@@ -572,7 +603,7 @@ p { line-height: 1.6; }
 .report-copy {
   max-width: 265px;
   margin: 0;
-  color: var(--ink-2);
+  color: var(--paper-muted);
   font-family: var(--display);
   font-size: 14px;
   line-height: 1.2;
@@ -582,29 +613,29 @@ p { line-height: 1.6; }
   grid-column: 2;
   grid-row: 1 / span 2;
   overflow: hidden;
-  background: var(--bg-sunken);
+  background: #17342f;
   border-radius: 8px;
-  border: 1px solid var(--line);
+  border: 1px solid #294943;
 }
 .report-photo::before {
   content: "";
   position: absolute;
   inset: 10px;
-  border: 1px solid var(--line-strong);
+  border: 1px solid rgba(238, 232, 220, 0.32);
   border-radius: 4px;
 }
 .window-shape {
   position: absolute;
   top: 17px; left: 29px;
   width: 44px; height: 50px;
-  border: 3px solid var(--line-strong);
-  box-shadow: 20px 14px 0 -17px var(--line-strong);
+  border: 3px solid rgba(238, 232, 220, 0.34);
+  box-shadow: 20px 14px 0 -17px rgba(238, 232, 220, 0.34);
 }
 .plant-shape {
   position: absolute;
   right: 20px; bottom: 16px;
   width: 22px; height: 52px;
-  border-left: 2px solid var(--ink-3);
+  border-left: 2px solid rgba(238, 232, 220, 0.58);
   border-radius: 50%;
   transform: rotate(19deg);
 }
@@ -612,7 +643,7 @@ p { line-height: 1.6; }
   content: "";
   position: absolute;
   width: 22px; height: 10px;
-  border: 2px solid var(--ink-3);
+  border: 2px solid rgba(238, 232, 220, 0.58);
   border-radius: 100% 0;
 }
 .plant-shape::before { top: 5px; left: -15px; transform: rotate(-35deg); }
@@ -620,7 +651,7 @@ p { line-height: 1.6; }
 .report-footer {
   grid-column: 1;
   grid-row: 3;
-  color: var(--signal-light);
+  color: var(--signal-hover);
   font-size: 8px;
   font-weight: 720;
   letter-spacing: 0.12em;
@@ -1031,8 +1062,11 @@ p { line-height: 1.6; }
   .hero-composition::before { left: 5%; }
   .dossier { padding: 9px; border-radius: 16px; }
   .composition-grid { grid-template-columns: 1fr; }
+  .composition-grid::after { display: none; }
   .evidence-panel { transform: none; }
   .report-panel { grid-column: auto; }
+  .dossier-compact .report-panel,
+  .dossier-compact .dossier-footer { display: none; }
   .workflow-contrast { grid-template-columns: 1fr; }
   .contrast-arrow { transform: rotate(90deg); }
   .workflow-step { display: block; min-height: 240px; }
@@ -1044,4 +1078,15 @@ p { line-height: 1.6; }
   .footer-meta { justify-self: start; text-align: left; }
   .footer-links { justify-content: flex-start; flex-wrap: wrap; }
   .footer-legal span { float: none; display: block; }
+}
+
+@media (max-width: 360px) {
+  h1 { font-size: 3rem; line-height: 0.94; }
+  .site-header { gap: 12px; }
+  .button-small {
+    min-height: 36px;
+    padding-inline: 10px;
+    font-size: 10px;
+    white-space: nowrap;
+  }
 }
