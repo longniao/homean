@@ -19,7 +19,7 @@ export function ErrorState({ retry }: { retry?: () => void }) {
       <AlertCircle className="mb-3 size-7 text-red-700" />
       <p className="font-medium">{t("loadError")}</p>
       {retry && (
-        <button className="mt-3 text-sm font-semibold text-[#1f6f5b]" onClick={retry}>
+        <button className="mt-3 text-sm font-semibold text-[#4f46e5]" onClick={retry}>
           {t("tryAgain")}
         </button>
       )}

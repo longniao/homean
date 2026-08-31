@@ -20,7 +20,7 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       title: t("title"),
       description: t("description"),
-      images: [{ url: "/og.png", width: 1731, height: 909, alt: t("imageAlt") }],
+      images: [{ url: "/og.png", width: 1200, height: 630, alt: t("imageAlt") }],
     },
     twitter: {
       card: "summary_large_image",

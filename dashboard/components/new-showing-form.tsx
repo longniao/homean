@@ -132,16 +132,16 @@ export function NewShowingForm() {
 
       <form className="mt-9 space-y-6" onSubmit={submit}>
         <section className="panel p-5 sm:p-7">
-          <div className="mb-5 flex size-9 items-center justify-center rounded-xl bg-emerald-50 text-sm font-bold text-[#1f6f5b]">1</div>
+          <div className="mb-5 flex size-9 items-center justify-center rounded-xl bg-indigo-50 text-sm font-bold text-[#4f46e5]">1</div>
           <h2 className="font-serif text-2xl font-semibold">{t("propertyTitle")}</h2>
           <p className="mt-1 text-sm text-stone-500">{t("propertyBody")}</p>
           <fieldset className="mt-5">
             <legend className="mb-2 text-sm font-semibold text-stone-800">{t("propertyChoiceLabel")}</legend>
             <div className="grid gap-2 sm:grid-cols-2">
-              <label className={cn("flex cursor-pointer gap-3 rounded-xl border p-3 transition", propertySelection === "assigned" ? "border-emerald-700 bg-emerald-50/60" : "border-stone-200 hover:bg-stone-50")}>
+              <label className={cn("flex cursor-pointer gap-3 rounded-xl border p-3 transition", propertySelection === "assigned" ? "border-[#4f46e5] bg-indigo-50/60" : "border-stone-200 hover:bg-stone-50")}>
                 <input
                   checked={propertySelection === "assigned"}
-                  className="mt-1 accent-[#1f6f5b]"
+                  className="mt-1 accent-[#4f46e5]"
                   name="property-selection"
                   onChange={() => {
                     setPropertySelection("assigned");
@@ -155,10 +155,10 @@ export function NewShowingForm() {
                   <span className="mt-0.5 block text-xs leading-5 text-stone-500">{t("propertyChoiceAssignedBody")}</span>
                 </span>
               </label>
-              <label className={cn("flex cursor-pointer gap-3 rounded-xl border p-3 transition", propertySelection === "none" ? "border-emerald-700 bg-emerald-50/60" : "border-stone-200 hover:bg-stone-50")}>
+              <label className={cn("flex cursor-pointer gap-3 rounded-xl border p-3 transition", propertySelection === "none" ? "border-[#4f46e5] bg-indigo-50/60" : "border-stone-200 hover:bg-stone-50")}>
                 <input
                   checked={propertySelection === "none"}
-                  className="mt-1 accent-[#1f6f5b]"
+                  className="mt-1 accent-[#4f46e5]"
                   name="property-selection"
                   onChange={() => {
                     setPropertySelection("none");
@@ -231,20 +231,20 @@ export function NewShowingForm() {
         </section>
 
         <section className="panel p-5 sm:p-7">
-          <div className="mb-5 flex size-9 items-center justify-center rounded-xl bg-emerald-50 text-sm font-bold text-[#1f6f5b]">2</div>
+          <div className="mb-5 flex size-9 items-center justify-center rounded-xl bg-indigo-50 text-sm font-bold text-[#4f46e5]">2</div>
           <h2 className="font-serif text-2xl font-semibold">{t("uploadTitle")}</h2>
           <p className="mt-1 text-sm text-stone-500">{t("uploadBody")}</p>
           <div
             className={cn(
               "mt-5 flex min-h-52 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-stone-300 bg-stone-50/70 p-6 text-center transition",
-              dragging && "border-[#1f6f5b] bg-emerald-50",
+              dragging && "border-[#4f46e5] bg-indigo-50",
             )}
             onDragEnter={() => setDragging(true)}
             onDragLeave={() => setDragging(false)}
             onDragOver={(event) => event.preventDefault()}
             onDrop={drop}
           >
-            <UploadCloud className="mb-4 size-8 text-[#1f6f5b]" />
+            <UploadCloud className="mb-4 size-8 text-[#4f46e5]" />
             <p className="font-semibold">{t("dropTitle")}</p>
             <p className="mt-1 text-sm text-stone-500">{t("dropBody")}</p>
             <label className="mt-5 cursor-pointer rounded-lg border bg-white px-3 py-2 text-sm font-semibold shadow-sm hover:bg-stone-50">
@@ -272,7 +272,7 @@ export function NewShowingForm() {
                         <span className="text-stone-400">{item.done ? t("complete") : `${item.progress}%`}</span>
                       </div>
                       <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-stone-100">
-                        <div className="h-full bg-[#1f6f5b] transition-all" style={{ width: `${item.progress}%` }} />
+                        <div className="h-full bg-[#4f46e5] transition-all" style={{ width: `${item.progress}%` }} />
                       </div>
                     </div>
                     {item.done ? (
@@ -300,7 +300,7 @@ export function NewShowingForm() {
               aria-describedby={consentError ? "consent-help consent-error" : "consent-help"}
               aria-invalid={Boolean(consentError)}
               checked={consentAck}
-              className="mt-1 size-4 accent-[#1f6f5b]"
+              className="mt-1 size-4 accent-[#4f46e5]"
               id="consent-attestation"
               onChange={(event) => {
                 setConsentAck(event.target.checked);

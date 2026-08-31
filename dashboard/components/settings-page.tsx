@@ -157,7 +157,7 @@ export function SettingsPage() {
             }}
           >
             <div className="mb-5 flex items-center gap-3">
-              <div className="rounded-xl bg-emerald-50 p-2 text-[#1f6f5b]"><Palette className="size-5" /></div>
+              <div className="rounded-xl bg-indigo-50 p-2 text-[#4f46e5]"><Palette className="size-5" /></div>
               <div><h2 className="font-serif text-xl font-semibold">{t("brandingTitle")}</h2><p className="text-sm text-stone-500">{t("brandingBody")}</p></div>
             </div>
             <div className="mb-5 flex items-center gap-4 rounded-xl bg-stone-50 p-4">

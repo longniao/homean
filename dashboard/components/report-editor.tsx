@@ -64,7 +64,7 @@ function BulletSection({
   return (
     <section className="panel p-4 sm:p-5">
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h3 className="font-serif text-xl font-semibold text-[#102c27]">{title}</h3>
+        <h3 className="font-serif text-xl font-semibold text-[#172824]">{title}</h3>
         {!readOnly && (
           <Button disabled={observations.length === 0} onClick={add} size="sm" variant="outline">
             <Plus /> {t("addBullet")}
@@ -72,7 +72,7 @@ function BulletSection({
         )}
       </div>
       {bullets.length === 0 ? (
-        <p className="rounded-xl bg-[#ebece5] px-4 py-5 text-sm text-[#626a67]">
+        <p className="rounded-xl bg-[#ebe8df] px-4 py-5 text-sm text-[#53635e]">
           {observations.length === 0 && emptyEvidenceMessage ? emptyEvidenceMessage : t("emptySection")}
         </p>
       ) : (
@@ -84,7 +84,7 @@ function BulletSection({
             return (
               <article
                 className={cn(
-                  "group rounded-xl border border-[#d6d9d2] bg-[#f4f3ed]/70 p-3",
+                  "group rounded-xl border border-[#d8d5cc] bg-[#f4f1e9]/70 p-3",
                   sensitive && "border-amber-300 bg-amber-50",
                   dragIndex === index && "opacity-50",
                 )}
@@ -112,7 +112,7 @@ function BulletSection({
                     <div className="mt-2 flex flex-wrap items-center gap-2">
                       {sources.map((source) => (
                         <button
-                          className="inline-flex max-w-full items-center gap-1 rounded-full border border-[#d6d9d2] bg-[#fffdf7] px-2 py-1 text-xs font-medium text-[#1f6f5b] shadow-sm transition hover:border-[#1f6f5b]/30 hover:bg-emerald-50"
+                          className="inline-flex max-w-full items-center gap-1 rounded-full border border-[#d8d5cc] bg-[#fffdf8] px-2 py-1 text-xs font-medium text-[#4f46e5] shadow-sm transition hover:border-[#4f46e5]/30 hover:bg-indigo-50"
                           key={source.id}
                           onClick={() => onEvidence(source)}
                           type="button"
@@ -153,7 +153,7 @@ function BulletSection({
             );
           })}
           {observations.length === 0 && emptyEvidenceMessage && (
-            <p className="rounded-xl bg-[#ebece5] px-4 py-3 text-sm text-[#626a67]">
+            <p className="rounded-xl bg-[#ebe8df] px-4 py-3 text-sm text-[#53635e]">
               {emptyEvidenceMessage}
             </p>
           )}
@@ -234,7 +234,7 @@ export function ReportEditor({
       </div>
 
       {!readOnly && (
-        <div className="sticky bottom-4 z-20 flex flex-col gap-3 rounded-2xl border border-[#d6d9d2] bg-[#fffdf7]/96 p-4 shadow-[0_20px_50px_rgb(16_44_39_/_0.14)] backdrop-blur sm:flex-row sm:items-center">
+        <div className="sticky bottom-4 z-20 flex flex-col gap-3 rounded-2xl border border-[#d8d5cc] bg-[#fffdf8]/96 p-4 shadow-[0_20px_50px_rgb(23_40_36_/_0.14)] backdrop-blur sm:flex-row sm:items-center">
           <div className="min-w-0 flex-1">
             {confirmReasons.length ? (
               <div className="flex items-start gap-2 text-sm text-amber-800" data-testid="confirm-guard">

@@ -5,7 +5,7 @@
  */
 "use client";
 
-import { Building2, CalendarDays, ContactRound, Home, ListFilter, LogOut, Plus, Search, Settings } from "lucide-react";
+import { Building2, ContactRound, Home, ListFilter, LogOut, Plus, Search, Settings } from "lucide-react";
 import Link from "next/link";
 
 import { cn } from "@/lib/utils";
@@ -56,19 +56,19 @@ const NAV = [
 
 export default function PreviewPage() {
   return (
-    <div className="min-h-screen text-[#17201d]">
+    <div className="min-h-screen text-[#172824]">
       {/* Sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-50 flex w-72 flex-col overflow-hidden border-r border-white/10 bg-[#102c27] p-4 text-[#fffdf7] shadow-2xl shadow-[#102c27]/20">
-        <div aria-hidden="true" className="pointer-events-none absolute -right-24 top-20 size-64 rounded-full border border-[#e6f36a]/10" />
-        <div aria-hidden="true" className="pointer-events-none absolute -right-12 top-32 size-36 rounded-full border border-[#e6f36a]/10" />
+      <aside className="fixed inset-y-0 left-0 z-50 flex w-72 flex-col overflow-hidden border-r border-white/10 bg-[#172824] p-4 text-[#fffdf8] shadow-2xl shadow-[#172824]/20">
+        <div aria-hidden="true" className="pointer-events-none absolute -right-24 top-20 size-64 rounded-full border border-[#a5b4fc]/10" />
+        <div aria-hidden="true" className="pointer-events-none absolute -right-12 top-32 size-36 rounded-full border border-[#a5b4fc]/10" />
         <div className="relative mb-9 flex items-center px-2 pt-2">
           <Link className="flex items-center gap-3" href="/">
-            <span className="grid size-10 place-items-center rounded-full bg-[#e6f36a] font-sans text-sm font-bold text-[#102c27]">H</span>
-            <span className="font-serif text-3xl font-semibold tracking-[-0.045em]">Homean</span>
+            <span aria-hidden="true" className="brand-mark size-10" />
+            <span className="text-xl font-semibold tracking-[-0.03em]">Homean</span>
           </Link>
         </div>
         <Link
-          className="relative mb-8 flex h-12 items-center justify-center gap-2 overflow-hidden rounded-full bg-[#e6f36a] px-4 text-sm font-bold text-[#102c27] shadow-[0_10px_30px_rgb(0_0_0_/_0.20)] transition duration-200 hover:-translate-y-1 hover:bg-white hover:shadow-[0_16px_40px_rgb(0_0_0_/_0.25)]"
+          className="relative mb-8 flex h-12 items-center justify-center gap-2 overflow-hidden rounded-full bg-[#4f46e5] px-4 text-sm font-bold text-white shadow-[0_10px_30px_rgb(79_70_229_/_0.24)] transition duration-200 hover:-translate-y-1 hover:bg-[#4338ca] hover:shadow-[0_16px_40px_rgb(79_70_229_/_0.28)]"
           href="/showings/new"
         >
           <Plus className="size-4" />
@@ -81,12 +81,12 @@ export default function PreviewPage() {
               <Link
                 className={cn(
                   "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-[#b8c8c1] transition-all duration-150 hover:bg-white/8 hover:text-white",
-                  active && "bg-[#e6f36a]/12 text-[#e6f36a] shadow-[inset_0_0_0_1px_rgb(230_243_106_/_18%)]",
+                  active && "bg-[#a5b4fc]/12 text-[#a5b4fc] shadow-[inset_0_0_0_1px_rgb(165_180_252_/_18%)]",
                 )}
                 href={item.href}
                 key={item.href}
               >
-                <span className={cn("text-[9px] font-bold tabular-nums text-[#7f9990]", active && "text-[#e6f36a]")}>{`0${index + 1}`}</span>
+                <span className={cn("text-[9px] font-bold tabular-nums text-[#7f9990]", active && "text-[#a5b4fc]")}>{`0${index + 1}`}</span>
                 <item.icon className="size-[17px]" />
                 <span>{item.label}</span>
               </Link>
@@ -111,12 +111,12 @@ export default function PreviewPage() {
             <div>
               <p className="eyebrow mb-4">Showing Intelligence</p>
               <h1 className="page-title">Your Showings</h1>
-              <p className="mt-5 max-w-2xl text-base leading-7 text-[#59625f]">
+              <p className="mt-5 max-w-2xl text-base leading-7 text-[#53635e]">
                 Review AI-generated reports from your property visits, then confirm and deliver to your clients.
               </p>
             </div>
             <Link
-              className="inline-flex h-12 shrink-0 items-center gap-2 rounded-full bg-[#102c27] px-6 text-sm font-bold text-[#fffdf7] shadow-[0_8px_24px_rgb(16_44_39_/_0.18)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_32px_rgb(16_44_39_/_0.24)]"
+              className="inline-flex h-12 shrink-0 items-center gap-2 rounded-full bg-[#4f46e5] px-6 text-sm font-bold text-white shadow-[0_8px_24px_rgb(79_70_229_/_0.20)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#4338ca] hover:shadow-[0_12px_32px_rgb(79_70_229_/_0.25)]"
               href="/showings/new"
             >
               <Plus className="size-4" /> New Showing
@@ -126,12 +126,13 @@ export default function PreviewPage() {
           {/* Filter panel */}
           <div className="panel mb-10 p-4 sm:p-5">
             <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-[#e8ebe3] pb-4">
-              <div className="tab-bar">
+              <div className="tab-bar" role="tablist">
                 {(["client", "property"] as const).map((mode) => (
                   <button
                     aria-selected={mode === "client"}
                     className={cn("tab-btn", mode === "client" && "active")}
                     key={mode}
+                    role="tab"
                     type="button"
                   >
                     {mode === "client" ? <ContactRound className="size-4" /> : <Building2 className="size-4" />}
@@ -139,13 +140,13 @@ export default function PreviewPage() {
                   </button>
                 ))}
               </div>
-              <span className="flex items-center gap-1.5 text-xs font-medium text-[#8fa099]">
+              <span className="flex items-center gap-1.5 text-xs font-medium text-[#5f7069]">
                 <ListFilter className="size-3.5" /> Filter & search below
               </span>
             </div>
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
               <label className="relative xl:col-span-2">
-                <Search className="pointer-events-none absolute left-3 top-3.5 size-4 text-[#a8b3ae]" />
+                <Search className="pointer-events-none absolute left-3 top-3.5 size-4 text-[#70807a]" />
                 <input className="field pl-9" placeholder="Search by address, client, keyword…" />
               </label>
               {["All statuses", "All clients", "All properties"].map((label) => (
@@ -153,7 +154,7 @@ export default function PreviewPage() {
                   <select className="field appearance-none pr-9">
                     <option>{label}</option>
                   </select>
-                  <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#a8b3ae]">▾</span>
+                  <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#70807a]">▾</span>
                 </div>
               ))}
               <div className="grid grid-cols-2 gap-2">
@@ -168,33 +169,33 @@ export default function PreviewPage() {
             {MOCK_GROUPS.map((group) => (
               <section key={group.id}>
                 <div className="mb-4 flex items-center gap-3">
-                  <h2 className="font-serif text-xl font-semibold text-[#102c27]">{group.label}</h2>
-                  <span className="rounded-full bg-[#e6f36a] px-2.5 py-0.5 text-xs font-bold text-[#102c27] shadow-[0_2px_8px_rgb(230_243_106_/_0.5)]">
+                  <h2 className="font-serif text-xl font-semibold text-[#172824]">{group.label}</h2>
+                  <span className="rounded-full bg-[#a5b4fc] px-2.5 py-0.5 text-xs font-bold text-[#172824] shadow-[0_2px_8px_rgb(165_180_252_/_0.5)]">
                     {group.items.length}
                   </span>
                 </div>
                 <div className="grid gap-3 xl:grid-cols-2">
                   {group.items.map((showing) => (
                     <div
-                      className="panel group flex cursor-pointer items-center gap-4 p-4 transition duration-200 hover:-translate-y-1 hover:border-[#b8c0ba] hover:shadow-[0_20px_50px_rgb(16_44_39_/_0.12)]"
+                      className="panel group flex cursor-pointer items-center gap-4 p-4 transition duration-200 hover:-translate-y-1 hover:border-[#b8c0ba] hover:shadow-[0_20px_50px_rgb(23_40_36_/_0.12)]"
                       key={showing.id}
                     >
-                      <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#102c27] text-[#e6f36a] shadow-[0_4px_12px_rgb(16_44_39_/_0.25)] transition duration-200 group-hover:scale-110">
+                      <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#172824] text-[#a5b4fc] shadow-[0_4px_12px_rgb(23_40_36_/_0.25)] transition duration-200 group-hover:scale-110">
                         <Building2 className="size-5" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="mb-1 flex flex-wrap items-center gap-2">
-                          <span className="truncate font-semibold transition duration-150 group-hover:text-[#a73b25]">
+                          <span className="truncate font-semibold transition duration-150 group-hover:text-[#3730a3]">
                             {showing.name}
                           </span>
                           <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide", STATUS_STYLES[showing.status])}>
                             {STATUS_LABELS[showing.status]}
                           </span>
                         </div>
-                        <p className="truncate text-sm text-[#626a67]">{showing.address}</p>
-                        <p className="mt-1 text-xs text-[#8fa099]">{group.label} · {showing.date}</p>
+                        <p className="truncate text-sm text-[#53635e]">{showing.address}</p>
+                        <p className="mt-1 text-xs text-[#5f7069]">{group.label} · {showing.date}</p>
                       </div>
-                      <span className="text-sm font-bold text-[#a73b25] opacity-0 transition duration-150 group-hover:opacity-100">
+                      <span className="text-sm font-bold text-[#3730a3] opacity-0 transition duration-150 group-hover:opacity-100">
                         Open
                       </span>
                     </div>

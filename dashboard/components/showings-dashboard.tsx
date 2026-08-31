@@ -111,12 +111,12 @@ export function ShowingsDashboard() {
         <div>
           <p className="eyebrow mb-4">{t("eyebrow")}</p>
           <h1 className="page-title">{t("title")}</h1>
-          <p className="mt-5 max-w-2xl text-base leading-7 text-[#59625f]">{t("subtitle")}</p>
+          <p className="mt-5 max-w-2xl text-base leading-7 text-[#53635e]">{t("subtitle")}</p>
         </div>
         {billing.data?.active === false ? (
           <Button className="h-12 shrink-0 rounded-full px-6 text-sm font-bold" disabled><Plus /> {t("newShowing")}</Button>
         ) : (
-          <Button className="h-12 shrink-0 rounded-full px-6 text-sm font-bold shadow-[0_8px_24px_rgb(16_44_39_/_0.18)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_32px_rgb(16_44_39_/_0.24)]" nativeButton={false} render={<Link href="/showings/new" />}><Plus /> {t("newShowing")}</Button>
+          <Button className="h-12 shrink-0 rounded-full px-6 text-sm font-bold shadow-[0_8px_24px_rgb(23_40_36_/_0.18)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_32px_rgb(23_40_36_/_0.24)]" nativeButton={false} render={<Link href="/showings/new" />}><Plus /> {t("newShowing")}</Button>
         )}
       </div>
 
@@ -132,13 +132,14 @@ export function ShowingsDashboard() {
 
       <div className="panel mb-10 p-4 sm:p-5">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-[#e8ebe3] pb-4">
-          <div className="tab-bar">
+          <div className="tab-bar" role="tablist">
             {(["client", "property"] as const).map((mode) => (
               <button
                 aria-selected={view === mode}
                 className={cn("tab-btn", view === mode && "active")}
                 key={mode}
                 onClick={() => setView(mode)}
+                role="tab"
                 type="button"
               >
                 {mode === "client" ? <ContactRound className="size-4" /> : <Building2 className="size-4" />}
@@ -146,14 +147,14 @@ export function ShowingsDashboard() {
               </button>
             ))}
           </div>
-          <span className="flex items-center gap-1.5 text-xs font-medium text-[#8fa099]">
+          <span className="flex items-center gap-1.5 text-xs font-medium text-[#5f7069]">
             <ListFilter className="size-3.5" /> {t("filterHint")}
           </span>
         </div>
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
           <label className="relative xl:col-span-2">
             <span className="sr-only">{t("search")}</span>
-            <Search className="pointer-events-none absolute left-3 top-3.5 size-4 text-[#a8b3ae]" />
+            <Search className="pointer-events-none absolute left-3 top-3.5 size-4 text-[#70807a]" />
             <input
               className="field pl-9"
               onChange={(event) => setQuery(event.target.value)}
@@ -169,7 +170,7 @@ export function ShowingsDashboard() {
               <option value="confirmed">{t("confirmed")}</option>
               <option value="sent_to_client">{t("sent")}</option>
             </select>
-            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#a8b3ae]">▾</span>
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#70807a]">▾</span>
           </div>
           <div className="relative">
             <select className="field appearance-none pr-9" onChange={(event) => setContactId(event.target.value)} value={contactId}>
@@ -178,7 +179,7 @@ export function ShowingsDashboard() {
                 <option key={contact.id} value={contact.id}>{contact.name}</option>
               ))}
             </select>
-            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#a8b3ae]">▾</span>
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#70807a]">▾</span>
           </div>
           <div className="relative">
             <select aria-describedby={properties.isError ? "property-filter-status" : undefined} aria-label={t("allProperties")} className="field appearance-none pr-9" disabled={properties.isError} onChange={(event) => setSubjectId(event.target.value)} value={subjectId}>
@@ -188,7 +189,7 @@ export function ShowingsDashboard() {
                 <option key={property.id} value={property.id}>{property.display_name}</option>
               ))}
             </select>
-            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#a8b3ae]">▾</span>
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#70807a]">▾</span>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <input aria-label={t("dateFrom")} className="field px-2 text-xs" onChange={(e) => setDateFrom(e.target.value)} type="date" value={dateFrom} />
@@ -217,14 +218,14 @@ export function ShowingsDashboard() {
           )}
           {groups.length === 0 ? (
             <div className="panel relative flex min-h-96 flex-col items-center justify-center overflow-hidden p-8 text-center">
-              <div aria-hidden="true" className="absolute -right-24 -top-24 size-64 rounded-full border border-[#102c27]/6" />
-              <div aria-hidden="true" className="absolute -right-10 -top-10 size-36 rounded-full border border-[#102c27]/6" />
-              <div aria-hidden="true" className="absolute -left-16 bottom-0 size-48 rounded-full border border-[#a73b25]/5" />
-              <div className="mb-6 rounded-full bg-[#e6f36a] p-5 text-[#102c27] shadow-[0_8px_24px_rgb(230_243_106_/_0.4)]">
+              <div aria-hidden="true" className="absolute -right-24 -top-24 size-64 rounded-full border border-[#172824]/6" />
+              <div aria-hidden="true" className="absolute -right-10 -top-10 size-36 rounded-full border border-[#172824]/6" />
+              <div aria-hidden="true" className="absolute -left-16 bottom-0 size-48 rounded-full border border-[#3730a3]/5" />
+              <div className="mb-6 rounded-full bg-[#a5b4fc] p-5 text-[#172824] shadow-[0_8px_24px_rgb(165_180_252_/_0.4)]">
                 <CalendarDays className="size-7" />
               </div>
-              <h2 className="max-w-lg font-serif text-4xl font-medium leading-none tracking-[-0.045em] text-[#102c27]">{t("emptyTitle")}</h2>
-              <p className="mt-4 max-w-md text-sm leading-6 text-[#59625f]">{t("emptyBody")}</p>
+              <h2 className="max-w-lg font-serif text-4xl font-medium leading-none tracking-[-0.045em] text-[#172824]">{t("emptyTitle")}</h2>
+              <p className="mt-4 max-w-md text-sm leading-6 text-[#53635e]">{t("emptyBody")}</p>
               {billing.data?.active === false ? (
                 <Button className="mt-6" disabled><Plus /> {t("newShowing")}</Button>
               ) : (
@@ -236,35 +237,35 @@ export function ShowingsDashboard() {
               {groups.map(([id, group]) => (
                 <section key={id}>
                   <div className="mb-4 flex items-center gap-3">
-                    <h2 className="font-serif text-xl font-semibold text-[#102c27]">{group.label}</h2>
-                    <span className="rounded-full bg-[#e6f36a] px-2.5 py-0.5 text-xs font-bold text-[#102c27] shadow-[0_2px_8px_rgb(230_243_106_/_0.5)]">
+                    <h2 className="font-serif text-xl font-semibold text-[#172824]">{group.label}</h2>
+                    <span className="rounded-full bg-[#a5b4fc] px-2.5 py-0.5 text-xs font-bold text-[#172824] shadow-[0_2px_8px_rgb(165_180_252_/_0.5)]">
                       {group.items.length}
                     </span>
                   </div>
                   <div className="grid gap-3 xl:grid-cols-2">
                     {group.items.map((showing) => (
                       <Link
-                        className="panel group flex items-center gap-4 p-4 transition duration-200 hover:-translate-y-1 hover:border-[#b8c0ba] hover:shadow-[0_20px_50px_rgb(16_44_39_/_0.12)]"
+                        className="panel group flex items-center gap-4 p-4 transition duration-200 hover:-translate-y-1 hover:border-[#b8c0ba] hover:shadow-[0_20px_50px_rgb(23_40_36_/_0.12)]"
                         href={`/showings/${showing.id}`}
                         key={showing.id}
                       >
-                        <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#102c27] text-[#e6f36a] shadow-[0_4px_12px_rgb(16_44_39_/_0.25)] transition duration-200 group-hover:scale-110">
+                        <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#172824] text-[#a5b4fc] shadow-[0_4px_12px_rgb(23_40_36_/_0.25)] transition duration-200 group-hover:scale-110">
                           <Building2 className="size-5" />
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="mb-1 flex flex-wrap items-center gap-2">
-                            <h3 className="truncate font-semibold transition duration-150 group-hover:text-[#a73b25]">
+                            <h3 className="truncate font-semibold transition duration-150 group-hover:text-[#3730a3]">
                               {showing.property?.display_name ?? t("unassignedProperty")}
                             </h3>
                             {!showing.property && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">{t("unassignedBadge")}</span>}
                             <StatusBadge showing={showing} />
                           </div>
-                          <p className="truncate text-sm text-[#626a67]">{showing.property?.address ?? t("unassignedProperty")}</p>
-                          <p className="mt-1 text-xs text-[#8fa099]">
+                          <p className="truncate text-sm text-[#53635e]">{showing.property?.address ?? t("unassignedProperty")}</p>
+                          <p className="mt-1 text-xs text-[#5f7069]">
                             {showing.contact?.name ?? t("unassignedClient")} · {new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(tourDate(showing))}
                           </p>
                         </div>
-                        <span className="text-sm font-bold text-[#a73b25] opacity-0 transition duration-150 group-hover:opacity-100">
+                        <span className="text-sm font-bold text-[#3730a3] opacity-0 transition duration-150 group-hover:opacity-100">
                           {common("open")}
                         </span>
                       </Link>

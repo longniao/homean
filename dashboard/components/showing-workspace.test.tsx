@@ -587,7 +587,7 @@ describe("Showing workspace API-backed metadata", () => {
     });
 
     renderWithProviders(<ShowingWorkspace id={visitId} />);
-    fireEvent.click(await screen.findByRole("button", { name: /Observations/ }));
+    fireEvent.click(await screen.findByRole("tab", { name: /Observations/ }));
 
     expect(await screen.findByRole("option", { name: "Natural light" })).toBeInTheDocument();
     expect(screen.getByRole("option", { name: "Follow-up" })).toBeInTheDocument();

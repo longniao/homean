@@ -127,7 +127,7 @@ describe("voice tag jump points", () => {
       .mockResolvedValue(undefined);
 
     renderWorkspace(showing(segmentId));
-    fireEvent.click(await screen.findByRole("button", { name: /^Transcript/ }));
+    fireEvent.click(await screen.findByRole("tab", { name: /^Transcript/ }));
 
     const tag = await screen.findByRole("button", { name: "Tag 1 · 00:01" });
     await waitFor(() => expect(document.querySelector("audio")).toBeInTheDocument());
@@ -140,7 +140,7 @@ describe("voice tag jump points", () => {
 
   it("does not render a jump control for an unresolved tag", async () => {
     renderWorkspace(showing(null));
-    fireEvent.click(await screen.findByRole("button", { name: /^Transcript/ }));
+    fireEvent.click(await screen.findByRole("tab", { name: /^Transcript/ }));
 
     expect(await screen.findByText("The kitchen has excellent natural light.")).toBeInTheDocument();
     expect(screen.queryByText(messages.Transcript.voiceTags)).not.toBeInTheDocument();

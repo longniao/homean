@@ -117,7 +117,7 @@ function ProcessingBanner({ showing }: { showing: ShowingDetail }) {
       {failed ? <AlertCircle className="size-5 shrink-0 text-red-700" /> : <LoaderCircle className="size-5 shrink-0 animate-spin text-amber-700" />}
       <div className="flex-1">
         <p className="font-semibold">{failed ? t("processingFailed") : t("processingTitle")}</p>
-        <p className="mt-0.5 text-sm text-[#626a67]">{failed ? showing.processing_error ?? t("processingFailedBody") : t("processingBody")}</p>
+        <p className="mt-0.5 text-sm text-[#53635e]">{failed ? showing.processing_error ?? t("processingFailedBody") : t("processingBody")}</p>
       </div>
       {failed && (
         <Button disabled={reprocess.isPending} onClick={() => reprocess.mutate()} variant="outline">
@@ -197,10 +197,10 @@ function ObservationCard({
   }[observation.category] ?? "badge-neutral";
 
   return (
-    <article className={cn("rounded-2xl border border-[#d6d9d2] bg-[#fffdf7] p-4 transition-shadow hover:shadow-[0_4px_16px_rgb(16_44_39_/_0.07)]", categoryAccent, sensitive && "border-amber-300 bg-amber-50/50", observation.review_status === "dismissed" && "opacity-55")}>
+    <article className={cn("rounded-2xl border border-[#d8d5cc] bg-[#fffdf8] p-4 transition-shadow hover:shadow-[0_4px_16px_rgb(23_40_36_/_0.07)]", categoryAccent, sensitive && "border-amber-300 bg-amber-50/50", observation.review_status === "dismissed" && "opacity-55")}>
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <span className={cn("rounded-full px-2 py-1 text-xs font-semibold", categoryBadge)}>{categoryLabels[observation.category]}</span>
-        <span className="rounded-full border border-[#d6d9d2] bg-[#f4f3ed] px-2 py-1 text-xs font-medium text-[#626a67]">{t(`review.${observation.review_status}` as never)}</span>
+        <span className="rounded-full border border-[#d8d5cc] bg-[#f4f1e9] px-2 py-1 text-xs font-medium text-[#53635e]">{t(`review.${observation.review_status}` as never)}</span>
         {sensitive && <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-900"><ShieldAlert className="size-3" /> {t("sensitive")}</span>}
       </div>
       {editing ? (
@@ -305,7 +305,7 @@ function ObservationsTab({
           <section key={zoneIdKey}>
             <div className="mb-3 flex items-center gap-2">
               <h3 className="font-serif text-xl font-semibold">{zone ? zoneLabels[zone.zone_type] : t("visitLevel")}</h3>
-              <span className={cn("rounded-full bg-[#e6f36a] px-2 py-0.5 text-xs font-bold text-[#102c27]", "shadow-[0_2px_6px_rgb(230_243_106_/_0.4)]")}>{items.length}</span>
+              <span className={cn("rounded-full bg-[#a5b4fc] px-2 py-0.5 text-xs font-bold text-[#172824]", "shadow-[0_2px_6px_rgb(165_180_252_/_0.4)]")}>{items.length}</span>
             </div>
             <div className="grid gap-3 xl:grid-cols-2">
               {items.map((observation) => <ObservationCard categories={categories} categoryLabels={categoryLabels} key={observation.id} observation={observation} onEvidence={onEvidence} showing={showing} zoneLabels={zoneLabels} />)}
@@ -364,11 +364,11 @@ function TranscriptTab({
       <div className="space-y-2">
         {bookmarks.length > 0 && (
           <div className="panel p-4">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-[#626a67]">{t("voiceTags")}</p>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-[#53635e]">{t("voiceTags")}</p>
             <div className="flex flex-wrap gap-2">
               {bookmarks.map((bookmark, index) => (
                 <button
-                  className="rounded-full border border-[#d6d9d2] bg-[#fffdf7] px-3 py-1.5 text-sm font-semibold text-[#1f6f5b] transition hover:border-[#1f6f5b]/30 hover:bg-emerald-50"
+                  className="rounded-full border border-[#d8d5cc] bg-[#fffdf8] px-3 py-1.5 text-sm font-semibold text-[#4f46e5] transition hover:border-[#4f46e5]/30 hover:bg-indigo-50"
                   key={bookmark.id}
                   onClick={() => play(bookmark.transcript_segment_id!, bookmark.timestamp_offset_ms)}
                   type="button"
@@ -380,13 +380,13 @@ function TranscriptTab({
           </div>
         )}
         {showing.transcript.map((segment) => (
-          <article className={cn("panel scroll-mt-28 p-4 transition", segment.id === targetSegmentId && "border-emerald-500 ring-4 ring-emerald-500/10")} id={`segment-${segment.id}`} key={segment.id}>
+          <article className={cn("panel scroll-mt-28 p-4 transition", segment.id === targetSegmentId && "border-[#4f46e5] ring-4 ring-[#4f46e5]/10")} id={`segment-${segment.id}`} key={segment.id}>
             <div className="flex gap-3">
-              <button aria-label={t("playSegment")} className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-[#102c27]/8 text-[#1f6f5b] transition hover:bg-[#102c27]/14" disabled={!audioUrl} onClick={() => play(segment.id, segment.timestamp_start)} type="button"><Play className="ml-0.5 size-4" /></button>
+              <button aria-label={t("playSegment")} className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-[#172824]/8 text-[#4f46e5] transition hover:bg-[#172824]/14" disabled={!audioUrl} onClick={() => play(segment.id, segment.timestamp_start)} type="button"><Play className="ml-0.5 size-4" /></button>
               <div className="min-w-0 flex-1">
-                <div className="mb-2 flex items-center justify-between gap-3 text-xs text-[#8fa099]">
+                <div className="mb-2 flex items-center justify-between gap-3 text-xs text-[#5f7069]">
                   <span>{segment.timestamp_start === null ? t("unknownTime") : new Date(segment.timestamp_start).toISOString().slice(14, 19)}</span>
-                  {showing.status === "draft" && editing !== segment.id && <button className="font-semibold text-[#1f6f5b]" onClick={() => { setEditing(segment.id); setText(segment.text); }} type="button">{t("correct")}</button>}
+                  {showing.status === "draft" && editing !== segment.id && <button className="font-semibold text-[#4f46e5]" onClick={() => { setEditing(segment.id); setText(segment.text); }} type="button">{t("correct")}</button>}
                 </div>
                 {editing === segment.id ? (
                   <div>
@@ -399,7 +399,7 @@ function TranscriptTab({
                 ) : (
                   <p className="text-sm leading-6 text-[#3d4d47]">{segment.text}</p>
                 )}
-                {segment.original_text && <p className="mt-2 border-l-2 border-[#d6d9d2] pl-3 text-xs leading-5 text-[#8fa099]">{t("original")}: {segment.original_text}</p>}
+                {segment.original_text && <p className="mt-2 border-l-2 border-[#d8d5cc] pl-3 text-xs leading-5 text-[#5f7069]">{t("original")}: {segment.original_text}</p>}
               </div>
             </div>
           </article>
@@ -407,9 +407,9 @@ function TranscriptTab({
       </div>
       <aside className="xl:sticky xl:top-8 xl:self-start">
         <div className="panel p-4">
-          <p className="mb-3 text-sm font-semibold text-[#102c27]">{t("audioTitle")}</p>
-          {audioUrl ? <audio className="w-full" controls ref={audioRef} src={audioUrl} /> : <p className="text-sm text-[#626a67]">{t("audioUnavailable")}</p>}
-          <p className="mt-3 text-xs leading-5 text-[#8fa099]">{t("audioHint")}</p>
+          <p className="mb-3 text-sm font-semibold text-[#172824]">{t("audioTitle")}</p>
+          {audioUrl ? <audio className="w-full" controls ref={audioRef} src={audioUrl} /> : <p className="text-sm text-[#53635e]">{t("audioUnavailable")}</p>}
+          <p className="mt-3 text-xs leading-5 text-[#5f7069]">{t("audioHint")}</p>
         </div>
       </aside>
     </div>
@@ -543,22 +543,22 @@ export function DeliveryPanel({ showing }: { showing: ShowingDetail }) {
   const linkPending = link.isPending || replacementLink.isPending;
   return (
     <section className="panel mt-7 overflow-hidden border-emerald-200/60">
-      <div className="border-b border-emerald-100 bg-gradient-to-br from-emerald-50 to-[#f4f3ed] p-5 sm:p-6">
+      <div className="border-b border-emerald-100 bg-gradient-to-br from-emerald-50 to-[#f4f1e9] p-5 sm:p-6">
         <p className="eyebrow mb-2">{t("eyebrow")}</p>
-        <h2 className="font-serif text-2xl font-semibold text-[#102c27]">{t("title")}</h2>
-        <p className="mt-1 text-sm text-[#626a67]">{t("body")}</p>
+        <h2 className="font-serif text-2xl font-semibold text-[#172824]">{t("title")}</h2>
+        <p className="mt-1 text-sm text-[#53635e]">{t("body")}</p>
       </div>
       <div className="grid gap-5 p-5 sm:p-6 lg:grid-cols-2">
-        <form className="rounded-xl border border-[#d6d9d2] bg-[#fffdf7] p-4" onSubmit={(event) => { event.preventDefault(); send.mutate(); }}>
-          <div className="mb-3 flex items-center gap-2 font-semibold text-[#102c27]"><Mail className="size-4 text-[#1f6f5b]" /> {t("emailTitle")}</div>
+        <form className="rounded-xl border border-[#d8d5cc] bg-[#fffdf8] p-4" onSubmit={(event) => { event.preventDefault(); send.mutate(); }}>
+          <div className="mb-3 flex items-center gap-2 font-semibold text-[#172824]"><Mail className="size-4 text-[#4f46e5]" /> {t("emailTitle")}</div>
           <input className="field" onChange={(event) => setEmail(event.target.value)} placeholder={t("emailPlaceholder")} required type="email" value={email} />
           <Button className="mt-3 w-full" disabled={send.isPending || emailRetryBlocked || showing.status !== "confirmed"} type="submit"><Send /> {t("sendEmail")}</Button>
           {emailDelivery?.status === "outcome_unknown" && <p className="mt-2 text-xs leading-5 text-amber-700">{t("emailOutcomeUnknown")}</p>}
-          {emailDelivery?.status === "pending" && <p className="mt-2 text-xs leading-5 text-[#626a67]">{t("emailInProgress")}</p>}
+          {emailDelivery?.status === "pending" && <p className="mt-2 text-xs leading-5 text-[#53635e]">{t("emailInProgress")}</p>}
         </form>
-        <div className="rounded-xl border border-[#d6d9d2] bg-[#fffdf7] p-4">
-          <div className="mb-3 flex items-center gap-2 font-semibold text-[#102c27]"><Link2 className="size-4 text-[#1f6f5b]" /> {t("linkTitle")}</div>
-          <p className="mb-3 text-sm leading-6 text-[#626a67]">{t("linkBody")}</p>
+        <div className="rounded-xl border border-[#d8d5cc] bg-[#fffdf8] p-4">
+          <div className="mb-3 flex items-center gap-2 font-semibold text-[#172824]"><Link2 className="size-4 text-[#4f46e5]" /> {t("linkTitle")}</div>
+          <p className="mb-3 text-sm leading-6 text-[#53635e]">{t("linkBody")}</p>
           {showing.status === "confirmed" && <Button className="w-full" disabled={linkPending} onClick={() => link.mutate()} variant="outline"><Link2 /> {t("copyLink")}</Button>}
           {canCreateReplacement && <Button className="w-full" disabled={linkPending} onClick={() => replacementLink.mutate()} variant="outline"><Link2 /> {t("createReplacementLink")}</Button>}
           {activeShareLink && (
@@ -577,7 +577,7 @@ export function DeliveryPanel({ showing }: { showing: ShowingDetail }) {
                 />
                 <Button aria-label={t("copyLinkAction")} disabled={!isActiveShareLink(activeShareLink, Date.now())} onClick={() => { if (isActiveShareLink(activeShareLink, Date.now())) void copyLink(activeShareLink.url); }} variant="outline"><Copy /> {t("copyLinkAction")}</Button>
               </div>
-              {activePdfUrl && <a className="mt-3 inline-flex min-h-9 w-full items-center justify-center gap-2 rounded-lg border border-[#1f6f5b] px-3 text-sm font-semibold text-[#1f6f5b] transition hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[#1f6f5b]/30" href={activePdfUrl} onClick={(event) => { if (!isActiveShareLink(activeShareLink, Date.now())) event.preventDefault(); }} rel="noreferrer" target="_blank"><FileDown className="size-4" /> {t("openPdf")}</a>}
+              {activePdfUrl && <a className="mt-3 inline-flex min-h-9 w-full items-center justify-center gap-2 rounded-lg border border-[#4f46e5] px-3 text-sm font-semibold text-[#4f46e5] transition hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-[#4f46e5]/30" href={activePdfUrl} onClick={(event) => { if (!isActiveShareLink(activeShareLink, Date.now())) event.preventDefault(); }} rel="noreferrer" target="_blank"><FileDown className="size-4" /> {t("openPdf")}</a>}
             </div>
           )}
           {createdLinkUrl && createdLinkUrl !== activeShareLink?.url && (
@@ -590,7 +590,7 @@ export function DeliveryPanel({ showing }: { showing: ShowingDetail }) {
               </div>
             </div>
           )}
-          {showing.status === "sent_to_client" && !activeShareLink && <p className="mt-2 text-xs leading-5 text-[#8fa099]">{t("alreadyDelivered")}</p>}
+          {showing.status === "sent_to_client" && !activeShareLink && <p className="mt-2 text-xs leading-5 text-[#5f7069]">{t("alreadyDelivered")}</p>}
         </div>
       </div>
       <div className="border-t px-5 py-4 sm:px-6">
@@ -612,7 +612,7 @@ export function DeliveryPanel({ showing }: { showing: ShowingDetail }) {
                   <input aria-label={t("manualUrl")} className="field h-8 w-48 bg-white text-xs" id={`history-share-link-${entry.item.id}`} onClick={(event) => event.currentTarget.select()} onFocus={(event) => event.currentTarget.select()} readOnly value={entry.item.url} />
                   <Button aria-label={t("copyLinkAction")} disabled={revoke.isPending} onClick={() => { if (isActiveShareLink(entry.item, Date.now())) void copyLink(entry.item.url); }} size="sm" variant="outline"><Copy /> {t("copyLinkAction")}</Button>
                   <Button aria-label={t("revokeLink")} disabled={revoke.isPending} onClick={() => { if (isActiveShareLink(entry.item, Date.now()) && window.confirm(t("revokeConfirm"))) revoke.mutate(entry.item.id); }} size="sm" variant="destructive"><Trash2 /> {t("revokeLink")}</Button>
-                  <a aria-label={t("openLink")} className="text-[#1f6f5b]" href={entry.item.url} onClick={(event) => { if (!isActiveShareLink(entry.item, Date.now())) event.preventDefault(); }} rel="noreferrer" target="_blank"><ExternalLink className="size-4" /></a>
+                  <a aria-label={t("openLink")} className="text-[#4f46e5]" href={entry.item.url} onClick={(event) => { if (!isActiveShareLink(entry.item, Date.now())) event.preventDefault(); }} rel="noreferrer" target="_blank"><ExternalLink className="size-4" /></a>
                 </>}
               </div>
             )}
@@ -784,23 +784,23 @@ export function ShowingWorkspace({ id }: { id: string }) {
 
   return (
     <div>
-      <Link className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-[#626a67] transition hover:text-[#102c27]" href="/"><ArrowLeft className="size-4" /> {t("back")}</Link>
+      <Link className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-[#53635e] transition hover:text-[#172824]" href="/"><ArrowLeft className="size-4" /> {t("back")}</Link>
       <div className="mb-7 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
         <div className="min-w-0">
-          <div className="mb-3 flex flex-wrap items-center gap-3"><StatusBadge showing={showing} /><span className="text-xs text-[#8fa099]">{new Intl.DateTimeFormat(undefined, { dateStyle: "long" }).format(tourDate(showing))}</span></div>
+          <div className="mb-3 flex flex-wrap items-center gap-3"><StatusBadge showing={showing} /><span className="text-xs text-[#5f7069]">{new Intl.DateTimeFormat(undefined, { dateStyle: "long" }).format(tourDate(showing))}</span></div>
           <h1 className="page-title truncate">{showing.property?.display_name ?? t("unassignedTitle")}</h1>
-          <p className="mt-2 text-[#626a67]">{showing.property?.address ?? t("unassignedBody")}{showing.contact ? ` · ${showing.contact.name}` : ""}</p>
+          <p className="mt-2 text-[#53635e]">{showing.property?.address ?? t("unassignedBody")}{showing.contact ? ` · ${showing.contact.name}` : ""}</p>
         </div>
-        <div className="flex items-center gap-2 text-sm text-[#8fa099]"><Clock3 className="size-4" /> {showing.ended_at ? t("completed") : t("inProgress")}</div>
+        <div className="flex items-center gap-2 text-sm text-[#5f7069]"><Clock3 className="size-4" /> {showing.ended_at ? t("completed") : t("inProgress")}</div>
       </div>
 
       {!showing.property && showing.status !== "sent_to_client" && <AttachPropertyPanel onAttached={() => setConfirmError("")} showing={showing} />}
       <ProcessingBanner showing={showing} />
-      {photos.length > 0 && <section className="mb-6"><div className="mb-3 flex items-center gap-2 text-sm font-semibold text-[#102c27]"><ImageIcon className="size-4" /> {t("photos", { count: photos.length })}</div><div className="flex gap-3 overflow-x-auto pb-2">{photos.map((media) => <div key={media.id}><PhotoThumb mediaId={media.id} visitId={id} /><p className="mt-1 text-xs text-[#8fa099]">{media.timestamp_offset_ms === null ? t("noTimestamp") : `${Math.round(media.timestamp_offset_ms / 1000)}s`}</p></div>)}</div></section>}
+      {photos.length > 0 && <section className="mb-6"><div className="mb-3 flex items-center gap-2 text-sm font-semibold text-[#172824]"><ImageIcon className="size-4" /> {t("photos", { count: photos.length })}</div><div className="flex gap-3 overflow-x-auto pb-2">{photos.map((media) => <div key={media.id}><PhotoThumb mediaId={media.id} visitId={id} /><p className="mt-1 text-xs text-[#5f7069]">{media.timestamp_offset_ms === null ? t("noTimestamp") : `${Math.round(media.timestamp_offset_ms / 1000)}s`}</p></div>)}</div></section>}
 
       {/* Pill-style tab bar matching the design system */}
-      <div className="no-print mb-6 tab-bar w-full justify-start overflow-x-auto">
-        {tabs.map((item) => <button aria-selected={tab === item.key} className={cn("tab-btn", tab === item.key && "active")} key={item.key} onClick={() => setTab(item.key)} type="button">{item.label}{item.count !== undefined && <span className={cn("rounded-full px-1.5 py-0.5 text-[10px]", tab === item.key ? "bg-[#e6f36a]/20 text-[#e6f36a]" : "bg-[#d6d9d2] text-[#626a67]")}>{item.count}</span>}</button>)}
+      <div className="no-print mb-6 tab-bar w-full justify-start overflow-x-auto" role="tablist">
+        {tabs.map((item) => <button aria-selected={tab === item.key} className={cn("tab-btn", tab === item.key && "active")} key={item.key} onClick={() => setTab(item.key)} role="tab" type="button">{item.label}{item.count !== undefined && <span className={cn("rounded-full px-1.5 py-0.5 text-[10px]", tab === item.key ? "bg-[#a5b4fc]/20 text-[#a5b4fc]" : "bg-[#d8d5cc] text-[#53635e]")}>{item.count}</span>}</button>)}
       </div>
 
       {tab === "report" && (showing.report && reportContent ? (

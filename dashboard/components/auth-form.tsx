@@ -45,45 +45,45 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   };
 
   return (
-    <main className="relative grid min-h-screen overflow-hidden bg-[#f4f3ed] lg:grid-cols-[minmax(480px,1.08fr)_minmax(440px,.92fr)]">
-      <section className="relative hidden min-h-screen overflow-hidden bg-[#102c27] p-8 text-[#fffdf7] lg:flex lg:flex-col xl:p-12">
-        <div aria-hidden="true" className="absolute -right-44 -top-40 size-[34rem] rounded-full border border-[#e6f36a]/15" />
-        <div aria-hidden="true" className="absolute -right-20 -top-12 size-[22rem] rounded-full border border-[#e6f36a]/15" />
-        <div aria-hidden="true" className="absolute bottom-[18%] left-[11%] h-px w-[72%] rotate-[-8deg] bg-[#e6f36a]/20" />
+    <main className="relative grid min-h-screen overflow-hidden bg-[#f4f1e9] lg:grid-cols-[minmax(480px,1.08fr)_minmax(440px,.92fr)]">
+      <section className="relative hidden min-h-screen overflow-hidden bg-[#172824] p-8 text-[#fffdf8] lg:flex lg:flex-col xl:p-12">
+        <div aria-hidden="true" className="absolute -right-44 -top-40 size-[34rem] rounded-full border border-[#a5b4fc]/15" />
+        <div aria-hidden="true" className="absolute -right-20 -top-12 size-[22rem] rounded-full border border-[#a5b4fc]/15" />
+        <div aria-hidden="true" className="absolute bottom-[18%] left-[11%] h-px w-[72%] rotate-[-8deg] bg-[#a5b4fc]/20" />
         <Link className="relative flex items-center gap-3" href="/">
-          <span className="grid size-10 place-items-center rounded-full bg-[#e6f36a] text-sm font-bold text-[#102c27]">H</span>
-          <span className="font-serif text-3xl font-semibold tracking-[-0.045em]">Homean</span>
+          <span aria-hidden="true" className="brand-mark size-10" />
+          <span className="text-2xl font-semibold tracking-[-0.03em]">Homean</span>
         </Link>
         <div className="relative my-auto max-w-2xl py-16">
-          <p className="mb-8 flex items-center gap-2.5 text-[11px] font-bold uppercase tracking-[0.15em] text-[#e6f36a] before:size-2 before:rounded-full before:bg-current">
+          <p className="mb-8 flex items-center gap-2.5 text-[11px] font-bold uppercase tracking-[0.15em] text-[#a5b4fc] before:size-2 before:rounded-full before:bg-current">
             {t("eyebrow")}
           </p>
           <h1 className="max-w-xl font-serif text-[clamp(4.5rem,7vw,7.5rem)] font-medium leading-[0.82] tracking-[-0.065em]">
             {t("brandTitle")}
           </h1>
           <div className="mt-12 grid max-w-xl grid-cols-[64px_1fr] gap-5 border-t border-white/15 pt-6">
-            <span className="font-serif text-3xl text-[#e6f36a]">01</span>
+            <span className="font-serif text-3xl text-[#a5b4fc]">01</span>
             <p className="text-base leading-7 text-[#b8c8c1]">{t("brandBody")}</p>
           </div>
         </div>
-        <p className="relative max-w-lg border-l-2 border-[#a73b25] pl-4 text-xs leading-5 text-[#91aaa1]">
+        <p className="relative max-w-lg border-l-2 border-[#f97316] pl-4 text-xs leading-5 text-[#91aaa1]">
           {t("privacy")}
         </p>
       </section>
       <section className="relative flex items-center justify-center px-5 py-10 sm:px-10 lg:px-14">
-        <div aria-hidden="true" className="absolute right-[-8rem] top-[-8rem] size-80 rounded-full bg-[#e6f36a]/55 blur-3xl" />
-        <div className="relative w-full max-w-[31rem] rounded-[1.75rem] border border-[#d2d7cf] bg-[#fffdf7] p-6 shadow-[0_24px_70px_rgb(16_44_39_/_0.12)] sm:p-10 lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none">
+        <div aria-hidden="true" className="absolute right-[-8rem] top-[-8rem] size-80 rounded-full bg-[#a5b4fc]/55 blur-3xl" />
+        <div className="relative w-full max-w-[31rem] rounded-[1.75rem] border border-[#d2d7cf] bg-[#fffdf8] p-6 shadow-[0_24px_70px_rgb(23_40_36_/_0.12)] sm:p-10 lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none">
           <Link className="mb-14 flex items-center gap-3 lg:hidden" href="/">
-            <span className="grid size-9 place-items-center rounded-full bg-[#102c27] text-xs font-bold text-[#e6f36a]">H</span>
-            <span className="font-serif text-3xl font-semibold tracking-[-0.045em]">Homean</span>
+            <span aria-hidden="true" className="brand-mark size-9" />
+            <span className="text-2xl font-semibold tracking-[-0.03em]">Homean</span>
           </Link>
-          <p className="mb-4 flex items-center gap-2.5 text-[11px] font-bold uppercase tracking-[0.15em] text-[#a73b25] before:size-2 before:rounded-full before:bg-current">
+          <p className="mb-4 flex items-center gap-2.5 text-[11px] font-bold uppercase tracking-[0.15em] text-[#3730a3] before:size-2 before:rounded-full before:bg-current">
             {mode === "login" ? t("welcomeBack") : t("startTrial")}
           </p>
-          <h2 className="max-w-md font-serif text-5xl font-medium leading-[0.9] tracking-[-0.055em] text-[#102c27] sm:text-6xl">
+          <h2 className="max-w-md font-serif text-5xl font-medium leading-[0.9] tracking-[-0.055em] text-[#172824] sm:text-6xl">
             {mode === "login" ? t("loginTitle") : t("signupTitle")}
           </h2>
-          <p className="mt-5 max-w-md text-base leading-7 text-[#59625f]">
+          <p className="mt-5 max-w-md text-base leading-7 text-[#53635e]">
             {mode === "login" ? t("loginBody") : t("signupBody")}
           </p>
           <form className="mt-10 space-y-5" onSubmit={submit}>
@@ -115,15 +115,15 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
                 {error}
               </p>
             )}
-            <Button className="h-13 w-full rounded-full bg-[#102c27] text-sm font-bold text-[#fffdf7] shadow-[0_10px_24px_rgb(16_44_39_/_0.16)] hover:-translate-y-0.5 hover:bg-[#a73b25]" disabled={pending} type="submit">
+            <Button className="h-13 w-full rounded-full bg-[#4f46e5] text-sm font-bold text-white shadow-[0_10px_24px_rgb(79_70_229_/_0.22)] hover:-translate-y-0.5 hover:bg-[#4338ca]" disabled={pending} type="submit">
               {pending ? <LoaderCircle className="animate-spin" /> : <ArrowRight />}
               {mode === "login" ? t("loginAction") : t("signupAction")}
             </Button>
           </form>
-          <p className="mt-8 border-t border-[#d6d9d2] pt-6 text-sm text-[#59625f]">
+          <p className="mt-8 border-t border-[#d8d5cc] pt-6 text-sm text-[#53635e]">
             {mode === "login" ? t("noAccount") : t("hasAccount")} {" "}
             <Link
-              className="font-bold text-[#a73b25] underline-offset-4 hover:underline"
+              className="font-bold text-[#3730a3] underline-offset-4 hover:underline"
               href={mode === "login" ? "/signup" : "/login"}
             >
               {mode === "login" ? t("signupLink") : t("loginLink")}
