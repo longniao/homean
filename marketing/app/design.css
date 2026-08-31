@@ -891,7 +891,7 @@ p { line-height: 1.6; }
 
 .pilot-section h2 { color: var(--ink); }
 .pilot-copy > p:first-child { max-width: 420px; color: var(--ink-2); font-size: 17px; line-height: 1.62; }
-.pilot-note { max-width: 420px; margin-top: 18px; color: var(--ink-3); font-size: 11px; line-height: 1.55; }
+.pilot-note { max-width: 420px; margin-top: 18px; color: var(--ink-2); font-size: 11px; line-height: 1.55; }
 
 /* ─── FAQ ───────────────────────────────────────────────────────────────── */
 .faq-section {

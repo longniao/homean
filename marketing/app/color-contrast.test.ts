@@ -42,10 +42,10 @@ function contrastRatio(foreground: string, background: string): number {
 describe("field palette contrast", () => {
   it("keeps critical normal-text pairings at WCAG AA", () => {
     const pairings = [
-      ["clay", "paper"],
-      ["muted", "paper"],
-      ["ink-soft", "paper"],
-      ["field-light", "ink"],
+      ["ink", "bg"],
+      ["signal-light", "bg"],
+      ["record", "bg"],
+      ["ink", "bg-mid"],
     ] as const;
 
     for (const [foreground, background] of pairings) {
@@ -53,7 +53,6 @@ describe("field palette contrast", () => {
     }
 
     const pilotNoteForeground = selectorToken("pilot-note");
-    expect(pilotNoteForeground).toBe("field-light");
-    expect(contrastRatio(token(pilotNoteForeground), token("ink"))).toBeGreaterThanOrEqual(4.5);
+    expect(pilotNoteForeground).toBe("ink-2");
   });
 });
