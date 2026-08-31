@@ -3,25 +3,26 @@
 
 /* ─── Design Tokens ─────────────────────────────────────────────────────── */
 :root {
-  /* Dark surfaces */
-  --bg:           #080a0f;   /* page background — near-black with blue undertone */
-  --bg-raised:    #0d1117;   /* card / elevated surface */
-  --bg-mid:       #111827;   /* mid-level panels */
-  --bg-sunken:    #050709;   /* recessed / inset areas */
+  /* Editorial field-journal surfaces */
+  --bg:           #f4f1e9;
+  --bg-raised:    #fffdf8;
+  --bg-mid:       #ebe8df;
+  --bg-sunken:    #e7e3d9;
 
   /* Text */
-  --ink:          #f1f5f9;   /* primary text — cool white */
-  --ink-2:        #a8adb7;   /* secondary — AA on all dark surfaces */
-  --ink-3:        #7f8794;   /* tertiary — AA on all dark surfaces */
+  --ink:          #172824;
+  --ink-2:        #53635e;
+  --ink-3:        #5f7069;
 
   /* Borders */
-  --line:         rgba(255, 255, 255, 0.07);  /* subtle dividers */
-  --line-strong:  rgba(255, 255, 255, 0.14);  /* card borders */
+  --line:         #d8d5cc;
+  --line-strong:  #bfc4bc;
 
   /* Accent — electric indigo */
   --signal:       #4f46e5;                    /* primary accent / accessible button fill */
   --signal-hover: #4338ca;                    /* darker interactive state */
   --signal-light: #818cf8;                    /* lighter indigo for text on dark */
+  --signal-text:  #3730a3;                    /* accessible indigo text on light */
   --signal-dim:   rgba(99, 102, 241, 0.10);   /* low-opacity fill */
   --signal-glow:  rgba(99, 102, 241, 0.22);   /* shadows / halos */
 
@@ -34,6 +35,19 @@
   --paper-ink:    #1d2927;
   --paper-muted:  #4f5d59;
   --paper-line:   #cfc7b8;
+
+  /* Dark product field — kept distinct from the editorial page */
+  --field-bg:     #0d1117;
+  --field-mid:    #111827;
+  --field-sunken: #050709;
+  --field-ink:    #f1f5f9;
+  --field-muted:  #a8adb7;
+  --field-faint:  #7f8794;
+
+  /* Closing callout */
+  --signup-bg:    #17312c;
+  --signup-ink:   #f7f3e8;
+  --signup-muted: #c3cec9;
 
   /* Micro-accent — terracotta (kept for semantic error/review states only) */
   --accent:       #f87171;   /* soft red for review dot */
@@ -56,26 +70,26 @@ body {
   font-size: 16px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
-  /* Indigo bloom top-center + subtle dot grid */
+  /* Soft daylight washes, like a marked-up field notebook. */
   background-image:
-    radial-gradient(ellipse 70% 55% at 50% -10%, rgba(99, 102, 241, 0.13), transparent),
-    radial-gradient(ellipse 50% 40% at 85% 100%, rgba(99, 102, 241, 0.06), transparent);
+    radial-gradient(ellipse 70% 55% at 50% -10%, rgba(79, 70, 229, 0.08), transparent),
+    radial-gradient(ellipse 50% 40% at 85% 100%, rgba(23, 49, 44, 0.06), transparent);
 }
 
-/* Grain texture overlay — very faint on dark */
+/* Grain texture overlay — restrained paper tooth. */
 body::before {
   content: "";
   position: fixed;
   z-index: 99;
   inset: 0;
   pointer-events: none;
-  opacity: 0.04;
+  opacity: 0.025;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 a { color: inherit; text-decoration: none; }
 a:focus-visible { outline: 2px solid var(--signal); outline-offset: 4px; border-radius: 3px; }
-::selection { color: var(--bg); background: var(--signal-light); }
+::selection { color: #ffffff; background: var(--signal); }
 img, svg { display: block; }
 
 /* ─── Layout ────────────────────────────────────────────────────────────── */
@@ -91,7 +105,7 @@ img, svg { display: block; }
   top: 12px;
   left: -9999px;
   padding: 8px 14px;
-  color: var(--bg);
+  color: #ffffff;
   background: var(--signal);
   font-size: 12px;
   font-weight: 700;
@@ -125,15 +139,15 @@ img, svg { display: block; }
   letter-spacing: -0.03em;
 }
 
-/* Logo mark — two diagonal indigo slashes on near-black circle */
+/* Logo mark — two diagonal indigo slashes on an ink-green tile. */
 .wordmark-mark {
   position: relative;
   width: 32px;
   height: 32px;
   overflow: hidden;
   color: transparent;
-  background: var(--bg-mid);
-  border: 1px solid var(--line-strong);
+  background: var(--ink);
+  border: 1px solid var(--ink);
   border-radius: 8px;
 }
 .wordmark-mark::before,
@@ -144,7 +158,7 @@ img, svg { display: block; }
   margin: auto;
   width: 14px;
   height: 2px;
-  background: var(--signal-light);
+  background: #a5b4fc;
   transform: rotate(-38deg);
   border-radius: 2px;
 }
@@ -210,7 +224,7 @@ img, svg { display: block; }
   box-shadow: 0 8px 32px var(--signal-glow);
 }
 
-/* Signal — same as primary (used in pilot CTA) */
+/* Signal — same as primary (used in the closing signup CTA) */
 .button-signal {
   color: #fff;
   background: var(--signal);
@@ -255,7 +269,7 @@ p { line-height: 1.6; }
   align-items: center;
   gap: 8px;
   margin-bottom: 22px;
-  color: var(--signal-light);
+  color: var(--signal-text);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.18em;
@@ -284,7 +298,7 @@ p { line-height: 1.6; }
   padding-bottom: 4px;
   transition: color 0.2s, border-color 0.2s;
 }
-.text-link:hover { color: var(--signal-light); border-color: var(--signal); }
+.text-link:hover { color: var(--signal-text); border-color: var(--signal); }
 
 /* ─── Hero ──────────────────────────────────────────────────────────────── */
 .hero {
@@ -379,12 +393,12 @@ p { line-height: 1.6; }
   content: "";
   position: absolute;
   inset: 0 0 0 16%;
-  background-color: var(--bg-raised);
+  background-color: var(--field-bg);
   background-image:
-    linear-gradient(var(--line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
   background-size: 52px 52px;
-  border: 1px solid var(--line-strong);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 26px;
   transform: rotate(2.2deg);
   box-shadow: 0 0 80px rgba(99, 102, 241, 0.08);
@@ -394,6 +408,15 @@ p { line-height: 1.6; }
 
 /* ─── Dossier / Product Composition ────────────────────────────────────── */
 .dossier {
+  --bg-raised: var(--field-bg);
+  --bg-mid: var(--field-mid);
+  --bg-sunken: var(--field-sunken);
+  --ink: var(--field-ink);
+  --ink-2: var(--field-muted);
+  --ink-3: var(--field-faint);
+  --line: rgba(255, 255, 255, 0.07);
+  --line-strong: rgba(255, 255, 255, 0.14);
+
   position: relative;
   padding: 14px;
   overflow: hidden;
@@ -673,7 +696,7 @@ p { line-height: 1.6; }
   padding-block: 130px;
 }
 
-/* Full-bleed dark raised band */
+/* Full-bleed raised paper band */
 .problem-section::before {
   content: "";
   position: absolute;
@@ -701,9 +724,9 @@ p { line-height: 1.6; }
   border: 1px solid var(--line);
 }
 .contrast-column.collected {
-  background: var(--signal-dim);
-  border: 1px solid rgba(99,102,241,0.25);
-  box-shadow: 0 0 40px rgba(99,102,241,0.08) inset;
+  background: var(--signup-bg);
+  border: 1px solid #274740;
+  box-shadow: 0 18px 50px rgba(23, 49, 44, 0.14);
 }
 
 .contrast-label {
@@ -714,7 +737,7 @@ p { line-height: 1.6; }
   letter-spacing: 0.16em;
   text-transform: uppercase;
 }
-.contrast-column.collected .contrast-label { color: var(--signal-light); }
+.contrast-column.collected .contrast-label { color: #a5b4fc; }
 
 .contrast-item {
   display: flex;
@@ -729,9 +752,9 @@ p { line-height: 1.6; }
 }
 .contrast-item span { color: var(--ink-3); font-size: 9px; }
 .contrast-item i { margin-left: auto; color: var(--ink-3); font-family: var(--sans); font-size: 13px; font-style: normal; }
-.collected .contrast-item { color: var(--ink); border-color: rgba(255,255,255,0.06); }
-.collected .contrast-item span { color: rgba(255,255,255,0.3); }
-.collected .contrast-item i { color: var(--signal-light); font-size: 15px; }
+.collected .contrast-item { color: var(--signup-ink); border-color: rgba(255,255,255,0.11); }
+.collected .contrast-item span { color: var(--signup-muted); }
+.collected .contrast-item i { color: #a5b4fc; font-size: 15px; }
 
 .contrast-arrow { color: var(--ink-3); font-family: var(--display); font-size: 32px; text-align: center; }
 
@@ -767,12 +790,12 @@ p { line-height: 1.6; }
   transform: translateY(-6px);
   background: var(--signal-dim);
   border-color: rgba(99,102,241,0.3);
-  box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(99,102,241,0.15);
+  box-shadow: 0 20px 50px rgba(23, 49, 44, 0.10), 0 0 0 1px rgba(99,102,241,0.12);
 }
-.workflow-step:hover .step-number { color: var(--signal-light); }
+.workflow-step:hover .step-number { color: var(--signal-text); }
 .workflow-step:hover .step-copy h3 { color: var(--ink); }
 .workflow-step:hover .step-copy p { color: var(--ink-2); }
-.workflow-step:hover .step-detail { color: var(--signal-light); }
+.workflow-step:hover .step-detail { color: var(--signal-text); }
 
 .step-number {
   margin-bottom: 68px;
@@ -822,7 +845,7 @@ p { line-height: 1.6; }
   display: grid;
   width: 40px; height: 40px;
   place-items: center;
-  color: var(--signal-light);
+  color: var(--signal-text);
   background: var(--signal-dim);
   border: 1px solid rgba(99,102,241,0.25);
   border-radius: 10px;
@@ -832,10 +855,6 @@ p { line-height: 1.6; }
 .agent-point p { margin: 0; color: var(--ink-2); font-size: 14px; line-height: 1.55; }
 
 /* ─── Trust section ─────────────────────────────────────────────────────── */
-/*
-  Trust section sits on a slightly lighter dark surface to differentiate
-  it from the page bg — same dark family, not white/light.
-*/
 .trust-section {
   width: min(1300px, calc(100% - 32px));
   display: grid;
@@ -843,20 +862,20 @@ p { line-height: 1.6; }
   gap: 90px;
   align-items: start;
   padding: 88px max(32px, calc((100% - 1180px) / 2));
-  background: var(--bg-raised);
-  border: 1px solid var(--line-strong);
+  background: #e3e9e2;
+  border: 1px solid #c8d1c9;
   border-radius: 28px;
   position: relative;
   overflow: hidden;
 }
-/* Indigo glow top-right inside trust block */
+/* A quiet daylight bloom keeps the privacy block from feeling clinical. */
 .trust-section::before {
   content: "";
   position: absolute;
   top: -80px; right: -80px;
   width: 400px; height: 400px;
   background: radial-gradient(circle, var(--signal) 0%, transparent 70%);
-  opacity: 0.07;
+  opacity: 0.055;
   pointer-events: none;
 }
 .trust-heading h2 { color: var(--ink); }
@@ -871,16 +890,16 @@ p { line-height: 1.6; }
 .principle {
   min-height: 190px;
   padding: 22px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid var(--line);
+  background: rgba(255, 253, 248, 0.78);
+  border: 1px solid #c8d1c9;
   border-radius: 14px;
   transition: background 0.25s, border-color 0.25s;
 }
-.principle:hover { background: var(--signal-dim); border-color: rgba(99,102,241,0.25); }
+.principle:hover { background: var(--bg-raised); border-color: rgba(79, 70, 229, 0.28); }
 .principle-index {
   display: block;
   margin-bottom: 32px;
-  color: var(--signal-light);
+  color: var(--signal-text);
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.13em;
@@ -894,8 +913,8 @@ p { line-height: 1.6; }
   width: min(1240px, calc(100% - 64px));
   margin-block: 120px;
   padding: 80px;
-  background: var(--bg-raised);
-  border: 1px solid var(--line-strong);
+  background: var(--signup-bg);
+  border: 1px solid #274740;
   border-radius: 28px;
   overflow: hidden;
   position: relative;
@@ -920,9 +939,9 @@ p { line-height: 1.6; }
   z-index: 1;
 }
 
-.signup-section h2 { color: var(--ink); }
-.signup-copy > p:first-child { max-width: 420px; color: var(--ink-2); font-size: 17px; line-height: 1.62; }
-.signup-note { max-width: 420px; margin-top: 18px; color: var(--ink-2); font-size: 11px; line-height: 1.55; }
+.signup-section h2 { color: var(--signup-ink); }
+.signup-copy > p:first-child { max-width: 420px; color: var(--signup-muted); font-size: 17px; line-height: 1.62; }
+.signup-note { max-width: 420px; margin-top: 18px; color: var(--signup-muted); font-size: 11px; line-height: 1.55; }
 
 /* ─── FAQ ───────────────────────────────────────────────────────────────── */
 .faq-section {
@@ -948,7 +967,7 @@ p { line-height: 1.6; }
   transition: color 0.2s;
 }
 .faq-item summary::-webkit-details-marker { display: none; }
-.faq-item[open] summary { color: var(--signal-light); }
+.faq-item[open] summary { color: var(--signal-text); }
 .faq-plus {
   display: grid;
   flex-shrink: 0;
@@ -967,7 +986,7 @@ p { line-height: 1.6; }
   transform: rotate(45deg);
   background: var(--signal-dim);
   border-color: var(--signal);
-  color: var(--signal-light);
+  color: var(--signal-text);
 }
 .faq-item p { max-width: 620px; margin: -4px 0 22px; color: var(--ink-2); font-size: 15px; line-height: 1.6; }
 
@@ -1003,9 +1022,9 @@ p { line-height: 1.6; }
 .footer-meta > p { margin-bottom: 5px; color: var(--ink-3); font-size: 10px; font-weight: 640; letter-spacing: 0.1em; text-transform: uppercase; }
 .footer-links { display: flex; justify-content: flex-end; gap: 20px; margin-top: 22px; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
 .footer-links a { transition: color 0.2s; }
-.footer-links a:hover { color: var(--signal-light); }
+.footer-links a:hover { color: var(--signal-text); }
 .footer-legal { grid-column: 1 / -1; margin-top: 32px; color: var(--ink-3); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; line-height: 1.7; border-top: 1px solid var(--line); padding-top: 24px; }
-.footer-legal span { float: right; color: var(--signal-light); }
+.footer-legal span { float: right; color: var(--signal-text); }
 
 /* ─── Reveal animations ─────────────────────────────────────────────────── */
 .reveal { animation: field-rise 0.65s cubic-bezier(0.2, 0.75, 0.2, 1) both; }

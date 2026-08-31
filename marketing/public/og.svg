@@ -1,40 +1,41 @@
 <svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <radialGradient id="bloom" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(655 40) rotate(92) scale(510 700)">
-      <stop stop-color="#4F46E5" stop-opacity="0.22"/>
-      <stop offset="1" stop-color="#080A0F" stop-opacity="0"/>
+      <stop stop-color="#4F46E5" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#F4F1E9" stop-opacity="0"/>
     </radialGradient>
     <linearGradient id="evidence" x1="0" y1="0" x2="1" y2="1">
       <stop stop-color="#312E81"/>
       <stop offset="1" stop-color="#1E1B4B"/>
     </linearGradient>
     <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
-      <feDropShadow dx="0" dy="22" stdDeviation="24" flood-color="#000000" flood-opacity="0.45"/>
+      <feDropShadow dx="0" dy="22" stdDeviation="24" flood-color="#17312C" flood-opacity="0.25"/>
     </filter>
     <pattern id="plan" width="64" height="64" patternUnits="userSpaceOnUse">
-      <path d="M64 0H0V64" stroke="#FFFFFF" stroke-opacity="0.055"/>
+      <path d="M64 0H0V64" stroke="#172824" stroke-opacity="0.055"/>
     </pattern>
   </defs>
 
-  <rect width="1200" height="630" fill="#080A0F"/>
+  <rect width="1200" height="630" fill="#F4F1E9"/>
   <rect width="1200" height="630" fill="url(#bloom)"/>
+  <rect x="744" width="456" height="630" fill="#E7E3D9"/>
   <rect x="744" width="456" height="630" fill="url(#plan)"/>
-  <path d="M744 0V630" stroke="#FFFFFF" stroke-opacity="0.1"/>
+  <path d="M744 0V630" stroke="#172824" stroke-opacity="0.12"/>
 
   <g transform="translate(72 58)">
-    <rect width="38" height="38" rx="10" fill="#111827" stroke="#FFFFFF" stroke-opacity="0.18"/>
-    <path d="M11 23L21 13M19 27L29 17" stroke="#818CF8" stroke-width="2" stroke-linecap="round"/>
-    <text x="52" y="27" fill="#F1F5F9" font-family="Arial, sans-serif" font-size="24" font-weight="600">Homean</text>
+    <rect width="38" height="38" rx="10" fill="#172824" stroke="#172824"/>
+    <path d="M11 23L21 13M19 27L29 17" stroke="#A5B4FC" stroke-width="2" stroke-linecap="round"/>
+    <text x="52" y="27" fill="#172824" font-family="Arial, sans-serif" font-size="24" font-weight="600">Homean</text>
   </g>
 
   <g transform="translate(72 182)">
     <circle cx="4" cy="-5" r="4" fill="#F97316"/>
-    <text x="18" fill="#818CF8" font-family="Arial, sans-serif" font-size="14" font-weight="700" letter-spacing="2.6">FOR BUYER’S AGENTS</text>
-    <text y="74" fill="#F1F5F9" font-family="Georgia, serif" font-size="67" font-weight="500" letter-spacing="-2.4">
+    <text x="18" fill="#3730A3" font-family="Arial, sans-serif" font-size="14" font-weight="700" letter-spacing="2.6">FOR BUYER’S AGENTS</text>
+    <text y="74" fill="#172824" font-family="Georgia, serif" font-size="67" font-weight="500" letter-spacing="-2.4">
       <tspan x="0">Turn every showing</tspan>
       <tspan x="0" dy="69">into a client report.</tspan>
     </text>
-    <text y="244" fill="#A8ADB7" font-family="Arial, sans-serif" font-size="22">
+    <text y="244" fill="#53635E" font-family="Arial, sans-serif" font-size="22">
       <tspan x="0">Capture once. Review the evidence.</tspan>
       <tspan x="0" dy="34">Deliver with confidence.</tspan>
     </text>
@@ -98,5 +99,5 @@
     </g>
   </g>
 
-  <text x="1130" y="596" fill="#7F8794" font-family="Arial, sans-serif" font-size="9" font-weight="700" letter-spacing="1.6" text-anchor="end">AI ORGANIZED · AGENT REVIEWED</text>
+  <text x="1130" y="596" fill="#5F7069" font-family="Arial, sans-serif" font-size="9" font-weight="700" letter-spacing="1.6" text-anchor="end">AI ORGANIZED · AGENT REVIEWED</text>
 </svg>

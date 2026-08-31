@@ -47,11 +47,15 @@ describe("field palette contrast", () => {
       ["ink-3", "bg"],
       ["ink-2", "bg-raised"],
       ["ink-3", "bg-raised"],
-      ["signal-light", "bg"],
-      ["record", "bg"],
+      ["signal-text", "bg"],
       ["ink", "bg-mid"],
+      ["field-ink", "field-bg"],
+      ["field-muted", "field-bg"],
+      ["field-faint", "field-bg"],
       ["paper-ink", "paper"],
       ["paper-muted", "paper"],
+      ["signup-ink", "signup-bg"],
+      ["signup-muted", "signup-bg"],
     ] as const;
 
     for (const [foreground, background] of pairings) {
@@ -59,7 +63,7 @@ describe("field palette contrast", () => {
     }
 
     const signupNoteForeground = selectorToken("signup-note");
-    expect(signupNoteForeground).toBe("ink-2");
+    expect(signupNoteForeground).toBe("signup-muted");
   });
 
   it("keeps primary button text accessible in default and hover states", () => {
