@@ -40,7 +40,7 @@
     </text>
     <g transform="translate(0 318)">
       <rect width="244" height="48" rx="24" fill="#4F46E5"/>
-      <text x="22" y="30" fill="white" font-family="Arial, sans-serif" font-size="12" font-weight="700" letter-spacing="1">REQUEST PILOT ACCESS</text>
+      <text x="22" y="30" fill="white" font-family="Arial, sans-serif" font-size="12" font-weight="700" letter-spacing="1">CREATE YOUR ACCOUNT</text>
       <path d="M216 28L225 19M219 19H225V25" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
     </g>
   </g>

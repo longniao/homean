@@ -269,7 +269,7 @@ p { line-height: 1.6; }
   flex-shrink: 0;
   box-shadow: 0 0 6px var(--signal-glow);
 }
-/* .eyebrow-light used in pilot section on dark bg — same style fine */
+/* .eyebrow-light is used in the signup section on a dark surface. */
 .eyebrow-light { color: var(--signal-light); }
 
 .text-link {
@@ -889,8 +889,8 @@ p { line-height: 1.6; }
 .principle h3 { margin-bottom: 7px; color: var(--ink); font-size: 18px; }
 .principle p { margin: 0; color: var(--ink-2); font-size: 13px; line-height: 1.55; }
 
-/* ─── Pilot CTA ─────────────────────────────────────────────────────────── */
-.pilot-section {
+/* ─── Signup CTA ────────────────────────────────────────────────────────── */
+.signup-section {
   width: min(1240px, calc(100% - 64px));
   margin-block: 120px;
   padding: 80px;
@@ -901,7 +901,7 @@ p { line-height: 1.6; }
   position: relative;
 }
 /* Large indigo glow blob */
-.pilot-section::before {
+.signup-section::before {
   content: "";
   position: absolute;
   top: -100px; right: -80px;
@@ -911,7 +911,7 @@ p { line-height: 1.6; }
   pointer-events: none;
 }
 
-.pilot-grid {
+.signup-grid {
   display: grid;
   grid-template-columns: 1.15fr 0.85fr;
   gap: 80px;
@@ -920,9 +920,9 @@ p { line-height: 1.6; }
   z-index: 1;
 }
 
-.pilot-section h2 { color: var(--ink); }
-.pilot-copy > p:first-child { max-width: 420px; color: var(--ink-2); font-size: 17px; line-height: 1.62; }
-.pilot-note { max-width: 420px; margin-top: 18px; color: var(--ink-2); font-size: 11px; line-height: 1.55; }
+.signup-section h2 { color: var(--ink); }
+.signup-copy > p:first-child { max-width: 420px; color: var(--ink-2); font-size: 17px; line-height: 1.62; }
+.signup-note { max-width: 420px; margin-top: 18px; color: var(--ink-2); font-size: 11px; line-height: 1.55; }
 
 /* ─── FAQ ───────────────────────────────────────────────────────────────── */
 .faq-section {
@@ -1044,8 +1044,8 @@ p { line-height: 1.6; }
   .proof-section { grid-template-columns: 1fr; }
   .proof-heading h2 { margin-top: 0; }
   .trust-section { width: calc(100% - 20px); grid-template-columns: 1fr; gap: 48px; padding-inline: 44px; }
-  .pilot-section { width: min(100% - 40px, 760px); padding: 60px 55px; }
-  .pilot-grid { grid-template-columns: 1fr; gap: 32px; }
+  .signup-section { width: min(100% - 40px, 760px); padding: 60px 55px; }
+  .signup-grid { grid-template-columns: 1fr; gap: 32px; }
 }
 
 /* ─── Mobile ────────────────────────────────────────────────────────────── */
@@ -1073,7 +1073,7 @@ p { line-height: 1.6; }
   .step-number { margin-bottom: 52px; }
   .trust-section { padding: 56px 24px; border-radius: 20px; }
   .principles-grid { grid-template-columns: 1fr; }
-  .pilot-section { width: calc(100% - 32px); margin-block: 68px; padding: 44px 24px; border-radius: 20px; }
+  .signup-section { width: calc(100% - 32px); margin-block: 68px; padding: 44px 24px; border-radius: 20px; }
   .site-footer { grid-template-columns: 1fr; }
   .footer-meta { justify-self: start; text-align: left; }
   .footer-links { justify-content: flex-start; flex-wrap: wrap; }

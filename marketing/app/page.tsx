@@ -1,11 +1,11 @@
 import { Faq } from "@/components/faq";
-import { PilotCta } from "@/components/pilot-cta";
 import { ProductComposition } from "@/components/product-composition";
+import { SignupCta } from "@/components/signup-cta";
 import { SiteHeader } from "@/components/site-header";
 import { Trust } from "@/components/trust";
 import { Workflow } from "@/components/workflow";
 import { content } from "@/lib/content";
-import { pilotMailto, siteConfig } from "@/lib/config";
+import { contactMailto, siteConfig } from "@/lib/config";
 
 export default function HomePage() {
   return (
@@ -18,7 +18,7 @@ export default function HomePage() {
           <p className="eyebrow reveal reveal-one">{content.hero.eyebrow}</p>
           <h1 id="hero-title" className="reveal reveal-two">{content.hero.title}</h1>
           <p className="hero-description reveal reveal-three">{content.hero.description}</p>
-          <div className="hero-actions reveal reveal-four"><a className="button button-dark" href={pilotMailto()}>{content.hero.primaryCta}<span aria-hidden="true">↗</span></a><a className="text-link" href="#how-it-works">{content.hero.secondaryCta}<span aria-hidden="true">↓</span></a></div>
+          <div className="hero-actions reveal reveal-four"><a className="button button-dark" href={siteConfig.signupUrl}>{content.hero.primaryCta}<span aria-hidden="true">↗</span></a><a className="text-link" href="#how-it-works">{content.hero.secondaryCta}<span aria-hidden="true">↓</span></a></div>
           <p className="hero-note reveal reveal-four"><span className="tiny-square" aria-hidden="true" />{content.hero.note}</p>
         </div>
         <div className="hero-composition reveal reveal-three"><ProductComposition compact /></div>
@@ -42,17 +42,17 @@ export default function HomePage() {
       </section>
 
       <section className="agents-section section-shell" aria-labelledby="agents-title">
-        <div className="agents-copy"><p className="eyebrow">{content.agents.eyebrow}</p><h2 id="agents-title">{content.agents.title}</h2><p>{content.agents.description}</p><a className="text-link" href={pilotMailto()}>{content.agents.pilotLink} <span aria-hidden="true">↗</span></a></div>
+        <div className="agents-copy"><p className="eyebrow">{content.agents.eyebrow}</p><h2 id="agents-title">{content.agents.title}</h2><p>{content.agents.description}</p><a className="text-link" href={siteConfig.signupUrl}>{content.agents.signupLink} <span aria-hidden="true">↗</span></a></div>
         <div className="agent-points">{content.agents.points.map((point, index) => <article className="agent-point" key={point.title}><span className="agent-point-mark">{["✳", "□", "↗"][index]}</span><div><h3>{point.title}</h3><p>{point.description}</p></div></article>)}</div>
       </section>
 
       <Trust />
-      <PilotCta />
+      <SignupCta />
       <Faq />
 
       <footer className="site-footer section-shell">
         <div className="footer-brand"><span className="wordmark-mark" aria-hidden="true">H</span><span>{content.brandName}</span><p>{content.footer.line}</p></div>
-        <div className="footer-meta"><p>{content.footer.pilotStage}</p><p>{content.footer.privacy}</p><div className="footer-links"><a href={siteConfig.appUrl}>{content.nav.signIn}</a><a href={pilotMailto()}>{siteConfig.pilotEmail}</a></div></div>
+        <div className="footer-meta"><p>{content.footer.availability}</p><p>{content.footer.privacy}</p><div className="footer-links"><a href={siteConfig.appUrl}>{content.nav.signIn}</a><a href={contactMailto()}>{siteConfig.contactEmail}</a></div></div>
         <p className="footer-legal">{content.footer.copyright} <span>{content.footer.signature}</span></p>
       </footer>
       </main>

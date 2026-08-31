@@ -1,21 +1,19 @@
-import { content } from "@/lib/content";
-
 export type PublicConfigInput = {
   NEXT_PUBLIC_SITE_URL?: string;
   NEXT_PUBLIC_APP_URL?: string;
-  NEXT_PUBLIC_PILOT_EMAIL?: string;
+  NEXT_PUBLIC_CONTACT_EMAIL?: string;
 };
 
 type PublicConfig = {
   siteUrl: string;
   appUrl: string;
-  pilotEmail: string;
+  contactEmail: string;
 };
 
 const developmentDefaults: PublicConfig = {
   siteUrl: "http://localhost:3000",
   appUrl: "http://localhost:3001",
-  pilotEmail: "pilot@example.invalid",
+  contactEmail: "contact@example.invalid",
 };
 
 function isHttpUrl(value: string): boolean {
@@ -64,28 +62,18 @@ export function parsePublicConfig(
   return {
     siteUrl: readValue(input, "NEXT_PUBLIC_SITE_URL", developmentDefaults.siteUrl, isHttpUrl, "URL", production),
     appUrl: readValue(input, "NEXT_PUBLIC_APP_URL", developmentDefaults.appUrl, isHttpUrl, "URL", production),
-    pilotEmail: readValue(input, "NEXT_PUBLIC_PILOT_EMAIL", developmentDefaults.pilotEmail, isSaneEmail, "email", production),
+    contactEmail: readValue(input, "NEXT_PUBLIC_CONTACT_EMAIL", developmentDefaults.contactEmail, isSaneEmail, "email", production),
   };
 }
 
+const publicConfig = parsePublicConfig();
+
 export const siteConfig = {
-  ...parsePublicConfig(),
+  ...publicConfig,
+  signupUrl: new URL("/signup", publicConfig.appUrl).toString(),
   indexable: process.env.NEXT_PUBLIC_SITE_INDEXABLE === "true",
 } as const;
 
-export function pilotMailto(): string {
-  const subject = content.mail.subject;
-  const body = [
-    content.mail.salutation,
-    "",
-    content.mail.opening,
-    "",
-    content.mail.name,
-    content.mail.market,
-    content.mail.showings,
-    "",
-    content.mail.closing,
-  ].join("\n");
-
-  return `mailto:${siteConfig.pilotEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+export function contactMailto(): string {
+  return `mailto:${siteConfig.contactEmail}`;
 }

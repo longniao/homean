@@ -18,7 +18,7 @@ before a real deployment:
 
 - `NEXT_PUBLIC_SITE_URL` — canonical site and sitemap origin.
 - `NEXT_PUBLIC_APP_URL` — authenticated dashboard URL used by the secondary sign-in link.
-- `NEXT_PUBLIC_PILOT_EMAIL` — recipient used to construct the pilot `mailto:` CTA.
+- `NEXT_PUBLIC_CONTACT_EMAIL` — public contact address shown in the footer.
 - `NEXT_PUBLIC_SITE_INDEXABLE` — publication gate. Keep `false` until counsel approves
   public launch wording; `true` enables index/follow metadata and an allow-all robots file.
 

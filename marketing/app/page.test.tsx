@@ -2,15 +2,19 @@ import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import HomePage from "./page";
 import { metadata } from "./layout";
-import { pilotMailto, siteConfig } from "@/lib/config";
+import { siteConfig } from "@/lib/config";
 
 describe("marketing home page", () => {
-  it("offers the pilot CTA and authenticated app link", () => {
+  it("offers self-service signup and an authenticated app link", () => {
     render(<HomePage />);
 
-    expect(screen.getAllByRole("link", { name: /request pilot access/i }).length).toBeGreaterThan(0);
+    const signupLinks = screen.getAllByRole("link", { name: /create (your )?account/i });
+    expect(signupLinks.length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: /sign in/i })[0]).toHaveAttribute("href", siteConfig.appUrl);
-    expect(screen.getAllByRole("link", { name: /request pilot access/i })[0]).toHaveAttribute("href", pilotMailto());
+    for (const link of signupLinks) {
+      expect(link).toHaveAttribute("href", siteConfig.signupUrl);
+      expect(link.getAttribute("href")).not.toMatch(/^mailto:/);
+    }
   });
 
   it("states the agent confirmation and private-by-default boundaries", () => {
@@ -19,7 +23,7 @@ describe("marketing home page", () => {
     expect(screen.getAllByText(/nothing is delivered without your explicit confirmation/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/private by default/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/fictional sample · 1840 alder lane/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/no web form or account is created here/i)).toBeInTheDocument();
+    expect(screen.getByText(/account creation continues securely/i)).toBeInTheDocument();
   });
 
   it("keeps navigation anchors and high-confidence FAQ content present", () => {

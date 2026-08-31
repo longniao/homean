@@ -24,7 +24,7 @@ export const content = {
     forAgents: "For agents",
     trust: "Trust",
     signIn: "Sign in",
-    pilot: "Request pilot access",
+    signup: "Create account",
     mainNavigation: "Main navigation",
     homeLink: "Homean home",
     homeHref: "#main-content",
@@ -35,9 +35,9 @@ export const content = {
     title: "Turn every showing into a professional client report.",
     description:
       "Capture a walkthrough once. Homean organizes the details into a structured draft you can review, refine, and deliver to your client.",
-    primaryCta: "Request pilot access",
+    primaryCta: "Create account",
     secondaryCta: "See how it works",
-    note: "Illustrative product view · English pilot",
+    note: "Illustrative product view · English only",
     sideNote: ["FIELD NOTE", "01—24"],
   },
   problem: {
@@ -124,7 +124,7 @@ export const content = {
         description: "A structured report makes the next conversation easier to start and easier to remember.",
       },
     ],
-    pilotLink: "Talk to us about the pilot",
+    signupLink: "Create your account",
   },
   trust: {
     eyebrow: "Product principles",
@@ -138,13 +138,13 @@ export const content = {
       { label: "Made for the field", description: "Offline-first capture protects the workflow when a showing has a weak signal." },
     ],
   },
-  pilot: {
-    eyebrow: "A small, considered pilot",
-    title: "Help shape the showing tool you would actually use.",
+  signup: {
+    eyebrow: "Ready for the next showing",
+    title: "Start with the showing already on your calendar.",
     description:
-      "Homean is preparing a small pilot for active buyer’s agents. Tell us a little about your practice and we’ll reply with the next step.",
-    cta: "Request pilot access",
-    note: "Opens your email app with a pre-addressed note. No web form or account is created here.",
+      "Create your account, add your buyer and property, and keep the next showing record together from capture through delivery.",
+    cta: "Create your account",
+    note: "Account creation continues securely in the Homean dashboard.",
   },
   faq: {
     eyebrow: "Questions agents ask",
@@ -167,25 +167,16 @@ export const content = {
         answer: "The mobile capture workflow is designed for offline-first use. Captured media can remain on the device and sync when connectivity returns.",
       },
       {
-        question: "How can an agent join the pilot?",
-        answer: "Use the request pilot access link. It opens a pre-addressed email so you can share a little about your practice without entering information into a website form.",
+        question: "How do I get started?",
+        answer: "Create an account in the Homean dashboard. Once signed in, you can start organizing showing records and client reports.",
       },
     ] satisfies FaqItem[],
   },
   footer: {
     line: "A private showing record for buyer’s agents.",
-    pilotStage: "Pilot-stage product · English only",
+    availability: "Self-service signup · English only",
     privacy: "Private by default. Agent-reviewed before delivery.",
-    copyright: "© 2026 Homean. Pilot-stage product.",
+    copyright: "© 2026 Homean.",
     signature: "Built for the field.",
-  },
-  mail: {
-    subject: "Homean pilot access",
-    salutation: "Hi Homean,",
-    opening: "I’m an active buyer’s agent and would like to learn about the Homean pilot.",
-    name: "Name:",
-    market: "Market:",
-    showings: "Typical showings per week:",
-    closing: "Thank you,",
   },
 } as const;

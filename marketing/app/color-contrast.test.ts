@@ -58,8 +58,8 @@ describe("field palette contrast", () => {
       expect(contrastRatio(token(foreground), token(background))).toBeGreaterThanOrEqual(4.5);
     }
 
-    const pilotNoteForeground = selectorToken("pilot-note");
-    expect(pilotNoteForeground).toBe("ink-2");
+    const signupNoteForeground = selectorToken("signup-note");
+    expect(signupNoteForeground).toBe("ink-2");
   });
 
   it("keeps primary button text accessible in default and hover states", () => {

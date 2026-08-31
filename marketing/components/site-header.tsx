@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { content } from "@/lib/content";
-import { pilotMailto, siteConfig } from "@/lib/config";
+import { siteConfig } from "@/lib/config";
 
 export function SiteHeader() {
   return (
@@ -16,7 +16,7 @@ export function SiteHeader() {
       </nav>
       <div className="header-actions">
         <a className="sign-in-link" href={siteConfig.appUrl}>{content.nav.signIn}</a>
-        <a className="button button-small button-dark" href={pilotMailto()}>{content.nav.pilot}</a>
+        <a className="button button-small button-dark" href={siteConfig.signupUrl}>{content.nav.signup}</a>
       </div>
     </header>
   );
