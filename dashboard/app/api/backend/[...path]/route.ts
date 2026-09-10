@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import {
   ACCESS_COOKIE,
-  backendUrl,
+  fetchBackend,
   LEGACY_ACCESS_COOKIE,
   LEGACY_REFRESH_COOKIE,
   REFRESH_COOKIE,
@@ -19,15 +19,13 @@ async function forward(
   request: NextRequest,
   path: string,
   accessToken: string | undefined,
+  body: ArrayBuffer | undefined,
 ) {
   const headers = new Headers();
   const contentType = request.headers.get("content-type");
   if (contentType) headers.set("Content-Type", contentType);
   if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
-  const body = ["GET", "HEAD"].includes(request.method)
-    ? undefined
-    : await request.arrayBuffer();
-  return fetch(`${backendUrl()}/${path}${request.nextUrl.search}`, {
+  return fetchBackend(`/${path}${request.nextUrl.search}`, {
     method: request.method,
     headers,
     body,
@@ -47,13 +45,16 @@ async function handler(
   const refreshToken =
     cookieStore.get(REFRESH_COOKIE)?.value ??
     cookieStore.get(LEGACY_REFRESH_COOKIE)?.value;
-  let upstream = await forward(request, path.join("/"), accessToken);
+  const body = ["GET", "HEAD"].includes(request.method)
+    ? undefined
+    : await request.arrayBuffer();
+  let upstream = await forward(request, path.join("/"), accessToken, body);
   let refreshed: TokenPayload | null = null;
   let refreshFailed = false;
 
   if (upstream.status === 401 && refreshToken) {
     try {
-      const refresh = await fetch(`${backendUrl()}/auth/refresh`, {
+      const refresh = await fetchBackend(`/auth/refresh`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ refresh_token: refreshToken }),
@@ -62,10 +63,18 @@ async function handler(
       if (refresh.ok) {
         refreshed = (await refresh.json()) as TokenPayload;
         accessToken = refreshed.access_token;
-        upstream = await forward(request, path.join("/"), accessToken);
-      } else refreshFailed = true;
+        upstream = await forward(request, path.join("/"), accessToken, body);
+      } else if (refresh.status === 401 || refresh.status === 403) {
+        refreshFailed = true;
+      } else {
+        upstream = new Response(JSON.stringify({ detail: "Session refresh temporarily unavailable" }), {
+          status: refresh.status, headers: { "Content-Type": "application/json" },
+        });
+      }
     } catch {
-      refreshFailed = true;
+      upstream = new Response(JSON.stringify({ detail: "Session refresh temporarily unavailable" }), {
+        status: 503, headers: { "Content-Type": "application/json" },
+      });
     }
   }
 

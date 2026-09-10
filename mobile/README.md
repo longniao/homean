@@ -2,6 +2,26 @@
 
 Expo SDK 57 managed-workflow app for capture-only real-estate showing visits. Editing remains in the Homean dashboard.
 
+## Account isolation and upgrading existing installs
+
+New captures, recovery sessions and caches use a separate SQLite database for each
+verified workspace/user pair. Ownership is stored together with the session credentials;
+the separate cached display identity is not trusted to choose a capture database.
+Signing out invalidates active sync work. Signing back into the same account restores
+its unsent captures; another account cannot list or upload them.
+
+The old `kawu-capture.db` is preserved untouched. Its captures have no reliable ownership
+metadata, so this version does not automatically assign them to the next signed-in user.
+Before upgrading a pilot device with unsent legacy recordings, preserve a device backup
+and arrange an owner-verified migration/export. Do not uninstall the app to recover them.
+Existing sessions without embedded account identity need one online identity check before
+the new account database can be opened. New captures support subsequent offline restarts.
+
+Mobile logout clears local credentials before awaiting revocation of the captured remote
+session, with a ten-second network timeout. Login waits for that logout attempt to finish,
+so a delayed revocation cannot clear the next account's credentials. Failed revocation
+still leaves the remote session subject to its absolute expiry.
+
 ## Local setup
 
 1. Copy `.env.example` to `.env` and set `EXPO_PUBLIC_API_URL` to an API URL reachable from the device. `localhost` does not refer to the development computer on a physical phone.

@@ -1,17 +1,18 @@
 import * as Crypto from 'expo-crypto';
 import * as SQLite from 'expo-sqlite';
-import type { LocalMarker, LocalMedia, LocalShowing, MediaKind, SyncState } from '../types';
+import { currentSessionAccount } from '../auth/sessionScope';
+import type { Account, LocalMarker, LocalMedia, LocalShowing, MediaKind, SyncState } from '../types';
 import type { SyncStore } from '../sync/engine';
 
-let databasePromise: Promise<SQLite.SQLiteDatabase> | null = null;
-// Keep this legacy filename: renaming an on-device SQLite database without a
-// verified atomic migration could strand offline captures. The schema remains
-// forward-compatible, so existing recordings continue to sync safely.
+const databases = new Map<string, Promise<SQLite.SQLiteDatabase>>();
+// Preserve the legacy file intact. Its rows have no trustworthy owner and
+// must not be imported into whichever account happens to sign in next.
+// Production capture uses separate account databases below.
 export const CAPTURE_DATABASE_NAME = 'kawu-capture.db';
 
-async function database(): Promise<SQLite.SQLiteDatabase> {
-  databasePromise ??= SQLite.openDatabaseAsync(CAPTURE_DATABASE_NAME);
-  const db = await databasePromise;
+async function database(name: string): Promise<SQLite.SQLiteDatabase> {
+  if (!databases.has(name)) databases.set(name, SQLite.openDatabaseAsync(name));
+  const db = await databases.get(name)!;
   await db.execAsync(`
     PRAGMA journal_mode = WAL;
     PRAGMA foreign_keys = ON;
@@ -106,41 +107,44 @@ const toMarker = (row: MarkerRow): LocalMarker => ({
 });
 
 export class CaptureRepository implements SyncStore {
+  constructor(private readonly databaseName = CAPTURE_DATABASE_NAME) {}
+  private database(): Promise<SQLite.SQLiteDatabase> { return database(this.databaseName); }
+
   async createShowing(input: { contactId: string | null; subjectId: string | null; address: string | null; title: string; consentAck?: boolean; consentTextVersion?: string | null }): Promise<LocalShowing> {
-    const now = Date.now(); const id = Crypto.randomUUID(); const db = await database();
+    const now = Date.now(); const id = Crypto.randomUUID(); const db = await this.database();
     await db.runAsync('INSERT INTO local_showings (id, contact_id, subject_id, address, title, started_at, sync_state, updated_at, generation, consent_ack, consent_text_version) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', id, input.contactId, input.subjectId, input.address, input.title, now, 'local', now, 0, input.consentAck ? 1 : 0, input.consentTextVersion ?? null);
     return (await this.getShowing(id))!;
   }
   async getShowing(id: string): Promise<LocalShowing | null> {
-    const row = await (await database()).getFirstAsync<ShowingRow>('SELECT * FROM local_showings WHERE id = ?', id);
+    const row = await (await this.database()).getFirstAsync<ShowingRow>('SELECT * FROM local_showings WHERE id = ?', id);
     return row ? toShowing(row) : null;
   }
   async activeShowing(): Promise<LocalShowing | null> {
-    const row = await (await database()).getFirstAsync<ShowingRow>('SELECT * FROM local_showings WHERE ended_at IS NULL ORDER BY started_at DESC LIMIT 1');
+    const row = await (await this.database()).getFirstAsync<ShowingRow>('SELECT * FROM local_showings WHERE ended_at IS NULL ORDER BY started_at DESC LIMIT 1');
     return row ? toShowing(row) : null;
   }
   async listShowings(): Promise<LocalShowing[]> {
-    return (await (await database()).getAllAsync<ShowingRow>('SELECT * FROM local_showings ORDER BY started_at DESC')).map(toShowing);
+    return (await (await this.database()).getAllAsync<ShowingRow>('SELECT * FROM local_showings ORDER BY started_at DESC')).map(toShowing);
   }
   async pendingShowings(): Promise<LocalShowing[]> {
-    return (await (await database()).getAllAsync<ShowingRow>("SELECT * FROM local_showings WHERE sync_state IN ('local', 'syncing', 'failed') ORDER BY started_at")).map(toShowing);
+    return (await (await this.database()).getAllAsync<ShowingRow>("SELECT * FROM local_showings WHERE sync_state IN ('local', 'syncing', 'failed') ORDER BY started_at")).map(toShowing);
   }
   async patchShowing(id: string, patch: Partial<Pick<LocalShowing, 'remoteId' | 'syncState' | 'processingStatus' | 'lastError' | 'updatedAt' | 'rejectedMediaCount'>>, expectedGeneration?: number): Promise<boolean> {
     const map: Record<string, string> = { remoteId: 'remote_id', syncState: 'sync_state', processingStatus: 'processing_status', lastError: 'last_error', updatedAt: 'updated_at', rejectedMediaCount: 'rejected_media_count' };
     const entries = Object.entries(patch); if (!entries.length) return true;
     const predicate = expectedGeneration === undefined ? 'id = ?' : 'id = ? AND generation = ?';
-    const result = await (await database()).runAsync(`UPDATE local_showings SET ${entries.map(([key]) => `${map[key]} = ?`).join(', ')}, generation = generation + 1 WHERE ${predicate}`, ...entries.map(([, value]) => value ?? null), id, ...(expectedGeneration === undefined ? [] : [expectedGeneration]));
+    const result = await (await this.database()).runAsync(`UPDATE local_showings SET ${entries.map(([key]) => `${map[key]} = ?`).join(', ')}, generation = generation + 1 WHERE ${predicate}`, ...entries.map(([, value]) => value ?? null), id, ...(expectedGeneration === undefined ? [] : [expectedGeneration]));
     return result.changes > 0;
   }
   async updateElapsed(id: string, elapsedMs: number): Promise<void> {
-    await (await database()).runAsync('UPDATE local_showings SET elapsed_ms = ?, updated_at = ?, generation = generation + 1 WHERE id = ?', elapsedMs, Date.now(), id);
+    await (await this.database()).runAsync('UPDATE local_showings SET elapsed_ms = ?, updated_at = ?, generation = generation + 1 WHERE id = ?', elapsedMs, Date.now(), id);
   }
   async finish(id: string, elapsedMs: number): Promise<void> {
     const now = Date.now();
-    await (await database()).runAsync("UPDATE local_showings SET ended_at = ?, elapsed_ms = ?, finish_requested = 1, sync_state = 'local', updated_at = ?, generation = generation + 1 WHERE id = ?", now, elapsedMs, now, id);
+    await (await this.database()).runAsync("UPDATE local_showings SET ended_at = ?, elapsed_ms = ?, finish_requested = 1, sync_state = 'local', updated_at = ?, generation = generation + 1 WHERE id = ?", now, elapsedMs, now, id);
   }
   async enqueueMedia(input: { showingId: string; kind: MediaKind; fileUri: string; contentType: string; timestampOffsetMs: number }): Promise<LocalMedia> {
-    const db = await database(); const id = Crypto.randomUUID(); const now = Date.now();
+    const db = await this.database(); const id = Crypto.randomUUID(); const now = Date.now();
     let row: MediaRow | null = null;
     await db.withExclusiveTransactionAsync(async (txn) => {
       await txn.runAsync("UPDATE local_showings SET sync_state = 'local', updated_at = ?, generation = generation + 1 WHERE id = ?", now, input.showingId);
@@ -151,24 +155,24 @@ export class CaptureRepository implements SyncStore {
     return toMedia(row);
   }
   async mediaForShowing(showingId: string): Promise<LocalMedia[]> {
-    return (await (await database()).getAllAsync<MediaRow>('SELECT * FROM local_media WHERE showing_id = ? ORDER BY created_at', showingId)).map(toMedia);
+    return (await (await this.database()).getAllAsync<MediaRow>('SELECT * FROM local_media WHERE showing_id = ? ORDER BY created_at', showingId)).map(toMedia);
   }
   async markersForShowing(showingId: string): Promise<LocalMarker[]> {
-    return (await (await database()).getAllAsync<MarkerRow>('SELECT id, showing_id, remote_marker_id, \'voice_tag\' AS marker_type, timestamp_offset_ms, state, attempt_count, next_attempt_at, last_error, created_at FROM voice_tags WHERE showing_id = ? ORDER BY created_at', showingId)).map(toMarker);
+    return (await (await this.database()).getAllAsync<MarkerRow>('SELECT id, showing_id, remote_marker_id, \'voice_tag\' AS marker_type, timestamp_offset_ms, state, attempt_count, next_attempt_at, last_error, created_at FROM voice_tags WHERE showing_id = ? ORDER BY created_at', showingId)).map(toMarker);
   }
   async patchMedia(id: string, patch: Partial<Pick<LocalMedia, 'remoteMediaId' | 'state' | 'attemptCount' | 'nextAttemptAt' | 'uploadUrl' | 'uploadHeaders' | 'uploadExpiresAt'>>): Promise<void> {
     const map: Record<string, string> = { remoteMediaId: 'remote_media_id', state: 'state', attemptCount: 'attempt_count', nextAttemptAt: 'next_attempt_at', uploadUrl: 'upload_url', uploadHeaders: 'upload_headers', uploadExpiresAt: 'upload_expires_at' };
     const entries = Object.entries(patch); if (!entries.length) return;
     const values = entries.map(([key, value]) => key === 'uploadHeaders' ? JSON.stringify(value) : value ?? null) as (string | number | null)[];
-    await (await database()).runAsync(`UPDATE local_media SET ${entries.map(([key]) => `${map[key]} = ?`).join(', ')} WHERE id = ?`, ...values, id);
+    await (await this.database()).runAsync(`UPDATE local_media SET ${entries.map(([key]) => `${map[key]} = ?`).join(', ')} WHERE id = ?`, ...values, id);
   }
   async patchMarker(id: string, patch: Partial<Pick<LocalMarker, 'remoteMarkerId' | 'state' | 'attemptCount' | 'nextAttemptAt' | 'lastError'>>): Promise<void> {
     const map: Record<string, string> = { remoteMarkerId: 'remote_marker_id', state: 'state', attemptCount: 'attempt_count', nextAttemptAt: 'next_attempt_at', lastError: 'last_error' };
     const entries = Object.entries(patch); if (!entries.length) return;
-    await (await database()).runAsync(`UPDATE voice_tags SET ${entries.map(([key]) => `${map[key]} = ?`).join(', ')} WHERE id = ?`, ...entries.map(([, value]) => value ?? null), id);
+    await (await this.database()).runAsync(`UPDATE voice_tags SET ${entries.map(([key]) => `${map[key]} = ?`).join(', ')} WHERE id = ?`, ...entries.map(([, value]) => value ?? null), id);
   }
   async addVoiceTag(showingId: string, timestampOffsetMs: number): Promise<LocalMarker> {
-    const db = await database(); const id = Crypto.randomUUID(); const now = Date.now();
+    const db = await this.database(); const id = Crypto.randomUUID(); const now = Date.now();
     // A showing can have reached `synced` during an active recording. Mark it
     // pending before inserting the tag so a crash cannot leave an orphaned
     // queued marker that the sync query will never revisit.
@@ -182,17 +186,17 @@ export class CaptureRepository implements SyncStore {
     return toMarker(row);
   }
   async saveRecordingSession(showingId: string, fileUri: string, segmentOffsetMs: number): Promise<void> {
-    await (await database()).runAsync(
+    await (await this.database()).runAsync(
       'INSERT INTO recording_sessions (showing_id, file_uri, segment_offset_ms, updated_at) VALUES (?, ?, ?, ?) ON CONFLICT(showing_id) DO UPDATE SET file_uri = excluded.file_uri, segment_offset_ms = excluded.segment_offset_ms, updated_at = excluded.updated_at',
       showingId, fileUri, segmentOffsetMs, Date.now(),
     );
   }
   async recordingSession(showingId: string): Promise<{ fileUri: string; segmentOffsetMs: number } | null> {
-    const row = await (await database()).getFirstAsync<{ file_uri: string; segment_offset_ms: number }>('SELECT file_uri, segment_offset_ms FROM recording_sessions WHERE showing_id = ?', showingId);
+    const row = await (await this.database()).getFirstAsync<{ file_uri: string; segment_offset_ms: number }>('SELECT file_uri, segment_offset_ms FROM recording_sessions WHERE showing_id = ?', showingId);
     return row ? { fileUri: row.file_uri, segmentOffsetMs: row.segment_offset_ms } : null;
   }
   async recoverInterruptedAudio(showingId: string, expectedSession: { fileUri: string; segmentOffsetMs: number }): Promise<void> {
-    const db = await database();
+    const db = await this.database();
     const recoveryKey = recoveryIdentity(showingId, expectedSession);
 
     await db.withExclusiveTransactionAsync(async (txn) => {
@@ -235,7 +239,7 @@ export class CaptureRepository implements SyncStore {
     });
   }
   async clearRecordingSession(showingId: string): Promise<void> {
-    await (await database()).runAsync('DELETE FROM recording_sessions WHERE showing_id = ?', showingId);
+    await (await this.database()).runAsync('DELETE FROM recording_sessions WHERE showing_id = ?', showingId);
   }
 
   /**
@@ -244,18 +248,18 @@ export class CaptureRepository implements SyncStore {
    * remains the sole owner of anything that has not reached the backend.
    */
   async readCache(key: string): Promise<unknown> {
-    const row = await (await database()).getFirstAsync<{ value: string }>('SELECT value FROM cache_entries WHERE key = ?', key);
+    const row = await (await this.database()).getFirstAsync<{ value: string }>('SELECT value FROM cache_entries WHERE key = ?', key);
     if (!row) return null;
     try { return JSON.parse(row.value) as unknown; } catch { return null; }
   }
   async writeCache(key: string, value: unknown): Promise<void> {
-    await (await database()).runAsync(
+    await (await this.database()).runAsync(
       'INSERT INTO cache_entries (key, value, updated_at) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at',
       key, JSON.stringify(value), Date.now(),
     );
   }
   async clearCache(): Promise<void> {
-    await (await database()).runAsync('DELETE FROM cache_entries');
+    await (await this.database()).runAsync('DELETE FROM cache_entries');
   }
 }
 
@@ -263,4 +267,20 @@ function recoveryIdentity(showingId: string, session: { fileUri: string; segment
   return `recording-session:${JSON.stringify([showingId, session.fileUri, session.segmentOffsetMs])}`;
 }
 
-export const captureRepository = new CaptureRepository();
+export function accountDatabaseName(account: Pick<Account, 'userId' | 'workspaceId'>): string {
+  // UUIDs are server-issued; validate before using them in a filename.
+  if (![account.userId, account.workspaceId].every((id) => /^[a-f0-9-]{36}$/i.test(id))) throw new Error('Invalid capture account');
+  return `homean-capture-${account.workspaceId}-${account.userId}.db`;
+}
+export function repositoryForAccount(account: Pick<Account, 'userId' | 'workspaceId'>): CaptureRepository {
+  return new CaptureRepository(accountDatabaseName(account));
+}
+// Resolve the owner once per call. Each async operation stays bound to that
+// owner's database even when the signed-in account changes while it is awaiting.
+export const captureRepository = new Proxy({} as CaptureRepository, {
+  get(_target, property) {
+    const repository = repositoryForAccount(currentSessionAccount());
+    const value = Reflect.get(repository, property);
+    return typeof value === 'function' ? value.bind(repository) : value;
+  },
+});

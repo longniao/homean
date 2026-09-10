@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import {
   ACCESS_COOKIE,
-  backendUrl,
+  fetchBackend,
   LEGACY_ACCESS_COOKIE,
   LEGACY_REFRESH_COOKIE,
   REFRESH_COOKIE,
@@ -56,7 +56,7 @@ export async function POST(
       ?? request.cookies.get(LEGACY_REFRESH_COOKIE)?.value;
     if (refreshToken) {
       try {
-        await fetch(`${backendUrl()}/auth/logout`, {
+        await fetchBackend(`/auth/logout`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ refresh_token: refreshToken }),
@@ -74,7 +74,7 @@ export async function POST(
     return NextResponse.json({ detail: "Not found" }, { status: 404 });
   }
 
-  const upstream = await fetch(`${backendUrl()}/auth/${action}`, {
+  const upstream = await fetchBackend(`/auth/${action}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: await request.text(),

@@ -1,3 +1,4 @@
+import { activateSessionAccount, deactivateSessionAccount, assertSessionGeneration, sessionGeneration } from '../auth/sessionScope';
 import { File } from 'expo-file-system';
 import { fetch as expoFetch } from 'expo/fetch';
 import { z } from 'zod';
@@ -40,7 +41,7 @@ export const verticalConfigSchema = z.object({
   consent: z.object({ version: z.string(), text: z.string() }).optional(),
 });
 const showingSchema = z.object({
-  id: z.string(), status: z.string(), processing_status: z.string(), created_at: z.string(),
+  id: z.string(), status: z.string(), processing_status: z.string(), created_at: z.string(), started_at: z.string().nullable().optional(),
   property: propertySchema.nullable(), contact: contactSchema.nullable(),
   consent_ack: z.boolean().optional().default(false),
 });
@@ -65,7 +66,7 @@ function propertyFromWire(value: z.infer<typeof propertySchema>): Property {
   return { id: value.id, displayName: value.display_name, address: value.address };
 }
 function showingFromWire(value: z.infer<typeof showingSchema>): ShowingSummary {
-  return { id: value.id, status: value.status, processingStatus: value.processing_status, createdAt: value.created_at, property: value.property ? propertyFromWire(value.property) : null, contact: value.contact ? contactFromWire(value.contact) : null, consentAck: value.consent_ack };
+  return { id: value.id, status: value.status, processingStatus: value.processing_status, createdAt: value.created_at, startedAt: value.started_at ?? value.created_at, property: value.property ? propertyFromWire(value.property) : null, contact: value.contact ? contactFromWire(value.contact) : null, consentAck: value.consent_ack };
 }
 function accountFromWire(value: z.infer<typeof meSchema>): Account {
   return {
@@ -87,6 +88,7 @@ async function responseDetail(response: Response): Promise<string> {
 }
 
 export class ApiClient {
+  private logoutPending: Promise<void> | null = null;
   private refreshPromise: Promise<TokenPair> | null = null;
   private sessionExpiredHandler: (() => void) | null = null;
 
@@ -97,34 +99,68 @@ export class ApiClient {
    */
   onSessionExpired(handler: (() => void) | null): void { this.sessionExpiredHandler = handler; }
 
+  forCurrentSession(): ApiClient {
+    const generation = sessionGeneration();
+    return new Proxy(this, {
+      get(target, property) {
+        const value = Reflect.get(target, property);
+        if (typeof value !== 'function') return value;
+        return async (...args: unknown[]) => {
+          assertSessionGeneration(generation);
+          const result = await value.apply(target, args);
+          assertSessionGeneration(generation);
+          return result;
+        };
+      },
+    });
+  }
+
   async login(email: string, password: string): Promise<void> {
+    await this.logoutPending;
+    deactivateSessionAccount();
+    this.refreshPromise = null;
+    const generation = sessionGeneration();
     const response = await fetch(`${API_URL}/auth/login`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }),
     });
     if (!response.ok) throw new ApiError(response.status, await responseDetail(response));
-    await setTokens(tokensFromWire(tokenSchema.parse(await response.json())));
-    // Best effort: a failed identity fetch must not fail an otherwise good
-    // sign-in. The next sync fills it in.
-    try { await this.loadAccount(); } catch { /* identity fills in on the next sync */ }
+    const tokens = tokensFromWire(tokenSchema.parse(await response.json()));
+    assertSessionGeneration(generation);
+    await setTokens(tokens);
+    try {
+      const account = await this.loadAccount();
+      assertSessionGeneration(generation);
+      activateSessionAccount(account);
+    } catch (error) {
+      if (generation === sessionGeneration()) await this.clearLocalCredentials();
+      throw error;
+    }
   }
 
-  async logout(): Promise<void> {
-    // Revoke the session server-side before dropping the local copy. Clearing
-    // only the device would leave a refresh token that still works for anyone
-    // who has it, which is the whole point of session-backed auth.
+  logout(): Promise<void> {
+    deactivateSessionAccount();
+    this.logoutPending = this.performLogout().finally(() => { this.logoutPending = null; });
+    return this.logoutPending;
+  }
+
+  private async performLogout(): Promise<void> {
+    this.refreshPromise = null;
+    // Capture the token, clear local credentials, then revoke that exact
+    // session. New login waits for this operation to finish.
     const tokens = await getTokens();
+    await this.clearLocalCredentials();
     if (tokens) {
       try {
         await fetch(`${API_URL}/auth/logout`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ refresh_token: tokens.refreshToken }),
+          signal: AbortSignal.timeout(10_000),
         });
       } catch {
         // Signing out offline must still clear the device. The session then
         // lapses at its absolute expiry rather than never.
       }
     }
-    await this.clearLocalCredentials();
   }
 
   private async clearLocalCredentials(): Promise<void> {
@@ -132,6 +168,8 @@ export class ApiClient {
   }
 
   private async endSession(): Promise<void> {
+    deactivateSessionAccount();
+    this.refreshPromise = null;
     // The server has already rejected this session, so there is nothing left
     // to revoke — only the local copy to drop.
     await this.clearLocalCredentials();
@@ -139,11 +177,14 @@ export class ApiClient {
   }
 
   private async refresh(refreshToken: string): Promise<TokenPair> {
+    const generation = sessionGeneration();
     const response = await fetch(`${API_URL}/auth/refresh`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ refresh_token: refreshToken }),
     });
+    assertSessionGeneration(generation);
     if (!response.ok) {
       const detail = await responseDetail(response);
+      assertSessionGeneration(generation);
       // Only a rejected refresh token ends the session. A rate limit, a 5xx,
       // or a gateway error is transient: discarding the stored session there
       // would sign the agent out mid-field-day and force a password re-entry
@@ -151,13 +192,17 @@ export class ApiClient {
       if (response.status === 401 || response.status === 403) await this.endSession();
       throw new ApiError(response.status, detail);
     }
-    const tokens = tokensFromWire(tokenSchema.parse(await response.json()));
+    const previous = await getTokens();
+    const tokens = { ...tokensFromWire(tokenSchema.parse(await response.json())), account: previous?.account };
+    assertSessionGeneration(generation);
     await setTokens(tokens);
     return tokens;
   }
 
   private async accessToken(forceRefresh = false): Promise<string> {
+    const generation = sessionGeneration();
     const tokens = await getTokens();
+    assertSessionGeneration(generation);
     if (!tokens) throw new ApiError(401, 'Not authenticated');
     if (!forceRefresh && tokens.expiresAt > Date.now() + 30_000) return tokens.accessToken;
     this.refreshPromise ??= this.refresh(tokens.refreshToken).finally(() => { this.refreshPromise = null; });
@@ -165,13 +210,17 @@ export class ApiClient {
   }
 
   private async request(path: string, init: RequestInit = {}, retry = true): Promise<Response> {
+    const generation = sessionGeneration();
     const token = await this.accessToken();
+    assertSessionGeneration(generation);
     const response = await fetch(`${API_URL}${path}`, {
       ...init,
       headers: { 'Content-Type': 'application/json', ...init.headers, Authorization: `Bearer ${token}` },
     });
+    assertSessionGeneration(generation);
     if (response.status === 401 && retry) {
       await this.accessToken(true);
+      assertSessionGeneration(generation);
       return this.request(path, init, false);
     }
     if (!response.ok) throw new ApiError(response.status, await responseDetail(response));
@@ -180,7 +229,15 @@ export class ApiClient {
 
   /** Fetches the signed-in identity and persists it for offline cold starts. */
   async loadAccount(): Promise<Account> {
+    const generation = sessionGeneration();
     const account = accountFromWire(meSchema.parse(await (await this.request('/me')).json()));
+    const tokens = await getTokens();
+    assertSessionGeneration(generation);
+    if (!tokens) throw new ApiError(401, 'Not authenticated');
+    // Persist ownership atomically with its credentials. A separate stale
+    // display-identity record must never select another account's database.
+    await setTokens({ ...tokens, account });
+    assertSessionGeneration(generation);
     await setAccount(account);
     return account;
   }

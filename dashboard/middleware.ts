@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { ACCESS_COOKIE_NAMES } from "@/lib/auth";
+import { ACCESS_COOKIE_NAMES, REFRESH_COOKIE_NAMES } from "@/lib/auth";
 
 export function middleware(request: NextRequest) {
-  const authenticated = ACCESS_COOKIE_NAMES.some((name) =>
+  const authenticated = [...ACCESS_COOKIE_NAMES, ...REFRESH_COOKIE_NAMES].some((name) =>
     Boolean(request.cookies.get(name)?.value),
   );
   const isAuthPage = ["/login", "/signup"].includes(request.nextUrl.pathname);
@@ -14,7 +14,7 @@ export function middleware(request: NextRequest) {
     url.searchParams.set("next", request.nextUrl.pathname);
     return NextResponse.redirect(url);
   }
-  if (authenticated && isAuthPage) {
+  if (ACCESS_COOKIE_NAMES.some((name) => Boolean(request.cookies.get(name)?.value)) && isAuthPage) {
     return NextResponse.redirect(new URL("/", request.url));
   }
   return NextResponse.next();

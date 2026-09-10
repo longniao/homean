@@ -27,3 +27,9 @@ describe("Homean auth cookie compatibility", () => {
     expect(backendUrl()).toBe("https://api.homean.test");
   });
 });
+
+it('uses the legacy origin when the optional server override is empty', () => {
+  vi.stubEnv('HOMEAN_API_URL', '');
+  vi.stubEnv('NEXT_PUBLIC_API_URL', 'http://127.0.0.1:8001');
+  expect(backendUrl()).toBe('http://127.0.0.1:8001');
+});

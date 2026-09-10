@@ -1,3 +1,4 @@
+import { currentSessionAccount } from '../auth/sessionScope';
 import { useEffect, useReducer, useRef, useState } from 'react';
 import { Alert, Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -9,7 +10,7 @@ import { colors } from '../theme';
 import { initialRecordingState, recordingReducer } from '../recording/machine';
 import { requestCapturePermissions } from '../recording/permissions';
 import { recoverInterruptedSegment } from '../recording/recovery';
-import { captureRepository } from '../storage/database';
+import { repositoryForAccount } from '../storage/database';
 import type { LocalShowing } from '../types';
 
 // Kept under the API's 200 MB ceiling so the recorder stops on its own rather
@@ -17,6 +18,7 @@ import type { LocalShowing } from '../types';
 const VIDEO_MAX_BYTES = 180 * 1024 * 1024;
 
 export function RecordingScreen({ showing, recovered, onFinished }: { showing: LocalShowing; recovered: boolean; onFinished: () => void }) {
+  const [captureRepository] = useState(() => repositoryForAccount(currentSessionAccount()));
   const { t } = useTranslation();
   const [state, dispatch] = useReducer(recordingReducer, recovered ? { ...initialRecordingState, phase: 'interrupted', elapsedMs: showing.elapsedMs, segmentStartedAtMs: showing.elapsedMs } : initialRecordingState);
   const recorder = useAudioRecorder({ ...RecordingPresets.HIGH_QUALITY, directory: 'document' }, (status) => {
@@ -61,7 +63,7 @@ export function RecordingScreen({ showing, recovered, onFinished }: { showing: L
     const elapsed = state.segmentStartedAtMs + recorderState.durationMillis;
     dispatch({ type: 'TICK', elapsedMs: elapsed });
     void captureRepository.updateElapsed(showing.id, elapsed);
-  }, [recorderState.durationMillis, showing.id, state.phase, state.segmentStartedAtMs]);
+  }, [captureRepository, recorderState.durationMillis, showing.id, state.phase, state.segmentStartedAtMs]);
 
   async function closeSegment() {
     const offset = state.segmentStartedAtMs;

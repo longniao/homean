@@ -1,5 +1,6 @@
+import { deactivateSessionAccount } from '../../auth/sessionScope';
 import { ApiClient } from '../client';
-import { clearTokens, getTokens } from '../../auth/tokenStore';
+import { clearTokens, getTokens, setTokens } from '../../auth/tokenStore';
 
 jest.mock('../../auth/tokenStore', () => ({
   clearTokens: jest.fn(),
@@ -141,7 +142,7 @@ describe('ApiClient sign-out', () => {
     tokenStore.getTokens.mockResolvedValue({ accessToken: 'access-token', refreshToken: 'refresh-token', expiresAt: Date.now() + 60_000 });
   });
 
-  test('revokes the session server-side before clearing the device', async () => {
+  test('revokes the captured session and clears the device', async () => {
     const fetchMock = jest.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, status: 204, json: async () => ({}) } as Response);
 
     await new ApiClient().logout();
@@ -162,4 +163,57 @@ describe('ApiClient sign-out', () => {
     // Signing out offline must work; the session lapses at its absolute expiry.
     expect(tokenStore.clearTokens).toHaveBeenCalled();
   });
+});
+
+describe('account transitions and tour dates', () => {
+  afterEach(() => jest.restoreAllMocks());
+  test('a session-bound sync client cannot send after logout/account switch', async () => {
+    const scoped = new ApiClient().forCurrentSession();
+    deactivateSessionAccount();
+    const fetchMock = jest.spyOn(globalThis, 'fetch');
+    await expect(scoped.createShowing({ subjectId: null, address: null, contactId: null })).rejects.toThrow('session changed');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+  test('does not send a request if the account changes while acquiring credentials', async () => {
+    let resolve!: (tokens: object) => void;
+    tokenStore.getTokens.mockImplementationOnce(() => new Promise((done) => { resolve = done; }));
+    const fetchMock = jest.spyOn(globalThis, 'fetch');
+    const pending = new ApiClient().listShowings();
+    deactivateSessionAccount();
+    resolve({ accessToken: 'old', refreshToken: 'old-refresh', expiresAt: Date.now() + 60_000 });
+    await expect(pending).rejects.toThrow('session changed');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+  test('uses capture time for offline tours with a legacy fallback', async () => {
+    const showing = { id: 'tour', status: 'draft', processing_status: 'ready', created_at: '2026-09-09T12:00:00Z', property: null, contact: null };
+    jest.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, status: 200, json: async () => ({ items: [{ ...showing, started_at: '2026-09-07T12:00:00Z' }, showing] }) } as Response);
+    expect((await new ApiClient().listShowings()).map((item) => item.startedAt)).toEqual(['2026-09-07T12:00:00Z', '2026-09-09T12:00:00Z']);
+  });
+});
+
+test('a delayed refresh cannot overwrite credentials after the account changes', async () => {
+  expiredAccessToken();
+  let resolve!: (response: Response) => void;
+  const fetchMock = jest.spyOn(globalThis, 'fetch').mockImplementationOnce(() => new Promise((done) => { resolve = done; }));
+  const pending = new ApiClient().listShowings();
+  await Promise.resolve(); await Promise.resolve(); await Promise.resolve();
+  deactivateSessionAccount();
+  resolve({ ok: true, status: 200, json: async () => ({ access_token: 'old-new-access', refresh_token: 'old-refresh', expires_in: 900 }) } as Response);
+  await expect(pending).rejects.toThrow('session changed');
+  fetchMock.mockRestore();
+  tokenStore.getTokens.mockResolvedValue({ accessToken: 'access-token', refreshToken: 'refresh-token', expiresAt: Date.now() + 60_000 });
+});
+
+
+test('login persists verified ownership together with the session credentials', async () => {
+  const account = { user: { id: '11111111-1111-4111-8111-111111111111', email: 'agent@example.com', name: null }, workspace: { id: '22222222-2222-4222-8222-222222222222', name: 'Agent' }, profile: { role: 'buyers_agent' } };
+  const fetchMock = jest.spyOn(globalThis, 'fetch')
+    .mockResolvedValueOnce({ ok: true, json: async () => ({ access_token: 'access-token', refresh_token: 'refresh-token', expires_in: 900 }) } as Response)
+    .mockResolvedValueOnce({ ok: true, json: async () => account } as Response);
+  await new ApiClient().login('agent@example.com', 'password123');
+  expect(setTokens).toHaveBeenLastCalledWith(expect.objectContaining({
+    account: expect.objectContaining({ userId: account.user.id, workspaceId: account.workspace.id }),
+  }));
+  fetchMock.mockRestore();
+  deactivateSessionAccount();
 });

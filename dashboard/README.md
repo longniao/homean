@@ -72,8 +72,12 @@ provisioned; replace `HOMEAN_API_URL` before treating the deployment as function
 npm ci
 npm run cf:typegen
 npm run cf:preview
-npm run cf:deploy
+HOMEAN_API_URL=https://your-provisioned-api.example.com npm run cf:deploy
 ```
+
+Deployment requires an explicit HTTPS API origin and checks `/ready` for healthy
+database, Redis, and S3 dependencies before building or uploading. It passes the
+verified origin to the Worker as `HOMEAN_API_URL`; it refuses the checked-in placeholder.
 
 The deployed Cloudflare dashboard is <https://app.homean.com>. The API origin is non-secret server
 configuration. Keep provider keys and other
@@ -100,6 +104,11 @@ npm run test:e2e
 The E2E runner creates and removes an isolated database, starts the fake-provider API,
 builds the dashboard, and runs the Playwright suite on port 3001. It does not call
 Deepgram, Anthropic, Stripe, or an email provider.
+
+The integrated scenario uses the real pipeline service with fake AI responses and
+checks persisted evidence, saving after access-token expiry, confirmation, private
+report delivery, public access, and revocation. The older UI smoke scenarios retain
+their browser mocks and run alongside this integration scenario.
 
 ## Related runbooks
 

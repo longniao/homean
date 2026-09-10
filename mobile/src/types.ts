@@ -3,7 +3,7 @@ export type MediaState = 'queued' | 'presigned' | 'uploading' | 'uploaded' | 'co
 export type MediaKind = 'audio' | 'photo' | 'video';
 export type MarkerState = 'queued' | 'syncing' | 'synced' | 'failed';
 
-export interface TokenPair { accessToken: string; refreshToken: string; expiresAt: number }
+export interface TokenPair { accessToken: string; refreshToken: string; expiresAt: number; account?: Account }
 
 export interface Account {
   userId: string; email: string; name: string | null;
@@ -36,7 +36,7 @@ export interface ReportContent {
   concerns: ReportBullet[]; follow_ups: ReportBullet[];
 }
 export interface ShowingSummary {
-  id: string; status: string; processingStatus: string; createdAt: string;
+  id: string; status: string; processingStatus: string; createdAt: string; startedAt?: string;
   property: Property | null; contact: Contact | null; consentAck?: boolean;
 }
 export interface ShowingDetail extends ShowingSummary {

@@ -26,7 +26,7 @@ const verticalConfigSchema = z.object({
 });
 const bulletSchema = z.object({ text: z.string(), observation_ids: z.array(z.string()) });
 const showingDetailSchema = z.object({
-  id: z.string(), status: z.string(), processingStatus: z.string(), createdAt: z.string(),
+  id: z.string(), status: z.string(), processingStatus: z.string(), createdAt: z.string(), startedAt: z.string().optional(),
   consentAck: z.boolean().optional(),
   property: propertySchema.nullable(), contact: contactSchema.nullable(),
   observations: z.array(z.object({

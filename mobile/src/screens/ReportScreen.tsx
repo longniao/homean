@@ -1,3 +1,4 @@
+import { assertSessionGeneration, sessionGeneration } from '../auth/sessionScope';
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Linking, Modal, Pressable, ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -10,6 +11,7 @@ import type { ReportBullet, ReportContent, ShowingDetail, VerticalConfig } from 
 type BulletLocation = { group: 'highlights' | 'concerns' | 'follow_ups'; index: number } | { group: 'room_by_room'; room: number; index: number };
 
 export function ReportScreen({ visitId, onBack }: { visitId: string; onBack: () => void }) {
+  const [generation] = useState(sessionGeneration);
   const { t } = useTranslation(); const [detail, setDetail] = useState<ShowingDetail | null>(null); const [verticalConfig, setVerticalConfig] = useState<VerticalConfig | null>(null); const [loading, setLoading] = useState(true);
   const [edit, setEdit] = useState<{ location: BulletLocation; value: string } | null>(null);
   // True while the screen is showing the last synced copy because the network
@@ -18,7 +20,7 @@ export function ReportScreen({ visitId, onBack }: { visitId: string; onBack: () 
   const [stale, setStale] = useState(false);
   const load = async () => {
     setLoading(true);
-    try { const value = await api.getShowing(visitId); setDetail(value); setStale(false); void writeShowingDetail(value); }
+    try { const value = await api.getShowing(visitId); assertSessionGeneration(generation); setDetail(value); setStale(false); void writeShowingDetail(value); }
     catch { Alert.alert(t('common.error')); }
     finally { setLoading(false); }
   };
@@ -35,6 +37,7 @@ export function ReportScreen({ visitId, onBack }: { visitId: string; onBack: () 
       try {
         const value = await api.getShowing(visitId);
         if (!active) return;
+        assertSessionGeneration(generation);
         setDetail(value); setStale(false); void writeShowingDetail(value);
       } catch {
         // Only a report with nothing cached is a dead end worth alerting about.
@@ -45,7 +48,7 @@ export function ReportScreen({ visitId, onBack }: { visitId: string; onBack: () 
       try { const config = await api.getVerticalConfig(); if (active) { setVerticalConfig(config); void writeVerticalConfig(config); } } catch { /* the cached or humanized labels stand */ }
     })();
     return () => { active = false; };
-  }, [t, visitId]);
+  }, [generation, t, visitId]);
   const canConfirm = useMemo(() => {
     if (stale || !detail?.report || !detail.property) return false;
     const reviewed = detail.observations.some((item) => item.reviewStatus !== 'pending');

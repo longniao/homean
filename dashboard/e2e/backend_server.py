@@ -8,10 +8,9 @@ from pathlib import Path
 
 import asyncpg
 import uvicorn
+from alembic import command
 from alembic.config import Config
 from sqlalchemy.engine import make_url
-
-from alembic import command
 
 BACKEND_DIR = Path(__file__).resolve().parents[2] / "backend"
 sys.path.insert(0, str(BACKEND_DIR))
@@ -37,7 +36,9 @@ async def main() -> None:
         "TEST_DATABASE_ADMIN_URL",
         "postgresql+asyncpg://homean:homean@127.0.0.1:55432/postgres",
     )
-    database_name = os.environ.get("HOMEAN_E2E_DATABASE", f"homean_e2e_{uuid.uuid4().hex}")
+    database_name = os.environ.get(
+        "HOMEAN_E2E_DATABASE", f"homean_e2e_{uuid.uuid4().hex}"
+    )
     database_url = render_url(admin_url, database_name)
     admin = await asyncpg.connect(asyncpg_dsn(admin_url))
     try:
@@ -55,22 +56,24 @@ async def main() -> None:
             "S3_BUCKET": "homean-e2e",
             "JWT_SECRET": "e2e-jwt-secret-with-sufficient-length",
             "APP_ENV": "test",
+            "PUBLIC_BASE_URL": "http://127.0.0.1:8001",
+            "RATE_LIMIT_KEY_PREFIX": f"homean:e2e:{database_name}",
         }
     )
     await asyncio.to_thread(migrate, database_url)
 
-    from app.api.dependencies import (  # noqa: PLC0415
+    from app.api.dependencies import (
         get_email_provider,
         get_pipeline_enqueuer,
         get_storage_provider,
     )
-    from app.core.config import get_settings  # noqa: PLC0415
-    from app.core.database import dispose_database  # noqa: PLC0415
-    from app.email import FakeEmailProvider  # noqa: PLC0415
-    from app.main import app  # noqa: PLC0415
-    from app.pipeline import FakePipelineEnqueuer  # noqa: PLC0415
-    from app.storage import FakeStorageProvider  # noqa: PLC0415
-    from app.storage.provider import StoredObject  # noqa: PLC0415
+    from app.core.config import get_settings
+    from app.core.database import dispose_database
+    from app.email import FakeEmailProvider
+    from app.main import app
+    from app.pipeline import FakePipelineEnqueuer
+    from app.storage import FakeStorageProvider
+    from app.storage.provider import StoredObject
 
     class UploadedStorage(FakeStorageProvider):
         async def head_object(self, object_key: str) -> StoredObject:
@@ -79,7 +82,31 @@ async def main() -> None:
 
     get_settings.cache_clear()
     app.dependency_overrides[get_storage_provider] = UploadedStorage
-    app.dependency_overrides[get_pipeline_enqueuer] = FakePipelineEnqueuer
+    from app.core.database import get_session_factory
+    from app.core.pipeline_config import PipelineStep
+    from app.pipeline import FakeLLMClient, FakeTranscriptionProvider
+    from tests.test_pipeline import (
+        observation_fixture,
+        pipeline_service,
+        report_fixture,
+        zone_fixture,
+    )
+
+    class InlinePipeline(FakePipelineEnqueuer):
+        async def enqueue(
+            self, visit_id, workspace_id, start_step=PipelineStep.TRANSCRIBE
+        ):
+            async with get_session_factory()() as session:
+                service = pipeline_service(
+                    session,
+                    UploadedStorage(),
+                    FakeTranscriptionProvider(),
+                    FakeLLMClient([zone_fixture, observation_fixture, report_fixture]),
+                )
+                for step in list(PipelineStep)[list(PipelineStep).index(start_step) :]:
+                    await service.run_step(workspace_id, visit_id, step)
+
+    app.dependency_overrides[get_pipeline_enqueuer] = InlinePipeline
     app.dependency_overrides[get_email_provider] = FakeEmailProvider
     server = uvicorn.Server(
         uvicorn.Config(app, host="127.0.0.1", port=8001, log_level="warning")
