@@ -66,7 +66,7 @@ function showing(id: string, name: string, highlights: number, concerns: number,
 }
 
 describe("CompareTable", () => {
-  it("renders structured counts and zone observations side by side", () => {
+  it("renders report trade-offs and zone observations side by side", () => {
     render(
       <NextIntlClientProvider locale="en" messages={messages}>
         <CompareTable
@@ -80,12 +80,47 @@ describe("CompareTable", () => {
     );
     expect(screen.getByText("Oak House")).toBeInTheDocument();
     expect(screen.getByText("Pine House")).toBeInTheDocument();
-    const highlightRow = screen.getByText("Highlight count").closest("tr");
+    const highlightRow = screen.getByText("Highlights").closest("tr");
     expect(highlightRow).not.toBeNull();
-    expect(within(highlightRow!).getByText("2")).toBeInTheDocument();
-    expect(within(highlightRow!).getByText("1")).toBeInTheDocument();
+    expect(within(highlightRow!).getAllByRole("listitem")).toHaveLength(3);
     expect(screen.getAllByText("Oak House has good light")).toHaveLength(2);
     expect(screen.getAllByText("Pine House has good light")).toHaveLength(2);
+  });
+
+  it("shows follow-up questions and labels missing concerns explicitly", () => {
+    const detail = showing("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", "Oak House", 1, 0);
+    detail.report!.content.follow_ups = [{ text: "Request roof replacement records", observation_ids: [] }];
+    render(<NextIntlClientProvider locale="en" messages={messages}><CompareTable showings={[detail]} zoneLabels={{ kitchen: "Kitchen", other: "Other" }} /></NextIntlClientProvider>);
+    expect(within(screen.getByRole("rowheader", { name: "Questions and next steps" }).closest("tr")!).getByText("Request roof replacement records")).toBeInTheDocument();
+    expect(within(screen.getByRole("rowheader", { name: "Concerns" }).closest("tr")!).getByText("Not recorded")).toBeInTheDocument();
+  });
+
+  it.each(["draft", "report_pending", "missing_report"])("withholds %s content from the printable comparison", (state) => {
+    const detail = showing("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", "Oak House", 1, 1);
+    if (state === "draft") detail.status = "draft";
+    if (state === "report_pending") detail.report!.status = "pending_review";
+    if (state === "missing_report") detail.report = null;
+    render(<NextIntlClientProvider locale="en" messages={messages}><CompareTable showings={[detail]} zoneLabels={{ kitchen: "Kitchen", other: "Other" }} /></NextIntlClientProvider>);
+    expect(screen.getByText("Awaiting agent confirmation")).toBeInTheDocument();
+    expect(screen.queryByText("Summary")).not.toBeInTheDocument();
+    expect(screen.queryByText("Highlight")).not.toBeInTheDocument();
+    expect(screen.queryByText("Oak House has good light")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Review showing" })).toHaveAttribute("href", `/showings/${detail.id}`);
+  });
+
+  it("excludes pending and dismissed observations while retaining edited observations", () => {
+    const detail = showing("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", "Oak House", 0, 0);
+    const original = detail.observations[0];
+    detail.observations = [
+      { ...original, id: "pending", content: "Unreviewed claim", review_status: "pending" },
+      { ...original, id: "dismissed", content: "Rejected claim", review_status: "dismissed" },
+      { ...original, id: "edited", content: "Agent corrected note", review_status: "edited" },
+    ];
+    detail.status = "sent_to_client";
+    render(<NextIntlClientProvider locale="en" messages={messages}><CompareTable showings={[detail]} zoneLabels={{ kitchen: "Kitchen", other: "Other" }} /></NextIntlClientProvider>);
+    expect(screen.queryByText("Unreviewed claim")).not.toBeInTheDocument();
+    expect(screen.queryByText("Rejected claim")).not.toBeInTheDocument();
+    expect(screen.getAllByText("Agent corrected note")).toHaveLength(2);
   });
 
   it("renders the configured zone label exactly", () => {
@@ -98,8 +133,8 @@ describe("CompareTable", () => {
       </NextIntlClientProvider>,
     );
 
-    expect(screen.getByRole("columnheader", { name: "chef's kitchen" })).toBeInTheDocument();
-    expect(screen.queryByRole("columnheader", { name: "kitchen" })).not.toBeInTheDocument();
+    expect(screen.getByRole("rowheader", { name: "chef's kitchen" })).toBeInTheDocument();
+    expect(screen.queryByRole("rowheader", { name: "kitchen" })).not.toBeInTheDocument();
   });
 
   it("uses the configured other label for unknown or missing zone keys", () => {
@@ -112,7 +147,7 @@ describe("CompareTable", () => {
       </NextIntlClientProvider>,
     );
 
-    expect(screen.getByRole("columnheader", { name: "Other" })).toBeInTheDocument();
-    expect(screen.queryByRole("columnheader", { name: "unconfigured_zone" })).not.toBeInTheDocument();
+    expect(screen.getByRole("rowheader", { name: "Other" })).toBeInTheDocument();
+    expect(screen.queryByRole("rowheader", { name: "unconfigured_zone" })).not.toBeInTheDocument();
   });
 });

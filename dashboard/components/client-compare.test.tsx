@@ -138,8 +138,8 @@ describe("ClientCompare", () => {
 
     renderClientCompare();
 
-    expect(await screen.findByRole("columnheader", { name: "great room" })).toBeInTheDocument();
-    expect(screen.queryByRole("columnheader", { name: "living room" })).not.toBeInTheDocument();
+    expect(await screen.findByRole("rowheader", { name: "great room" })).toBeInTheDocument();
+    expect(screen.queryByRole("rowheader", { name: "living room" })).not.toBeInTheDocument();
     expect(vertical).toHaveBeenCalledTimes(1);
   });
 
