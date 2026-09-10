@@ -13,7 +13,7 @@ export type FaqItem = {
 export const content = {
   brandName: "Homean",
   metadata: {
-    title: "Homean — Professional showing reports for buyer’s agents",
+    title: "AI Showing Reports & Home Comparisons for Buyer’s Agents | Homean",
     description: "Homean helps buyer’s agents turn a showing walkthrough into a private, reviewable client report.",
     socialDescription: "Capture a showing once. Review the structured draft. Deliver a report you stand behind.",
     socialAlt: "Homean showing records for buyer’s agents",
@@ -21,6 +21,7 @@ export const content = {
   },
   nav: {
     howItWorks: "How it works",
+    resources: "Free resources",
     forAgents: "For agents",
     trust: "Trust",
     signIn: "Sign in",
@@ -37,7 +38,7 @@ export const content = {
       "Capture a walkthrough once. Homean organizes the details into a structured draft you can review, refine, and deliver to your client.",
     primaryCta: "Create account",
     secondaryCta: "See how it works",
-    note: "Illustrative product view · English only",
+    note: "Early beta · English only · Illustrative product view",
     sideNote: ["FIELD NOTE", "01—24"],
   },
   problem: {
@@ -140,9 +141,9 @@ export const content = {
   },
   signup: {
     eyebrow: "Ready for the next showing",
-    title: "Start with the showing already on your calendar.",
+    title: "Explore a clearer showing workflow.",
     description:
-      "Create your account, add your buyer and property, and keep the next showing record together from capture through delivery.",
+      "Explore the beta dashboard and fictional examples. AI processing and mobile capture are still being validated before general availability.",
     cta: "Create your account",
     note: "Account creation continues securely in the Homean dashboard.",
   },
@@ -174,7 +175,7 @@ export const content = {
   },
   footer: {
     line: "A private showing record for buyer’s agents.",
-    availability: "Self-service signup · English only",
+    availability: "Early beta · English only",
     privacy: "Private by default. Agent-reviewed before delivery.",
     copyright: "© 2026 Homean.",
     signature: "Built for the field.",

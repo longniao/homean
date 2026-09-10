@@ -15,6 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const metadataBase = new URL(host ? `${protocol}://${host}` : "http://localhost:3000");
   return {
     metadataBase,
+    robots: { index: false, follow: false },
     title: t("title"),
     description: t("description"),
     openGraph: {

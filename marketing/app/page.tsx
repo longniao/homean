@@ -1,3 +1,6 @@
+import Link from "next/link";
+import { ResourceIndex } from "@/components/resource-index";
+import { howItWorks } from "@/lib/how-it-works";
 import { Faq } from "@/components/faq";
 import { ProductComposition } from "@/components/product-composition";
 import { SignupCta } from "@/components/signup-cta";
@@ -34,6 +37,7 @@ export default function HomePage() {
         </div>
       </section>
 
+      <aside className="beta-banner section-shell"><strong>{howItWorks.eyebrow}.</strong> {howItWorks.availability} <Link href="/how-it-works/">{content.nav.howItWorks} →</Link></aside>
       <Workflow />
 
       <section className="proof-section section-shell" aria-labelledby="proof-title">
@@ -47,12 +51,13 @@ export default function HomePage() {
       </section>
 
       <Trust />
+      <ResourceIndex />
       <SignupCta />
       <Faq />
 
       <footer className="site-footer section-shell">
         <div className="footer-brand"><span className="wordmark-mark" aria-hidden="true">H</span><span>{content.brandName}</span><p>{content.footer.line}</p></div>
-        <div className="footer-meta"><p>{content.footer.availability}</p><p>{content.footer.privacy}</p><div className="footer-links"><a href={siteConfig.appUrl}>{content.nav.signIn}</a><a href={contactMailto()}>{siteConfig.contactEmail}</a></div></div>
+        <div className="footer-meta"><p>{content.footer.availability}</p><p>{content.footer.privacy}</p><div className="footer-links"><Link href="/resources/">{content.nav.resources}</Link><Link href="/how-it-works/">{content.nav.howItWorks}</Link><a href={siteConfig.appUrl}>{content.nav.signIn}</a><a href={contactMailto()}>{siteConfig.contactEmail}</a></div></div>
         <p className="footer-legal">{content.footer.copyright} <span>{content.footer.signature}</span></p>
       </footer>
       </main>

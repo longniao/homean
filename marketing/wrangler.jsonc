@@ -6,12 +6,22 @@
   "assets": {
     "directory": "./out",
     "html_handling": "auto-trailing-slash",
-    "not_found_handling": "404-page"
+    "not_found_handling": "404-page",
+    "binding": "ASSETS",
+    "run_worker_first": true
   },
   "observability": {
     "enabled": true,
     "logs": {
       "head_sampling_rate": 1
     }
-  }
+  },
+  "main": "worker.ts",
+  "d1_databases": [
+    {
+      "binding": "MARKETING_METRICS",
+      "database_name": "homean-marketing-metrics",
+      "database_id": "23e34984-f768-48f8-ac47-60777a45d1ef"
+    }
+  ]
 }

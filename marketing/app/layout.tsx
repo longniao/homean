@@ -1,11 +1,14 @@
+import { MarketingMeasurement } from "@/components/marketing-measurement";
 import type { Metadata } from "next";
 import { content } from "@/lib/content";
 import { siteConfig } from "@/lib/config";
 import "./globals.css";
 import "./design.css";
+import "./resources.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.siteUrl),
+  verification: { google: "hFGH3XdT8pwSB3sVbriK0eXzVyrDw_F9mEL3qMFTBPY" },
   title: content.metadata.title,
   description: content.metadata.description,
   alternates: { canonical: "/" },
@@ -27,5 +30,5 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en"><body>{children}</body></html>;
+  return <html lang="en"><body>{children}<MarketingMeasurement signupUrl={siteConfig.signupUrl} /></body></html>;
 }

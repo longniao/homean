@@ -1,0 +1,49 @@
+.resource-index { padding-block: 80px; }
+.resource-index h1, .resource-index h2, .resource-next h2 { font-family: var(--display); font-size: clamp(2rem,4vw,3rem); line-height: 1.08; letter-spacing: -.025em; }
+.resource-lead { max-width: 70ch; margin-block: 22px; color: var(--ink-2); font-size: 1.1rem; line-height: 1.7; }
+.resource-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 24px; margin-top: 36px; }
+.resource-card { padding: 26px; border-top: 3px solid var(--signal); background: var(--bg-raised); display: flex; flex-direction: column; gap: 20px; }
+.resource-card h3 { font: 1.7rem/1.15 var(--display); }
+.resource-card p { color: var(--ink-2); }
+.resource-card .text-link { margin-top: auto; }
+.resource-page { max-width: 1050px; padding-block: 40px 80px; }
+.resource-heading { margin-block: 38px; max-width: 850px; }
+.resource-heading h1 { font: clamp(2.6rem,6vw,4.8rem)/1.04 var(--display); letter-spacing: -.035em; color: var(--ink); }
+.resource-byline { color: var(--ink-3); font-size: .85rem; }
+.resource-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 24px; margin-block: 28px; }
+.resource-actions button { cursor: pointer; }
+.resource-body { max-width: 760px; }
+.resource-body section { padding-block: 28px; border-top: 1px solid var(--line); }
+.resource-body h2, .worksheet h2, .beta-note h2 { margin-bottom: 14px; font: 1.85rem/1.2 var(--display); color: var(--ink); }
+.resource-body p, .resource-body li, .beta-note p { color: var(--ink-2); line-height: 1.8; }
+.resource-body ul { list-style: disc; padding-left: 24px; margin-top: 16px; }
+.resource-body li + li { margin-top: 12px; }
+.resource-next, .beta-note { padding: 28px; margin-block: 36px; background: var(--bg-mid); border-left: 3px solid var(--signal); }
+.resource-next p { margin-block: 20px; max-width: 65ch; }
+.resource-related { display: flex; gap: 24px; flex-wrap: wrap; padding-block: 22px; border-top: 1px solid var(--line); }
+.resource-related a, .resource-contact a { text-decoration: underline; text-underline-offset: 4px; }
+.worksheet { margin-block: 40px; }
+.worksheet-scroll { overflow-x: auto; margin-top: 24px; }
+.worksheet table { width: 100%; border-collapse: collapse; background: var(--bg-raised); min-width: 620px; }
+.worksheet th, .worksheet td { border: 1px solid var(--line); padding: 16px; text-align: left; width: 25%; vertical-align: top; }
+.worksheet th { font-size: .9rem; }
+.worksheet-space { display: block; min-height: 42px; }
+.beta-banner { padding-block: 22px; border-block: 1px solid var(--line); color: var(--ink-2); }
+.beta-banner a { text-decoration: underline; text-underline-offset: 4px; }
+button:focus-visible { outline: 3px solid var(--signal); outline-offset: 4px; }
+@media(max-width: 760px) { .resource-grid { grid-template-columns: 1fr; } .resource-page { padding-top: 24px; } .resource-heading { margin-top: 28px; } .resource-index { padding-block: 48px; } }
+@media print {
+  .site-header, .no-print { display: none !important; }
+  body, html { background: white !important; color: #172824 !important; }
+  .resource-page { width: 100%; max-width: none; padding: 0; }
+  .resource-heading h1 { font-size: 28pt; }
+  .resource-lead { font-size: 11pt; }
+  .resource-body section { break-inside: avoid; padding-block: 14px; }
+  .resource-body h2, .worksheet h2 { font-size: 16pt; }
+  .resource-body p, .resource-body li { font-size: 10pt; }
+  .worksheet { break-before: page; }
+  .worksheet-scroll { overflow: visible; }
+  .worksheet table { min-width: 0; table-layout: fixed; }
+  .worksheet th, .worksheet td { padding: 9px; font-size: 9pt; }
+  @page { size: A4; margin: 16mm; }
+}

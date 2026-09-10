@@ -30,9 +30,9 @@ describe("marketing home page", () => {
     render(<HomePage />);
 
     const navigation = within(screen.getByRole("navigation"));
-    expect(navigation.getByRole("link", { name: /how it works/i })).toHaveAttribute("href", "#how-it-works");
-    expect(navigation.getByRole("link", { name: /for agents/i })).toHaveAttribute("href", "#for-agents");
-    expect(navigation.getByRole("link", { name: /trust/i })).toHaveAttribute("href", "#trust");
+    expect(navigation.getByRole("link", { name: /how it works/i })).toHaveAttribute("href", "/how-it-works");
+    expect(navigation.getByRole("link", { name: /for agents/i })).toHaveAttribute("href", "/#for-agents");
+    expect(navigation.getByRole("link", { name: /trust/i })).toHaveAttribute("href", "/#trust");
     expect(screen.getByText(/what happens without connectivity/i)).toBeInTheDocument();
   });
 
