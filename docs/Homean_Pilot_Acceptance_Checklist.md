@@ -14,6 +14,10 @@ backup/restore readiness, and the fresh-sign-in gate are complete.
 
 ## Run metadata
 
+Local engineering results are recorded in
+[the September 10 acceptance evidence](Homean_Local_Acceptance_2026-09-10.md).
+They do not mark any staging gate as passed.
+
 | Field | Record |
 | --- | --- |
 | Environment / staging URL |  |
