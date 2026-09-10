@@ -16,7 +16,8 @@ Use unique random PostgreSQL, S3, and JWT credentials. Set `POSTGRES_PASSWORD`,
 `DATABASE_URL`, `REDIS_URL`, all `S3_*` values, and `JWT_SECRET`. Configure
 `APP_ENV=production`, `DASHBOARD_ORIGIN=https://app.homean.com`,
 `PUBLIC_BASE_URL=https://api.homean.com`, and
-`S3_ENDPOINT_URL=https://media.homean.com`. The S3 endpoint must be reachable by
+`S3_ENDPOINT_URL=https://media.homean.com` and
+`S3_INTERNAL_ENDPOINT_URL=http://127.0.0.1:9010`. The S3 endpoint must be reachable by
 browsers and phones because it is used in signed URLs. Buckets remain private;
 never add an anonymous read policy or publish the MinIO console.
 

@@ -14,11 +14,23 @@ class S3Client(StorageProvider):
         self._bucket = settings.s3_bucket
         self._client: BaseClient = boto3.client(
             "s3",
-            endpoint_url=settings.s3_endpoint_url,
+            endpoint_url=settings.s3_internal_endpoint_url or settings.s3_endpoint_url,
             aws_access_key_id=settings.s3_access_key,
             aws_secret_access_key=settings.s3_secret_key.get_secret_value(),
             region_name=settings.s3_region,
         )
+
+        # Browser signatures must use the public hostname; server-side traffic can
+        # remain on the host's private storage connection.
+        self._signing_client = self._client
+        if settings.s3_internal_endpoint_url:
+            self._signing_client = boto3.client(
+                "s3",
+                endpoint_url=settings.s3_endpoint_url,
+                aws_access_key_id=settings.s3_access_key,
+                aws_secret_access_key=settings.s3_secret_key.get_secret_value(),
+                region_name=settings.s3_region,
+            )
 
     async def check_ready(self) -> None:
         await asyncio.to_thread(self._client.head_bucket, Bucket=self._bucket)
@@ -27,7 +39,7 @@ class S3Client(StorageProvider):
         self, object_key: str, content_type: str, expires_in: int
     ) -> str:
         return await asyncio.to_thread(
-            self._client.generate_presigned_url,
+            self._signing_client.generate_presigned_url,
             "put_object",
             Params={
                 "Bucket": self._bucket,
@@ -56,7 +68,7 @@ class S3Client(StorageProvider):
 
     async def presign_get(self, object_key: str, expires_in: int) -> str:
         return await asyncio.to_thread(
-            self._client.generate_presigned_url,
+            self._signing_client.generate_presigned_url,
             "get_object",
             Params={"Bucket": self._bucket, "Key": object_key},
             ExpiresIn=expires_in,

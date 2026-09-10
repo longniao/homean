@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     database_url: str
     redis_url: str
     s3_endpoint_url: str
+    s3_internal_endpoint_url: str | None = None
     s3_access_key: str
     s3_secret_key: SecretStr
     s3_bucket: str
