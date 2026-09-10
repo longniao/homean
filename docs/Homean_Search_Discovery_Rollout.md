@@ -4,7 +4,7 @@ Implemented September 10, 2026 (UTC).
 
 ## Public discovery surface
 
-Six canonical, statically rendered pages are published on https://homean.com/:
+Eight canonical, statically rendered pages are published on https://homean.com/:
 
 - `/`
 - `/how-it-works/`
@@ -12,6 +12,8 @@ Six canonical, statically rendered pages are published on https://homean.com/:
 - `/resources/showing-report-template/`
 - `/resources/sample-showing-report/`
 - `/resources/home-comparison-worksheet/`
+- `/resources/how-to-compare-homes-after-touring/`
+- `/resources/what-to-write-after-a-showing/`
 
 The resource pages include editorial content, print styles, related links, unique titles/descriptions/canonicals, and Article structured data matching the visible content. The two blank templates have editable text downloads. The sample is explicitly fictional. Availability copy distinguishes the dashboard from AI processing/mobile capture still under validation.
 
@@ -23,7 +25,7 @@ The dashboard has noindex/nofollow metadata. Backend shared reports retain their
 
 Public browser events increment daily aggregate counters in Cloudflare D1 database `homean-marketing-metrics`, binding `MARKETING_METRICS`. This is separate from the Mac mini application backend and contains no customer records.
 
-Stored dimensions: UTC day, allowlisted event, allowlisted public path, broad referral category, count. Events: page_view, signup_click, download_resource, print_resource. Sources: direct, google, bing, chatgpt, internal, other. No full URLs, query strings, worksheet contents, user IDs, email addresses, or IP addresses are stored in this table. Browser collection honors DNT and Global Privacy Control and excludes preview hosts.
+Stored dimensions: UTC day, allowlisted event, allowlisted public path, broad referral category, count. Events: page_view, signup_click, download_resource, print_resource, comparison_view, print_comparison. Sources: direct, google, bing, chatgpt, internal, other. No full URLs, query strings, worksheet contents, user IDs, email addresses, or IP addresses are stored in this table. Browser collection honors DNT and Global Privacy Control and excludes preview hosts.
 
 These are activity counts, not unique people, verified conversions, or attribution of completed signups. Counts may include bots, repeats, and deployment smoke tests; blockers and privacy settings reduce coverage. Reports and product activation are not instrumented by this marketing collector.
 
@@ -52,11 +54,19 @@ Bing submission is pending approval to use the existing Google identity to sign 
 
 ## Next growth work
 
-Use Search Console to choose future topics from actual impressions and queries. Start with the three useful resources before expanding into more pages. Improve examples using reviewed pilot feedback; publish real case studies only with permission and evidence. Track whether resource visitors become active agents and whether reports help buyers compare homes. Do not fabricate testimonials, customer results, local market expertise, or hundreds of thin location pages.
+Use Search Console to choose future topics from actual impressions and queries. Measure the comparison tool and five resources before expanding into more pages. Improve examples using reviewed pilot feedback; publish real case studies only with permission and evidence. Track whether resource visitors become active agents and whether reports help buyers compare homes. Do not fabricate testimonials, customer results, local market expertise, or hundreds of thin location pages.
+
+## Interactive comparison expansion
+
+The existing worksheet URL now includes a free comparison tool for two or three homes. It keeps entered notes in browser memory only, supports editing and confirmed clearing, and presents a printable comparison. Refreshing clears entries. Unknown answers remain labeled, and the tool does not score homes or recommend a winner. Notes for an unnamed third home are retained with a fallback label.
+
+Two supporting guides cover comparing homes after touring and writing a showing recap. Both are linked from the resource index and related-resource navigation and included in the eight-URL sitemap. Google's earlier six-page discovery count above predates this expansion; discovery of the new guides has not been confirmed.
+
+Validation: 26 marketing tests and TypeScript checks pass. Production build includes ESLint. Both new guide URLs return 200 with their expected titles and canonical URLs. A filled desktop comparison was checked in the live browser, and its aggregate comparison_view event was confirmed in D1. Print invocation is unit-tested; visual print-preview and mobile checks remain pending because the Mac locked during browser verification.
 
 References: [Google AI features and SEO](https://developers.google.com/search/docs/appearance/ai-features), [OpenAI crawlers](https://developers.openai.com/api/docs/bots), [Google sitemaps](https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap).
 
 ## Deployed versions
 
-- Marketing: `4f29887b-1a06-4e7e-82e3-1727f7e7977d`
+- Marketing: `6cbd60a9-6e5a-48d0-a02f-52ff3063b7eb`
 - Dashboard: `33fbbd2b-0960-45c6-8f90-6ca567f86b54`

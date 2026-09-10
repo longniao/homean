@@ -1,3 +1,4 @@
+import { showingGuides } from "./showing-guides";
 export type Resource = {
   slug: string; title: string; description: string; eyebrow: string;
   intro: string; sections: { title: string; text: string; bullets?: string[] }[];
@@ -5,7 +6,7 @@ export type Resource = {
 };
 export const resourceCopy = {
   title: "Better notes. Clearer decisions.",
-  description: "Free showing templates, a fictional report example, and a worksheet for comparing homes. No account required.",
+  description: "Free showing templates, practical guides, and a private browser tool for comparing homes. No account required.",
   eyebrow: "The showing notebook",
   read: "Open resource", print: "Print or save as PDF", download: "Download editable text",
   related: "Continue your showing notebook", home: "All resources", updated: "Updated September 10, 2026",
@@ -46,10 +47,10 @@ export const resources: Resource[] = [
     ],
   },
   {
-    slug: "home-comparison-worksheet", title: "Free home comparison worksheet",
-    description: "Compare homes after a tour using buyer priorities, observed trade-offs, unanswered questions, and next steps. Free printable worksheet and editable text download.",
+    slug: "home-comparison-worksheet", title: "Free home comparison tool and worksheet",
+    description: "Compare two or three homes side by side. Enter priorities, trade-offs, and questions privately in your browser, then print or save your comparison as PDF.",
     eyebrow: "03 / The shortlist", download: "/downloads/home-comparison-worksheet.txt",
-    intro: "After several tours, it is easy to confuse the quiet bedroom in one house with the generous kitchen in another. This worksheet puts the same questions beside each home, so your household can discuss the differences without reducing the decision to a score.",
+    intro: "After several tours, it is easy to confuse the quiet bedroom in one house with the generous kitchen in another. This free tool puts the same questions beside each home, so your household can discuss the differences without reducing the decision to a score.",
     sections: [
       { title: "Start with your own priorities", text: "Agree on a few must-haves before comparing the homes. Separate needs from preferences and allow household members to disagree. A large room is not automatically a benefit if your priority is a shorter commute or an easier entrance." },
       { title: "Compare like with like", text: "Use notes from each actual visit. Record the date and any relevant limits, such as only visiting in the afternoon. Write ‘not assessed’ when you do not have comparable information. Do not interpret a missing concern as evidence that a feature is problem-free." },
@@ -57,4 +58,5 @@ export const resources: Resource[] = [
       { title: "Use the worksheet with your agent", text: "Bring the worksheet to a shortlist conversation. Ask which uncertainty can be resolved and which trade-off is personal. A useful outcome may be ruling out a home, arranging another visit, or deciding you need more information." },
     ],
   },
+  ...showingGuides,
 ];

@@ -36,7 +36,7 @@ describe("public discovery resources", () => {
       expect(metadata.title).toContain(resource.title);
     }
     const urls = sitemap().map(item => item.url);
-    expect(new Set(urls).size).toBe(6);
+    expect(new Set(urls).size).toBe(8);
     expect(urls.some(url => /\/reports?\/|\/clients?\/|signup/.test(url))).toBe(false);
   });
   it("permits search indexing only when enabled, independently of training", () => {
