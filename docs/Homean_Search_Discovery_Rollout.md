@@ -68,5 +68,11 @@ References: [Google AI features and SEO](https://developers.google.com/search/do
 
 ## Deployed versions
 
-- Marketing: `6cbd60a9-6e5a-48d0-a02f-52ff3063b7eb`
+- Marketing: `ffbaa59f-7a96-4ebb-a2b6-e499594bad58`
 - Dashboard: `33fbbd2b-0960-45c6-8f90-6ca567f86b54`
+
+## Public frontend design refresh
+
+Replaced the overlapping legacy styles with one warm-white and forest-green design system. The homepage now uses a shorter headline, a legible report preview, consistent section spacing, and restrained typography. Resource pages and the comparison tool share the same form, card, and reading styles. Mobile navigation remains available; comparison results have a keyboard-focusable horizontal scroll region and a small-screen swipe cue. The unsaved-entry notice remains visible, with full privacy details in a disclosure.
+
+Validation: all 26 marketing tests pass, including palette contrast and comparison behavior. Production build, ESLint, and TypeScript pass. Browser checks covered the desktop homepage, deployed desktop comparison form, 390px mobile homepage/form/results, and absence of page overflow at that mobile width. The earlier mobile-check limitation is resolved; native print-preview verification remains outstanding.

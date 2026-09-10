@@ -33,9 +33,9 @@ export const content = {
   accessibility: { skipToMain: "Skip to main content" },
   hero: {
     eyebrow: "A showing record for buyer’s agents",
-    title: "Turn every showing into a professional client report.",
+    title: "Every showing, clearly remembered.",
     description:
-      "Capture a walkthrough once. Homean organizes the details into a structured draft you can review, refine, and deliver to your client.",
+      "A considered record of every home. Turn showing notes into clear, private client reports—with your judgment at the center.",
     primaryCta: "Create account",
     secondaryCta: "See how it works",
     note: "Early beta · English only · Illustrative product view",
@@ -54,7 +54,7 @@ export const content = {
   },
   workflow: {
     eyebrow: "A calmer handoff",
-    title: "From natural notes to a report you stand behind.",
+    title: "From walkthrough to thoughtful follow-up.",
     description:
       "Homean fits around the way buyer’s agents already move through a home—then gives the record a clear shape.",
     steps: [
@@ -83,7 +83,7 @@ export const content = {
   },
   productProof: {
     eyebrow: "Inside a showing record",
-    title: "A trail from what you said to what your client sees.",
+    title: "Every detail has a source.",
     description:
       "The sample below is fictional and illustrative. It shows the relationship between a timed capture, an observation, and a polished report—not a customer record.",
     sampleLabel: "Fictional sample · 1840 Alder Lane",
@@ -108,7 +108,7 @@ export const content = {
   },
   agents: {
     eyebrow: "Built for the buyer’s side",
-    title: "Professional context, without more admin.",
+    title: "Your expertise. A clearer record.",
     description:
       "Homean is for active buyer’s agents who want to turn field observations into a clearer client experience—without asking AI to make the decision for them.",
     points: [
@@ -129,7 +129,7 @@ export const content = {
   },
   trust: {
     eyebrow: "Product principles",
-    title: "Useful because the agent stays in the loop.",
+    title: "Built around your judgment.",
     description:
       "Homean is designed around a simple boundary: organize the record, keep the judgment with the professional.",
     principles: [

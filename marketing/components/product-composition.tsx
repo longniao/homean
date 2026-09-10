@@ -1,51 +1,17 @@
 import { content } from "@/lib/content";
 
-type ProductCompositionProps = {
-  compact?: boolean;
-};
-
-export function ProductComposition({ compact = false }: ProductCompositionProps) {
-  return (
-    <div
-      className={`dossier${compact ? " dossier-compact" : ""}`}
-      aria-label={content.productProof.compositionLabel}
-    >
-      <div className="dossier-topline">
-        <span>{content.productProof.sampleLabel}</span>
-        <span className="dossier-stamp">{content.productProof.sampleCode}</span>
+export function ProductComposition({ compact = false }: { compact?: boolean }) {
+  const copy = content.productProof;
+  return <div className={`dossier${compact ? " dossier-compact" : ""}`} aria-label={copy.compositionLabel}>
+    <div className="dossier-topline"><span>{copy.sampleLabel}</span><span className="dossier-stamp">{copy.sampleCode}</span></div>
+    <div className="report-preview">
+      <div className="report-preview-title"><div><p className="eyebrow">{copy.reportLabel}</p><p className="report-title">{copy.reportTitle}</p></div>
+        <svg className="report-emblem" viewBox="0 0 48 54" fill="none" aria-hidden="true"><path d="M5 24 24 7l19 17v24H5V24Z" stroke="currentColor" strokeWidth="1.5"/><path d="M18 48V30h12v18M12 24h5M31 24h5M24 7V2" stroke="currentColor" strokeWidth="1.5"/></svg>
       </div>
-      <div className="composition-grid">
-        <div className="capture-panel composition-panel">
-          <div className="panel-kicker"><span className="record-dot" />{content.productProof.timelineLabel}</div>
-          <div className="timeline-track" aria-hidden="true">
-            <span className="timeline-line" />
-            <span className="timeline-point point-one" />
-            <span className="timeline-point point-two" />
-            <span className="timeline-point point-three active" />
-            <span className="timeline-point point-four" />
-          </div>
-          <div className="capture-time">{content.productProof.timelineTime} <span>· 00:38</span></div>
-          <p className="capture-quote">“{content.productProof.timelineText}”</p>
-          <div className="capture-meta"><span>{content.productProof.captureSource}</span><span>{content.productProof.captureStatus}</span></div>
-        </div>
-        <div className="evidence-panel composition-panel">
-          <div className="evidence-tab">{content.productProof.evidenceLabel}</div>
-          <div className="evidence-bracket" aria-hidden="true"><span /></div>
-          <p className="evidence-category">{content.productProof.evidenceCategory}</p>
-          <p className="evidence-copy">{content.productProof.evidenceText}</p>
-          <div className="review-row"><span className="review-ring" />{content.productProof.evidenceState}</div>
-        </div>
-        <div className="report-panel composition-panel">
-          <div className="report-paperclip" aria-hidden="true" />
-          <div className="panel-kicker">{content.productProof.reportLabel}</div>
-          <div className="report-rule" />
-          <p className="report-title">{content.productProof.reportTitle}</p>
-          <p className="report-copy">{content.productProof.reportText}</p>
-          <div className="report-photo" aria-hidden="true"><span className="window-shape" /><span className="plant-shape" /></div>
-          <div className="report-footer">{content.productProof.reportFooter}</div>
-        </div>
-      </div>
-      <div className="dossier-footer"><span>{content.productProof.dossierFooter}</span><span>{content.productProof.dossierPage}</span></div>
+      <div className="report-observation"><p className="eyebrow">{copy.evidenceCategory}</p><p>{copy.evidenceText}</p></div>
+      <span className="report-preview-status">{copy.evidenceState}</span>
     </div>
-  );
+    <div className="report-source"><div className="report-source-label"><span>{copy.timelineLabel}</span><span>{copy.timelineTime}</span></div><blockquote>“{copy.timelineText}”</blockquote></div>
+    <div className="dossier-footer"><span>{copy.reportFooter}</span><span>{copy.dossierPage}</span></div>
+  </div>;
 }

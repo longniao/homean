@@ -2,23 +2,25 @@
 .resource-index h1, .resource-index h2, .resource-next h2 { font-family: var(--display); font-size: clamp(2rem,4vw,3rem); line-height: 1.08; letter-spacing: -.025em; }
 .resource-lead { max-width: 70ch; margin-block: 22px; color: var(--ink-2); font-size: 1.1rem; line-height: 1.7; }
 .resource-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 24px; margin-top: 36px; }
-.resource-card { padding: 26px; border-top: 3px solid var(--signal); background: var(--bg-raised); display: flex; flex-direction: column; gap: 20px; }
+.resource-card { padding: 26px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg-raised); display: flex; flex-direction: column; gap: 20px; }
 .resource-card h2, .resource-card h3 { font: 1.7rem/1.15 var(--display); }
-.resource-card p { color: var(--ink-2); }
+.resource-card p { color: var(--ink-2); font-size: 14px; }
+.resource-card .eyebrow { font-size: 10px; margin: 0; }
+.resource-card:hover { border-color: var(--line-strong); }
 .resource-card .text-link { margin-top: auto; }
-.resource-page { max-width: 1050px; padding-block: 40px 80px; }
-.resource-heading { margin-block: 38px; max-width: 850px; }
-.resource-heading h1 { font: clamp(2.6rem,6vw,4.8rem)/1.04 var(--display); letter-spacing: -.035em; color: var(--ink); }
+.resource-page { max-width: 1120px; padding-block: 40px 80px; }
+.resource-heading { margin-block: 42px 56px; max-width: 810px; }
+.resource-heading h1 { font: clamp(2.5rem,5vw,4rem)/1.04 var(--display); letter-spacing: -.035em; color: var(--ink); }
 .resource-byline { color: var(--ink-3); font-size: .85rem; }
 .resource-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 24px; margin-block: 28px; }
 .resource-actions button { cursor: pointer; }
-.resource-body { max-width: 760px; }
+.resource-body { max-width: 760px; margin-inline: auto; }
 .resource-body section { padding-block: 28px; border-top: 1px solid var(--line); }
 .resource-body h2, .worksheet h2, .beta-note h2 { margin-bottom: 14px; font: 1.85rem/1.2 var(--display); color: var(--ink); }
 .resource-body p, .resource-body li, .beta-note p { color: var(--ink-2); line-height: 1.8; }
 .resource-body ul { list-style: disc; padding-left: 24px; margin-top: 16px; }
 .resource-body li + li { margin-top: 12px; }
-.resource-next, .beta-note { padding: 28px; margin-block: 36px; background: var(--bg-mid); border-left: 3px solid var(--signal); }
+.resource-next, .beta-note { padding: 28px; margin-block: 36px; background: var(--bg-mid); border: 1px solid var(--line); border-radius: 10px; }
 .resource-next p { margin-block: 20px; max-width: 65ch; }
 .resource-related { display: flex; gap: 24px; flex-wrap: wrap; padding-block: 22px; border-top: 1px solid var(--line); }
 .resource-related a, .resource-contact a { text-decoration: underline; text-underline-offset: 4px; }
@@ -47,20 +49,23 @@ button:focus-visible { outline: 3px solid var(--signal); outline-offset: 4px; }
   .worksheet th, .worksheet td { padding: 9px; font-size: 9pt; }
   @page { size: A4; margin: 16mm; }
 }
-.comparison-tool { margin-block: 40px 64px; padding-top: 32px; border-top: 3px solid var(--signal); }
+.comparison-tool { margin-block: 40px 64px; padding: 32px; background: var(--bg-raised); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 10px 40px #203b3205; }
 .comparison-tool h2 { font: clamp(1.9rem,4vw,2.6rem)/1.1 var(--display); margin-bottom: 18px; }
-.comparison-privacy { font-size: .9rem; color: var(--ink-2); padding: 16px 20px; background: var(--bg-mid); margin-block: 24px; border-left: 2px solid var(--signal); }
+.comparison-privacy { font-size: 12px; color: var(--ink-2); padding: 14px 18px; background: #f2f5ed; border-radius: 6px; margin-block: 24px; }
+.comparison-privacy summary { cursor: pointer; font-weight: 600; color: var(--ink); }
+.comparison-privacy p { margin-top: 10px; max-width: 85ch; }
 .comparison-tool label { display: flex; flex-direction: column; gap: 8px; font-size: .88rem; font-weight: 600; }
-.comparison-tool input, .comparison-tool textarea { background: var(--bg-raised); border: 1px solid var(--line); padding: 12px; font: 400 1rem/1.5 var(--sans); color: var(--ink); width: 100%; border-radius: 0; }
-.comparison-tool textarea { resize: vertical; min-height: 90px; }
+.comparison-tool input, .comparison-tool textarea { background: var(--bg-raised); border: 1px solid var(--line); padding: 11px 12px; font: 400 14px/1.5 var(--sans); color: var(--ink); width: 100%; border-radius: 6px; }
+.comparison-tool textarea { resize: vertical; min-height: 78px; }
 .comparison-tool input:focus, .comparison-tool textarea:focus { outline: 2px solid var(--signal); outline-offset: 2px; }
 .comparison-tool input::placeholder, .comparison-tool textarea::placeholder { color: var(--ink-3); }
-.comparison-cards { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 18px; margin-block: 28px; }
-.comparison-card { min-width: 0; border: 1px solid var(--line); padding: 20px; display: grid; gap: 20px; background: var(--bg-mid); }
-.comparison-card legend { font: 1.7rem var(--display); padding-inline: 8px; }
+.comparison-cards { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 20px; margin-block: 32px; }
+.comparison-card { min-width: 0; margin: 0; border: 0; border-top: 2px solid #dce6ce; padding: 22px 0 0; display: grid; gap: 22px; background: transparent; }
+.comparison-card legend { font: 1.6rem var(--display); padding: 0 12px 0 0; }
 .comparison-hidden, .comparison-print-only { display: none; }
 .comparison-tool button:disabled { opacity: .5; cursor: not-allowed; }
 .comparison-editor > p { font-size: .9rem; margin-bottom: 16px; }
+.comparison-scroll-hint { display: none; }
 .comparison-table-scroll { overflow-x: auto; margin-block: 24px; }
 .comparison-result table { border-collapse: collapse; table-layout: fixed; min-width: 600px; width: 100%; }
 .comparison-result th, .comparison-result td { border: 1px solid var(--line); padding: 16px; text-align: left; vertical-align: top; overflow-wrap: anywhere; white-space: pre-wrap; }
@@ -68,11 +73,11 @@ button:focus-visible { outline: 3px solid var(--signal); outline-offset: 4px; }
 .comparison-result h3 { font-weight: 600; margin-block: 22px 8px; }
 .comparison-note { white-space: pre-wrap; overflow-wrap: anywhere; }
 .comparison-caution { color: var(--ink-2); font-size: .9rem; }
-.comparison-reset { margin-top: 32px; display: flex; align-items: center; flex-wrap: wrap; gap: 20px; }
-@media(max-width: 760px) { .comparison-cards { grid-template-columns: 1fr; } }
+.comparison-reset { padding-top: 22px; border-top: 1px solid var(--line); margin-top: 28px; display: flex; align-items: center; flex-wrap: wrap; gap: 20px; }
+@media(max-width: 760px) { .comparison-scroll-hint { display: block; font-size: 12px; color: var(--ink-2); } .comparison-cards { grid-template-columns: 1fr; gap: 32px; } .comparison-tool { padding: 22px 18px; } .comparison-tool input, .comparison-tool textarea { font-size: 16px; } }
 @media print {
   .comparison-print-only { display: block; }
-  .comparison-tool { margin: 0; padding: 0; border: 0; }
+  .comparison-tool { margin: 0; padding: 0; border: 0; box-shadow: none; }
   .comparison-result table { min-width: 0; }
   .comparison-result th, .comparison-result td { padding: 8px; font-size: 9pt; }
   .comparison-result thead { display: table-header-group; }
