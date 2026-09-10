@@ -36,7 +36,7 @@ button:focus-visible { outline: 3px solid var(--signal); outline-offset: 4px; }
 @media(max-width: 760px) { .resource-grid { grid-template-columns: 1fr; } .resource-page { padding-top: 24px; } .resource-heading { margin-top: 28px; } .resource-index { padding-block: 48px; } }
 @media print {
   .site-header, .no-print { display: none !important; }
-  body, html { background: white !important; color: #172824 !important; }
+  body, html { background: white !important; color: #202127 !important; }
   .resource-page { width: 100%; max-width: none; padding: 0; }
   .resource-heading h1 { font-size: 28pt; }
   .resource-lead { font-size: 11pt; }
@@ -49,9 +49,9 @@ button:focus-visible { outline: 3px solid var(--signal); outline-offset: 4px; }
   .worksheet th, .worksheet td { padding: 9px; font-size: 9pt; }
   @page { size: A4; margin: 16mm; }
 }
-.comparison-tool { margin-block: 40px 64px; padding: 32px; background: var(--bg-raised); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 10px 40px #203b3205; }
+.comparison-tool { margin-block: 40px 64px; padding: 32px; background: var(--bg-raised); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 10px 40px #20212705; }
 .comparison-tool h2 { font: clamp(1.9rem,4vw,2.6rem)/1.1 var(--display); margin-bottom: 18px; }
-.comparison-privacy { font-size: 12px; color: var(--ink-2); padding: 14px 18px; background: #f2f5ed; border-radius: 6px; margin-block: 24px; }
+.comparison-privacy { font-size: 12px; color: var(--ink-2); padding: 14px 18px; background: var(--bg-mid); border-radius: 6px; margin-block: 24px; }
 .comparison-privacy summary { cursor: pointer; font-weight: 600; color: var(--ink); }
 .comparison-privacy p { margin-top: 10px; max-width: 85ch; }
 .comparison-tool label { display: flex; flex-direction: column; gap: 8px; font-size: .88rem; font-weight: 600; }
@@ -60,7 +60,7 @@ button:focus-visible { outline: 3px solid var(--signal); outline-offset: 4px; }
 .comparison-tool input:focus, .comparison-tool textarea:focus { outline: 2px solid var(--signal); outline-offset: 2px; }
 .comparison-tool input::placeholder, .comparison-tool textarea::placeholder { color: var(--ink-3); }
 .comparison-cards { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 20px; margin-block: 32px; }
-.comparison-card { min-width: 0; margin: 0; border: 0; border-top: 2px solid #dce6ce; padding: 22px 0 0; display: grid; gap: 22px; background: transparent; }
+.comparison-card { min-width: 0; margin: 0; border: 0; border-top: 2px solid var(--line); padding: 22px 0 0; display: grid; gap: 22px; background: transparent; }
 .comparison-card legend { font: 1.6rem var(--display); padding: 0 12px 0 0; }
 .comparison-hidden, .comparison-print-only { display: none; }
 .comparison-tool button:disabled { opacity: .5; cursor: not-allowed; }
