@@ -1,0 +1,36 @@
+name: homean-production
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: homean
+      POSTGRES_USER: homean
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?required}
+    ports: ["127.0.0.1:55433:5432"]
+    volumes: ["postgres-data:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U homean -d homean"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports: ["127.0.0.1:6381:6379"]
+    volumes: ["redis-data:/data"]
+  minio:
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+    restart: unless-stopped
+    command: server /data --console-address :9001
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:?required}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:?required}
+      MINIO_API_CORS_ALLOW_ORIGIN: https://app.homean.com
+    ports: ["127.0.0.1:9010:9000"]
+    volumes: ["media-data:/data"]
+volumes:
+  postgres-data:
+  redis-data:
+  media-data:

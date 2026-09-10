@@ -1,3 +1,8 @@
+# Production host
+
+The production backend runs on the Mac mini. See [Mac mini deployment](macmini/README.md).
+The Render instructions below are an alternative hosting reference.
+
 # Homean production operations
 
 Render is the documented single-region deployment target. The Blueprint in
