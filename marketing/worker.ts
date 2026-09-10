@@ -1,5 +1,5 @@
 const paths = new Set(["/", "/how-it-works/", "/resources/", "/resources/showing-report-template/", "/resources/sample-showing-report/", "/resources/home-comparison-worksheet/", "/resources/how-to-compare-homes-after-touring/", "/resources/what-to-write-after-a-showing/"]);
-const events = new Set(["page_view", "signup_click", "print_resource", "download_resource", "comparison_view", "print_comparison"]);
+const events = new Set(["page_view", "signup_click", "print_resource", "download_resource", "comparison_view", "print_comparison", "comparison_tool_click", "comparison_example", "print_comparison_example"]);
 const sources = new Set(["direct", "google", "bing", "chatgpt", "other", "internal"]);
 
 export default {

@@ -7,6 +7,34 @@ function fillHome(number: number, name: string, note?: string) {
   if (note) fireEvent.change(group.getByRole("textbox", { name: "What stood out" }), { target: { value: note } });
 }
 describe("private home comparison", () => {
+  it("shows a fictional example without overwriting or mixing in personal notes", () => {
+    render(<HomeComparison />);
+    fillHome(1, "My private home", "My private note");
+    fireEvent.change(screen.getByRole("textbox", { name: "Our shared priorities" }), { target: { value: "My priorities" } });
+    fireEvent.click(screen.getByRole("button", { name: /see a filled example/i }));
+    expect(screen.getByText(/fictional example — not real listings/i)).toBeVisible();
+    const table = within(screen.getByRole("table"));
+    expect(table.getAllByRole("columnheader")).toHaveLength(4);
+    expect(table.getByRole("columnheader", { name: "Birch Place (fictional)" })).toBeInTheDocument();
+    expect(table.queryByText("My private note")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Back to my notes" }));
+    expect(screen.getByDisplayValue("My private home")).toBeVisible();
+    expect(screen.getByDisplayValue("My private note")).toBeVisible();
+    expect(screen.getByDisplayValue("My priorities")).toBeVisible();
+    expect(screen.getByRole("button", { name: /compare homes/i })).toBeDisabled();
+  });
+  it("keeps example printing identifiable and separate from personal comparison metrics", () => {
+    const print = vi.spyOn(window, "print").mockImplementation(() => {});
+    render(<HomeComparison />);
+    fireEvent.click(screen.getByRole("button", { name: /see a filled example/i }));
+    const label = screen.getByText(/fictional example — not real listings/i);
+    expect(label.closest(".no-print")).toBeNull();
+    const button = screen.getByRole("button", { name: "Print example" });
+    expect(button).toHaveAttribute("data-measure", "print_comparison_example");
+    fireEvent.click(button);
+    expect(print).toHaveBeenCalledOnce();
+    print.mockRestore();
+  });
   it("requires two names, preserves differences, and labels missing information", () => {
     render(<HomeComparison />);
     const compare = screen.getByRole("button", { name: /compare homes/i });

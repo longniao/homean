@@ -9,6 +9,12 @@ import { resources } from "@/lib/resources";
 import { siteConfig } from "@/lib/config";
 
 describe("public discovery resources", () => {
+  it("pairs all five template steps with explicitly fictional worked examples", async () => {
+    render(await ResourcePage({ params: Promise.resolve({ slug: "showing-report-template" }) }));
+    expect(screen.getAllByText("Filled example · fictional")).toHaveLength(5);
+    expect(screen.getByText(/confirmation has not been performed/i)).toBeVisible();
+    expect(screen.getByText(/not drawn from a listing, customer report, or completed AI trial/i)).toBeVisible();
+  });
   it("renders a single index heading and links all resources", () => {
     render(<ResourcesPage />);
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);

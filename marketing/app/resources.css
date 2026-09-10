@@ -34,6 +34,18 @@
 .beta-banner a { text-decoration: underline; text-underline-offset: 4px; }
 button:focus-visible { outline: 3px solid var(--signal); outline-offset: 4px; }
 @media(max-width: 760px) { .resource-grid { grid-template-columns: 1fr; } .resource-page { padding-top: 24px; } .resource-heading { margin-top: 28px; } .resource-index { padding-block: 48px; } }
+/* Worked examples remain visible in HTML and on printed resource pages. */
+.resource-body-examples { max-width: none; }
+.resource-section-example { display: grid; grid-template-columns: 1fr 1fr; gap: 44px; align-items: start; }
+.resource-filled-example { padding: 24px; border: 1px solid var(--line); background: var(--bg-raised); border-radius: 8px; }
+.resource-filled-example .eyebrow { font-size: 10px; margin-bottom: 14px; }
+.resource-filled-example p:last-child { font-size: 15px; }
+.comparison-example-entry { padding-bottom: 24px; margin-bottom: 24px; border-bottom: 1px solid var(--line); }
+.comparison-example-entry p { margin-top: 8px; font-size: 13px; color: var(--ink-2); }
+.comparison-example-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
+.comparison-example-heading .comparison-example-label { margin-bottom: 0; }
+.comparison-example-label { color: var(--signal-text); background: var(--bg-mid); padding: 12px 16px; margin-bottom: 22px; font-size: 13px; border-radius: 6px; }
+@media(max-width: 760px) { .resource-section-example { grid-template-columns: 1fr; gap: 22px; } }
 @media print {
   .site-header, .no-print { display: none !important; }
   body, html { background: white !important; color: #202127 !important; }
@@ -84,3 +96,5 @@ button:focus-visible { outline: 3px solid var(--signal); outline-offset: 4px; }
   .comparison-result tr { break-inside: avoid; }
   .comparison-worksheet-page > .resource-heading, .comparison-worksheet-page > .resource-body { display: none; }
 }
+
+@media print { .resource-section-example { display: block; } .resource-filled-example { margin-top: 12px; padding: 12px; } .resource-filled-example p:last-child { font-size: 10pt; } .comparison-example-label { font-size: 10pt; } }

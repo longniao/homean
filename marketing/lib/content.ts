@@ -37,7 +37,7 @@ export const content = {
     description:
       "A considered record of every home. Turn showing notes into clear, private client reports—with your judgment at the center.",
     primaryCta: "Create account",
-    secondaryCta: "See how it works",
+    secondaryCta: "Compare homes free",
     note: "Early beta · English only · Illustrative product view",
     sideNote: ["FIELD NOTE", "01—24"],
   },

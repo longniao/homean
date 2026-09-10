@@ -5,6 +5,11 @@ import { metadata } from "./layout";
 import { siteConfig } from "@/lib/config";
 
 describe("marketing home page", () => {
+  it("links directly from the hero to the free home comparison tool", () => {
+    render(<HomePage />);
+    const hero = within(screen.getByRole("region", { name: "Every showing, clearly remembered." }));
+    expect(hero.getByRole("link", { name: /compare homes free/i })).toHaveAttribute("href", "/resources/home-comparison-worksheet");
+  });
   it("offers self-service signup and an authenticated app link", () => {
     render(<HomePage />);
 

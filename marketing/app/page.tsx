@@ -21,7 +21,7 @@ export default function HomePage() {
           <p className="eyebrow reveal reveal-one">{content.hero.eyebrow}</p>
           <h1 id="hero-title" className="reveal reveal-two">{content.hero.title}</h1>
           <p className="hero-description reveal reveal-three">{content.hero.description}</p>
-          <div className="hero-actions reveal reveal-four"><a className="button button-dark" href={siteConfig.signupUrl}>{content.hero.primaryCta}<span aria-hidden="true">↗</span></a><a className="text-link" href="#how-it-works">{content.hero.secondaryCta}<span aria-hidden="true">↓</span></a></div>
+          <div className="hero-actions reveal reveal-four"><a className="button button-dark" href={siteConfig.signupUrl}>{content.hero.primaryCta}<span aria-hidden="true">↗</span></a><Link className="text-link" href="/resources/home-comparison-worksheet/" data-measure="comparison_tool_click">{content.hero.secondaryCta}<span aria-hidden="true">→</span></Link></div>
           <p className="hero-note reveal reveal-four"><span className="tiny-square" aria-hidden="true" />{content.hero.note}</p>
         </div>
         <div className="hero-composition reveal reveal-three"><ProductComposition compact /></div>

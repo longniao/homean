@@ -8,6 +8,13 @@ const setup = () => {
 };
 const request = (query: string, origin = "https://homean.com") => new Request(`https://homean.com/_events?${query}`, { method: "POST", headers: { Origin: origin } });
 describe("marketing measurement boundary", () => {
+  it("counts tool discovery and fictional example activity separately", async () => {
+    const env = setup();
+    for (const event of ["comparison_tool_click", "comparison_example", "print_comparison_example"]) {
+      expect((await worker.fetch(request(`event=${event}&path=/&source=direct`), env as unknown as Env)).status).toBe(204);
+      expect(env.bind).toHaveBeenLastCalledWith(event, "/", "direct");
+    }
+  });
   it("records only allowlisted aggregate dimensions", async () => {
     const env = setup();
     const response = await worker.fetch(request("event=page_view&path=/&source=chatgpt"), env as unknown as Env);

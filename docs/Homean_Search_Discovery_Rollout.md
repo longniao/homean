@@ -25,7 +25,7 @@ The dashboard has noindex/nofollow metadata. Backend shared reports retain their
 
 Public browser events increment daily aggregate counters in Cloudflare D1 database `homean-marketing-metrics`, binding `MARKETING_METRICS`. This is separate from the Mac mini application backend and contains no customer records.
 
-Stored dimensions: UTC day, allowlisted event, allowlisted public path, broad referral category, count. Events: page_view, signup_click, download_resource, print_resource, comparison_view, print_comparison. Sources: direct, google, bing, chatgpt, internal, other. No full URLs, query strings, worksheet contents, user IDs, email addresses, or IP addresses are stored in this table. Browser collection honors DNT and Global Privacy Control and excludes preview hosts.
+Stored dimensions: UTC day, allowlisted event, allowlisted public path, broad referral category, count. Events: page_view, signup_click, download_resource, print_resource, comparison_view, print_comparison, comparison_tool_click, comparison_example, print_comparison_example. Sources: direct, google, bing, chatgpt, internal, other. No full URLs, query strings, worksheet contents, user IDs, email addresses, or IP addresses are stored in this table. Browser collection honors DNT and Global Privacy Control and excludes preview hosts.
 
 These are activity counts, not unique people, verified conversions, or attribution of completed signups. Counts may include bots, repeats, and deployment smoke tests; blockers and privacy settings reduce coverage. Reports and product activation are not instrumented by this marketing collector.
 
@@ -68,7 +68,7 @@ References: [Google AI features and SEO](https://developers.google.com/search/do
 
 ## Deployed versions
 
-- Marketing: `024bb9cf-cd91-43da-bd85-92ed0ab201f2`
+- Marketing: `815a1360-d114-4883-9598-47065b4afe40`
 - Dashboard: `33fbbd2b-0960-45c6-8f90-6ca567f86b54`
 
 ## Public frontend design refresh
@@ -76,3 +76,11 @@ References: [Google AI features and SEO](https://developers.google.com/search/do
 Replaced the overlapping legacy styles with one unified design system. The current palette uses soft white, charcoal, cool gray, and restrained blue accents; the user explicitly rejected green styling. The homepage now uses a shorter headline, a legible report preview, consistent section spacing, and restrained typography. Resource pages and the comparison tool share the same form, card, and reading styles. Mobile navigation remains available; comparison results have a keyboard-focusable horizontal scroll region and a small-screen swipe cue. The unsaved-entry notice remains visible, with full privacy details in a disclosure.
 
 Validation: all 26 marketing tests pass, including palette contrast and comparison behavior. Production build, ESLint, and TypeScript pass. Browser checks covered the desktop homepage, deployed desktop comparison form, 390px mobile homepage/form/results, and absence of page overflow at that mobile width. The earlier mobile-check limitation is resolved; native print-preview verification remains outstanding.
+
+## Resource usefulness and tool discovery
+
+The homepage hero now links directly to the free comparison tool. Visitors can view a filled three-home fictional example and return to their original notes without replacement or mixing. The example is labeled on screen and in print; its views and print actions use separate aggregate event names from personal comparisons. No note contents are included in measurement.
+
+The showing report template pairs all five steps with a filled editorial example in static HTML. The comparison page explains the fictional trade-offs in readable article content, and the showing recap guide adds a rough-note-to-recap example. These are teaching materials, not customer case studies, professional endorsements, or evidence from live AI trials. No new URLs were added; the public sitemap still contains eight pages.
+
+Validation: 31 marketing tests, production build with lint and TypeScript, and desktop/mobile browser checks of the fictional comparison and paired template examples. Tests cover preserving private notes, explicit fictional labeling in printable content, the homepage tool link, and separate aggregate event acceptance. Native print-preview verification remains outstanding. Search impressions, indexing of the new guides, and real agent feedback require subsequent measurement; this release does not establish traffic gains.
