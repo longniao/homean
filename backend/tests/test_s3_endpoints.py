@@ -27,7 +27,9 @@ async def test_private_operations_and_public_signatures_use_separate_endpoints()
         assert await storage.presign_get("key", 60) == "signed-public-url"
         await storage.delete_object("key")
     assert factory.call_args_list[0].kwargs["endpoint_url"] == "http://127.0.0.1:9010"
-    assert factory.call_args_list[1].kwargs["endpoint_url"] == "https://media.example.com"
+    assert (
+        factory.call_args_list[1].kwargs["endpoint_url"] == "https://media.example.com"
+    )
     private.head_bucket.assert_called_once_with(Bucket="private-media")
     private.delete_object.assert_called_once_with(Bucket="private-media", Key="key")
     private.generate_presigned_url.assert_not_called()

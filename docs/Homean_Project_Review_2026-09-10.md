@@ -176,3 +176,27 @@ applied. API liveness, database, Redis and local storage checks pass. Public sto
 readiness and dashboard deployment await the Homean DNS connection. Deepgram and
 Anthropic credentials were absent in the earlier Kawu deployment and are not configured
 in Homean. SMTP, Stripe, backup restoration and physical-device acceptance remain open.
+
+### Mac mini deployment completed
+
+The user-approved `api.homean.com` DNS switch replaced the old Tencent target.
+`media.homean.com` routes signed storage requests to the Mac mini; server-side
+storage traffic uses its private loopback endpoint. Both accidental records under
+`insightrader.com` were removed with user approval.
+
+Public `/ready` now returns `ok` for database, Redis and S3. Real signed upload
+and download, dashboard-origin CORS, unsigned access rejection, and disposable
+object cleanup passed. The dashboard was deployed as Cloudflare version
+`6fc9c579-9592-4c7e-be07-de123ba1eea1` with `HOMEAN_API_URL=https://api.homean.com`.
+Its live login proxy now returns the expected HTTP 401 for invalid credentials,
+replacing the previous HTTP 500. API and worker run under supervisor on Mac mini.
+The old Kawu checkout and services remain untouched.
+
+This resolves finding 1's missing backend connection. Real AI generation still
+requires Deepgram and Anthropic credentials. Email delivery, billing integration,
+off-host backup setup/restore and physical-device acceptance remain outside the
+verified deployment result.
+
+Final validation after storage routing: all 200 backend tests and 74 dashboard
+tests pass; dashboard TypeScript/build and the storage regression pass. Together
+with the unchanged 85 mobile and 3 browser checks, this covers 362 passing tests.

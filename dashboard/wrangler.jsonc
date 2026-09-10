@@ -10,7 +10,7 @@
     "binding": "ASSETS"
   },
   "vars": {
-    "HOMEAN_API_URL": "https://homean-api-unconfigured.invalid"
+    "HOMEAN_API_URL": "https://api.homean.com"
   },
   "observability": {
     "enabled": true,
