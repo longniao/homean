@@ -4,7 +4,7 @@ import { siteConfig } from "@/lib/config";
 
 export function SiteHeader() {
   return (
-    <header className="site-header">
+    <><a className="skip-link" href="#main-content">{content.accessibility.skipToMain}</a><header className="site-header">
       <Link className="wordmark" href="/" aria-label={content.nav.homeLink}>
         <span className="wordmark-mark" aria-hidden="true">H</span>
         <span>{content.brandName}</span>
@@ -18,6 +18,6 @@ export function SiteHeader() {
         <a className="sign-in-link" href={siteConfig.appUrl}>{content.nav.signIn}</a>
         <a className="button button-small button-dark" href={siteConfig.signupUrl}>{content.nav.signup}</a>
       </div>
-    </header>
+    </header></>
   );
 }

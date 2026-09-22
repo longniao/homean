@@ -1,0 +1,20 @@
+export const about = {
+  title: "About Homean and our showing resources",
+  description: "Learn who Homean is for, how our free showing resources are prepared, what fictional examples mean, and which product features are available in the early beta.",
+  eyebrow: "Homean / Purpose & approach",
+  intro: "Homean is an early-beta showing-report tool for real estate buyer’s agents. Our public resources help agents and buyers keep observations, preferences and unanswered questions separate after a home tour.",
+  updated: "Updated",
+  sections: [
+    { id: "purpose", title: "A record for the buyer’s side", text: "A showing recap should help a buyer remember the visit and have a more useful next conversation. Homean’s intended workflow connects capture, source-linked observations, agent review and private delivery. It does not choose a home, publish customer reports as listings, or replace a professional assessment." },
+    { id: "editorial", title: "How these resources are prepared", text: "Homean publishes these AI-assisted editorial guides, templates and examples to explain a proposed note-taking format and the product workflow. They are not presented as research findings, licensed professional advice or independently reviewed expert guidance. No named professional reviewer or customer endorsement is claimed." },
+    { id: "examples", title: "Fictional examples stay clearly labeled", text: "The addresses, households, observations and trade-offs in our teaching examples are invented. They are not real listings, customer records, testimonials or proof of a completed AI trial. The examples show a format you can adapt; they do not establish the condition or suitability of any property." },
+    { id: "sources", title: "What our sources can tell you", text: "Our templates describe Homean’s editorial approach. Where a guide links to an external source, we state the topic and jurisdiction it covers. A linked source does not endorse Homean or verify our examples. Observations made during a short visit, third-party statements and professional findings should remain distinct in your own notes." },
+    { id: "updates", title: "Meaningful updates, visible dates", text: "Each resource displays the date of its latest substantive editorial update. We change that date when the guidance, examples or answers change, rather than every time the website is rebuilt. Corrections to product availability are reflected in the How it works page." },
+  ],
+  availableTitle: "What is available today",
+  availableText: "The public templates, fictional examples and two- or three-home comparison tool are free to use without an account. The comparison tool keeps notes in the current page’s memory; save a PDF before leaving. The dashboard is an early beta. General AI processing, mobile distribution, email delivery and paid subscriptions are not announced as ready for live-client use.",
+  resourcesLink: "Explore the free resources",
+  availabilityLink: "Check current product availability",
+  contactTitle: "Questions or corrections",
+  contactText: "If a guide is unclear or an example needs correcting, contact Homean with the public page address and the wording in question. Please leave client names, private report links and recordings out of your message.",
+};

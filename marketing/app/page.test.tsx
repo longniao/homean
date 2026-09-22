@@ -3,11 +3,12 @@ import { describe, expect, it } from "vitest";
 import HomePage from "./page";
 import { metadata } from "./layout";
 import { siteConfig } from "@/lib/config";
+import { content } from "@/lib/content";
 
 describe("marketing home page", () => {
   it("links directly from the hero to the free home comparison tool", () => {
     render(<HomePage />);
-    const hero = within(screen.getByRole("region", { name: "Every showing, clearly remembered." }));
+    const hero = within(screen.getByRole("region", { name: content.hero.title }));
     expect(hero.getByRole("link", { name: /compare homes free/i })).toHaveAttribute("href", "/resources/home-comparison-worksheet");
   });
   it("offers self-service signup and an authenticated app link", () => {

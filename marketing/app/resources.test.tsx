@@ -7,6 +7,10 @@ import sitemap from "./sitemap";
 import robots from "./robots";
 import { resources } from "@/lib/resources";
 import { siteConfig } from "@/lib/config";
+import { publicPages, updatedAt } from "@/lib/public-pages";
+import { resourceAnswers } from "@/lib/resource-answers";
+import { resourceSchema } from "@/lib/discovery";
+import AboutPage from "./about/page";
 
 describe("public discovery resources", () => {
   it("pairs all five template steps with explicitly fictional worked examples", async () => {
@@ -42,8 +46,48 @@ describe("public discovery resources", () => {
       expect(metadata.title).toContain(resource.title);
     }
     const urls = sitemap().map(item => item.url);
-    expect(new Set(urls).size).toBe(8);
+    expect(new Set(urls).size).toBe(publicPages.length);
+    expect(urls).toContain(`${siteConfig.siteUrl}/about/`);
     expect(urls.some(url => /\/reports?\/|\/clients?\/|signup/.test(url))).toBe(false);
+  });
+  it("publishes visible answers, attribution and dates for every guide", async () => {
+    for (const resource of resources) {
+      const { container, unmount } = render(await ResourcePage({ params: Promise.resolve({ slug: resource.slug }) }));
+      const answers = resourceAnswers[resource.slug];
+      expect(screen.getByRole("heading", { name: answers.question })).toBeVisible();
+      for (const answer of answers.questions) {
+        expect(screen.getByRole("heading", { name: answer.question })).toBeVisible();
+        expect(screen.getByText(answer.answer)).toBeVisible();
+      }
+      expect(screen.getByRole("link", { name: "Homean" })).toHaveAttribute("href", "/about");
+      expect(container.querySelector("time")?.dateTime).toBe(updatedAt(`/resources/${resource.slug}/`));
+      for (const link of container.querySelectorAll('a[href^="#"]')) {
+        expect(container.querySelector(link.getAttribute("href")!)).not.toBeNull();
+      }
+      expect(resources.some(item => item.slug === answers.nextSlug)).toBe(true);
+      const schema = JSON.parse(container.querySelector('script[type="application/ld+json"]')!.textContent!);
+      expect(schema).toEqual(resourceSchema(resource));
+      expect(schema["@graph"][0].dateModified).toBe(container.querySelector("time")?.dateTime);
+      expect(schema["@graph"][1].itemListElement.map((item: { name: string }) => item.name))
+        .toEqual(["Home", "Free resources", resource.title]);
+      unmount();
+    }
+  });
+  it("explains editorial provenance without inventing reviewers or live availability", () => {
+    render(<AboutPage />);
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    expect(screen.getByText(/No named professional reviewer or customer endorsement is claimed/)).toBeVisible();
+    expect(screen.getByText(/not announced as ready for live-client use/)).toBeVisible();
+    expect(screen.getByRole("link", { name: "Check current product availability →" })).toHaveAttribute("href", "/how-it-works");
+  });
+  it("uses article social metadata and keeps editorial dates consistent with sitemap", async () => {
+    for (const resource of resources) {
+      const metadata = await generateMetadata({ params: Promise.resolve({ slug: resource.slug }) });
+      expect(metadata.openGraph).toMatchObject({ type: "article", modifiedTime: updatedAt(`/resources/${resource.slug}/`) });
+      const entry = sitemap().find(item => item.url === `${siteConfig.siteUrl}/resources/${resource.slug}/`);
+      expect(entry?.lastModified).toEqual(new Date(updatedAt(`/resources/${resource.slug}/`)));
+    }
+    expect(() => updatedAt("/private-report/")).toThrow();
   });
   it("permits search indexing only when enabled, independently of training", () => {
     const previous = siteConfig.indexable;

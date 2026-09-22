@@ -6,11 +6,15 @@ export type Resource = {
 };
 export const resourceCopy = {
   title: "Better notes. Clearer decisions.",
+  indexTitle: "Free showing templates & home comparison tools",
+  editorialLink: "How Homean prepares these resources",
   description: "Free showing templates, practical guides, and a private browser tool for comparing homes. No account required.",
   eyebrow: "The showing notebook",
   exampleLabel: "Filled example · fictional",
+  quickAnswer: "The short answer",
+  questionsTitle: "Before your next showing",
   read: "Open resource", print: "Print or save as PDF", download: "Download editable text",
-  related: "Continue your showing notebook", home: "All resources", updated: "Updated September 10, 2026",
+  related: "Continue your showing notebook", home: "All resources",
   nextTitle: "Keep the next conversation grounded in what you noticed.",
   nextText: "Homean is an early-beta workspace for buyer’s agents. Explore the report workflow and current availability before trying it.",
   nextLink: "How Homean works", worksheetTitle: "Compare your shortlist", worksheetNote: "Write on the printed worksheet. Keep filled copies private. A blank cell means unknown, not a positive finding.",

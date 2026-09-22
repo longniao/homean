@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from "vitest";
 import worker from "./worker";
+import { publicPages } from "./lib/public-pages";
 const setup = () => {
   const run = vi.fn(async () => ({ success: true }));
   const bind = vi.fn(() => ({ run }));
@@ -8,6 +9,13 @@ const setup = () => {
 };
 const request = (query: string, origin = "https://homean.com") => new Request(`https://homean.com/_events?${query}`, { method: "POST", headers: { Origin: origin } });
 describe("marketing measurement boundary", () => {
+  it("accepts the same public pages as the sitemap, including the about page", async () => {
+    const env = setup();
+    for (const { path } of publicPages) {
+      const query = new URLSearchParams({ event: "page_view", path, source: "direct" });
+      expect((await worker.fetch(request(query.toString()), env as unknown as Env)).status).toBe(204);
+    }
+  });
   it("counts tool discovery and fictional example activity separately", async () => {
     const env = setup();
     for (const event of ["comparison_tool_click", "comparison_example", "print_comparison_example"]) {

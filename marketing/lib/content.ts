@@ -14,7 +14,7 @@ export const content = {
   brandName: "Homean",
   metadata: {
     title: "AI Showing Reports & Home Comparisons for Buyer’s Agents | Homean",
-    description: "Homean helps buyer’s agents turn a showing walkthrough into a private, reviewable client report.",
+    description: "Free showing report templates and a home comparison tool for buyer’s agents and buyers. Explore Homean’s early-beta, agent-reviewed AI report workflow.",
     socialDescription: "Capture a showing once. Review the structured draft. Deliver a report you stand behind.",
     socialAlt: "Homean showing records for buyer’s agents",
     twitterDescription: "A private showing record for buyer’s agents.",
@@ -22,6 +22,7 @@ export const content = {
   nav: {
     howItWorks: "How it works",
     resources: "Free resources",
+    about: "About & editorial approach",
     forAgents: "For agents",
     trust: "Trust",
     signIn: "Sign in",
@@ -33,12 +34,12 @@ export const content = {
   accessibility: { skipToMain: "Skip to main content" },
   hero: {
     eyebrow: "A showing record for buyer’s agents",
-    title: "Every showing, clearly remembered.",
+    title: "Clear reports for every showing.",
     description:
-      "A considered record of every home. Turn showing notes into clear, private client reports—with your judgment at the center.",
+      "Free showing templates and home comparisons, with an early-beta workspace for buyer’s agents. Keep the observations clear and your judgment at the center.",
     primaryCta: "Create account",
     secondaryCta: "Compare homes free",
-    note: "Early beta · English only · Illustrative product view",
+    note: "Early beta · AI processing not yet generally available · English only",
     sideNote: ["FIELD NOTE", "01—24"],
   },
   problem: {
@@ -62,14 +63,14 @@ export const content = {
         number: "01",
         title: "Capture naturally",
         description:
-          "Use the mobile app to record your walkthrough, add photos, and speak as you go—even when connectivity is limited.",
-        detail: "Mobile capture · offline-first",
+          "The mobile workflow is designed to record your walkthrough and keep photos together, including when connectivity is limited. Physical-device testing is still in progress.",
+        detail: "Mobile capture · in testing",
       },
       {
         number: "02",
         title: "Review the draft",
         description:
-          "The dashboard organizes the transcript into spaces and observations, with each detail connected back to its source.",
+          "The planned AI workflow organizes a transcript into spaces and observations for review in the dashboard, with each detail connected back to its source.",
         detail: "Dashboard review · evidence linked",
       },
       {
@@ -136,7 +137,7 @@ export const content = {
       { label: "Private by default", description: "Showing records are private unless you choose to deliver one to a client." },
       { label: "Agent-reviewed before delivery", description: "AI output is a draft. Nothing is delivered without your explicit confirmation." },
       { label: "Evidence stays connected", description: "Observations can remain linked to transcript moments and original media." },
-      { label: "Made for the field", description: "Offline-first capture protects the workflow when a showing has a weak signal." },
+      { label: "Made for the field", description: "Offline-first capture is designed for weak signals; physical-device acceptance is still pending." },
     ],
   },
   signup: {
@@ -169,7 +170,7 @@ export const content = {
       },
       {
         question: "How do I get started?",
-        answer: "Create an account in the Homean dashboard. Once signed in, you can start organizing showing records and client reports.",
+        answer: "Start with the free templates or home comparison tool; neither needs an account. You can also explore the beta dashboard. Real AI processing, mobile distribution, email delivery and paid subscriptions are not yet ready for general live-client use.",
       },
     ] satisfies FaqItem[],
   },

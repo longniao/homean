@@ -12,6 +12,28 @@
 .resource-heading { margin-block: 42px 56px; max-width: 810px; }
 .resource-heading h1 { font: clamp(2.5rem,5vw,4rem)/1.04 var(--display); letter-spacing: -.035em; color: var(--ink); }
 .resource-byline { color: var(--ink-3); font-size: .85rem; }
+.resource-byline a { text-decoration: underline; text-underline-offset: 3px; }
+.resource-breadcrumbs ol { display: flex; flex-wrap: wrap; gap: 8px 12px; list-style: none; padding: 0; font-size: 12px; color: var(--ink-2); }
+.resource-breadcrumbs li + li::before { content: "/"; margin-right: 12px; color: var(--ink-3); }
+.resource-breadcrumbs a { text-decoration: underline; text-underline-offset: 3px; }
+.resource-answer { padding: 30px 34px; margin-bottom: 36px; border-left: 3px solid var(--ink); background: var(--bg-mid); }
+.resource-answer h2 { font: clamp(1.6rem,3vw,2rem)/1.2 var(--display); margin: 14px 0; max-width: 34ch; }
+.resource-answer > p:last-child { max-width: 80ch; line-height: 1.8; color: var(--ink-2); }
+.resource-contents { max-width: 760px; margin: 36px auto; padding-block: 24px; border-block: 1px solid var(--line); }
+.resource-contents ul { columns: 2; column-gap: 32px; padding: 0; margin-top: 14px; list-style: none; }
+.resource-contents li { break-inside: avoid; margin-bottom: 10px; font-size: 14px; }
+.resource-contents a { text-decoration: underline; text-underline-offset: 4px; line-height: 1.6; }
+.resource-body section, #questions { scroll-margin-top: 100px; }
+.resource-questions, .resource-editorial { max-width: 760px; margin: 48px auto; }
+.resource-questions h2 { font: 2.2rem/1.15 var(--display); margin-block: 14px 28px; }
+.resource-question { padding-block: 22px; border-top: 1px solid var(--line); }
+.resource-question h3 { font-size: 1.05rem; font-weight: 600; margin-bottom: 10px; }
+.resource-question p, .resource-editorial p { color: var(--ink-2); line-height: 1.8; }
+.resource-editorial { border-top: 1px solid var(--line); padding-top: 24px; font-size: 14px; }
+.resource-editorial h2 { font-size: 1rem; font-weight: 600; margin-bottom: 10px; }
+.resource-editorial h3 { margin-block: 22px 10px; font-weight: 600; }
+.resource-editorial a { text-decoration: underline; text-underline-offset: 3px; }
+@media(max-width: 760px) { .resource-contents ul { columns: 1; } .resource-answer { padding: 24px 22px; } }
 .resource-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 24px; margin-block: 28px; }
 .resource-actions button { cursor: pointer; }
 .resource-body { max-width: 760px; margin-inline: auto; }

@@ -2,6 +2,8 @@ import { MarketingMeasurement } from "@/components/marketing-measurement";
 import type { Metadata } from "next";
 import { content } from "@/lib/content";
 import { siteConfig } from "@/lib/config";
+import { StructuredData } from "@/components/structured-data";
+import { siteIdentity } from "@/lib/discovery";
 import "./globals.css";
 import "./design.css";
 import "./resources.css";
@@ -30,5 +32,5 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en"><body>{children}<MarketingMeasurement signupUrl={siteConfig.signupUrl} /></body></html>;
+  return <html lang="en"><body><StructuredData value={siteIdentity} />{children}<MarketingMeasurement signupUrl={siteConfig.signupUrl} /></body></html>;
 }

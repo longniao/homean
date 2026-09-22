@@ -13,7 +13,6 @@ import { contactMailto, siteConfig } from "@/lib/config";
 export default function HomePage() {
   return (
     <>
-      <a className="skip-link" href="#main-content">{content.accessibility.skipToMain}</a>
       <SiteHeader />
       <main id="main-content">
       <section className="hero section-shell" aria-labelledby="hero-title">
@@ -57,7 +56,7 @@ export default function HomePage() {
 
       <footer className="site-footer section-shell">
         <div className="footer-brand"><span className="wordmark-mark" aria-hidden="true">H</span><span>{content.brandName}</span><p>{content.footer.line}</p></div>
-        <div className="footer-meta"><p>{content.footer.availability}</p><p>{content.footer.privacy}</p><div className="footer-links"><Link href="/resources/">{content.nav.resources}</Link><Link href="/how-it-works/">{content.nav.howItWorks}</Link><a href={siteConfig.appUrl}>{content.nav.signIn}</a><a href={contactMailto()}>{siteConfig.contactEmail}</a></div></div>
+        <div className="footer-meta"><p>{content.footer.availability}</p><p>{content.footer.privacy}</p><div className="footer-links"><Link href="/resources/">{content.nav.resources}</Link><Link href="/how-it-works/">{content.nav.howItWorks}</Link><Link href="/about/">{content.nav.about}</Link><a href={siteConfig.appUrl}>{content.nav.signIn}</a><a href={contactMailto()}>{siteConfig.contactEmail}</a></div></div>
         <p className="footer-legal">{content.footer.copyright} <span>{content.footer.signature}</span></p>
       </footer>
       </main>

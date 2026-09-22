@@ -1,13 +1,14 @@
 # Homean search discovery rollout
 
-Implemented September 10, 2026 (UTC).
+Initial rollout September 10, 2026 (UTC). Latest website update September 22, 2026.
 
 ## Public discovery surface
 
-Eight canonical, statically rendered pages are published on https://homean.com/:
+Nine canonical, statically rendered pages are published on https://homean.com/:
 
 - `/`
 - `/how-it-works/`
+- `/about/`
 - `/resources/`
 - `/resources/showing-report-template/`
 - `/resources/sample-showing-report/`
@@ -68,7 +69,7 @@ References: [Google AI features and SEO](https://developers.google.com/search/do
 
 ## Deployed versions
 
-- Marketing: `815a1360-d114-4883-9598-47065b4afe40`
+- Marketing: `4a8e06ca-eb1e-4af3-ac53-7de86b67bff3` (September 22, 2026)
 - Dashboard: `33fbbd2b-0960-45c6-8f90-6ca567f86b54`
 
 ## Public frontend design refresh
@@ -84,3 +85,55 @@ The homepage hero now links directly to the free comparison tool. Visitors can v
 The showing report template pairs all five steps with a filled editorial example in static HTML. The comparison page explains the fictional trade-offs in readable article content, and the showing recap guide adds a rough-note-to-recap example. These are teaching materials, not customer case studies, professional endorsements, or evidence from live AI trials. No new URLs were added; the public sitemap still contains eight pages.
 
 Validation: 31 marketing tests, production build with lint and TypeScript, and desktop/mobile browser checks of the fictional comparison and paired template examples. Tests cover preserving private notes, explicit fictional labeling in printable content, the homepage tool link, and separate aggregate event acceptance. Native print-preview verification remains outstanding. Search impressions, indexing of the new guides, and real agent feedback require subsequent measurement; this release does not establish traffic gains.
+
+## September 22: answer clarity, provenance and owner handoff
+
+The [owner TODO](Homean_Owner_TODO.md) records credentials, business decisions,
+physical-device participation, professional review, pilot recruitment and search
+account tasks that need the owner's input. Website changes do not complete the
+real AI, SMTP, billing or device acceptance gates.
+
+All five existing resources now include a concise direct answer, three visible
+question-and-answer pairs, a table of contents, breadcrumbs, an author link and
+the substantive update date. These elements are present in static HTML and do not
+depend on a browser interaction to reveal content. Related actions connect a
+template to its example and a guide to its tool. The two resources discussing
+inspection distinctions link to CFPB guidance with its U.S. scope clearly stated.
+
+The new About page explains Homean's purpose, AI-assisted editorial preparation,
+fictional examples, correction contact and current availability. It does not claim
+a named professional reviewer, real customer outcomes or independent validation.
+Homepage and workflow copy now distinguish free public resources from AI/mobile
+capabilities that are still under acceptance.
+
+Organization and WebSite structured data share stable identifiers; resource
+Article markup includes the visible author/date and a matching BreadcrumbList.
+Article social metadata includes dates and the existing PNG preview. The sitemap
+and aggregate-event path allowlist now use one public-page inventory. Dates are
+explicit editorial values, not build timestamps. Existing Google verification,
+OAI-SearchBot allowance, separate GPTBot opt-out and private-app indexing boundaries
+are preserved. No new tracking fields or personal-data collection were added.
+
+Validation:
+
+- All 35 marketing tests, ESLint, TypeScript and the static production build passed.
+- All nine exported pages passed an HTML check for a single H1, self-canonical,
+  indexability, valid JSON-LD and working internal links/fragments.
+- Cloudflare deployment dry run and production deployment passed.
+- All nine production URLs return 200 with matching canonicals and index/follow.
+  The live sitemap contains nine URLs; an unknown resource returns 404.
+- Googlebot, bingbot and OAI-SearchBot user-agent checks return 200 on the template
+  page. These checks do not establish access from actual crawler IPs or indexing.
+- Browser checks covered desktop and 390px mobile template layout, no horizontal
+  page overflow at that width, the question-section anchor and the live About page.
+
+Search Console indexing, ranking changes and ChatGPT citations were not verified
+by this release. No new sitemap submission, Bing account setup, outreach or
+recurring monitoring was performed. Next evaluate actual impressions/clicks and
+aggregate resource use, then prioritize content from observed query demand.
+
+References checked September 22:
+[Google AI search guidance](https://developers.google.com/search/blog/2025/05/succeeding-in-ai-search),
+[Article markup](https://developers.google.com/search/docs/appearance/structured-data/article),
+[Breadcrumb markup](https://developers.google.com/search/docs/appearance/structured-data/breadcrumb),
+[OpenAI crawler controls](https://developers.openai.com/api/docs/bots).
