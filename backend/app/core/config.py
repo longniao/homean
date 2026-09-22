@@ -30,6 +30,9 @@ class Settings(BaseSettings):
     deepgram_api_key: SecretStr | None = None
     transcription_provider: str = "deepgram"
     email_provider: str = "console"
+    resend_api_key: SecretStr | None = None
+    resend_from_email: str = "reports@homean.com"
+    resend_from_name: str = "Homean"
     public_base_url: str = "http://localhost:8000"
     smtp_host: str | None = None
     smtp_port: int = 587

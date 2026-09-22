@@ -306,7 +306,7 @@ class RealEstateDeliveryService:
         report_send.error = None
         await self._repository.flush()
         # This durable boundary is essential.  If the process dies after the
-        # SMTP call, the next request sees the same pending attempt/link and
+        # provider call, the next request sees the same pending attempt/link and
         # cannot create a second email or link.
         await self._repository.session.commit()
 
@@ -397,7 +397,12 @@ class RealEstateDeliveryService:
         return report_send, visit
 
     def _message_id(self, send_id: uuid.UUID) -> str:
-        domain = self._settings.smtp_from_email.rpartition("@")[2] or "homean.com"
+        sender = (
+            self._settings.resend_from_email
+            if self._settings.email_provider.lower() == "resend"
+            else self._settings.smtp_from_email
+        )
+        domain = sender.rpartition("@")[2] or "homean.com"
         if domain.casefold() == "kawu.local":
             domain = "homean.com"
         return f"<homean-report-{send_id}@{domain}>"

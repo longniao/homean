@@ -6,6 +6,7 @@ from app.email.provider import (
     EmailProvider,
     FakeEmailProvider,
     OutboundEmail,
+    ResendEmailProvider,
     SMTPEmailProvider,
     create_email_provider,
 )
@@ -18,6 +19,7 @@ __all__ = [
     "EmailProvider",
     "FakeEmailProvider",
     "OutboundEmail",
+    "ResendEmailProvider",
     "SMTPEmailProvider",
     "create_email_provider",
 ]

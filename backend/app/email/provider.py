@@ -1,4 +1,6 @@
 import asyncio
+import base64
+import hashlib
 import logging
 import smtplib
 import uuid
@@ -6,6 +8,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from email.message import EmailMessage
 from enum import StrEnum
+
+import httpx
 
 from app.core.config import Settings
 
@@ -29,7 +33,7 @@ class OutboundEmail:
 
 
 class EmailDeliveryOutcome(StrEnum):
-    """The provider's knowledge about whether SMTP accepted the message."""
+    """The provider's knowledge about whether it accepted the message."""
 
     DEFINITIVE_FAILURE = "failed"
     OUTCOME_UNKNOWN = "outcome_unknown"
@@ -172,6 +176,98 @@ class SMTPEmailProvider(EmailProvider):
         return email
 
 
+class ResendEmailProvider(EmailProvider):
+    def __init__(
+        self,
+        settings: Settings,
+        *,
+        transport: httpx.AsyncBaseTransport | None = None,
+    ) -> None:
+        self._api_key = settings.resend_api_key
+        self._from_email = settings.resend_from_email
+        self._from_name = settings.resend_from_name
+        self._transport = transport
+
+    async def send(self, message: OutboundEmail) -> str:
+        if self._api_key is None or not self._api_key.get_secret_value().strip():
+            raise EmailDeliveryError(
+                "RESEND_API_KEY is required when EMAIL_PROVIDER=resend",
+                outcome=EmailDeliveryOutcome.DEFINITIVE_FAILURE,
+            )
+        if not message.message_id.strip():
+            raise EmailDeliveryError(
+                "a stable message_id is required for Resend delivery",
+                outcome=EmailDeliveryOutcome.DEFINITIVE_FAILURE,
+            )
+        payload = {
+            "from": f"{self._from_name} <{self._from_email}>",
+            "to": [message.to_email],
+            "subject": message.subject,
+            "html": message.html_body,
+            "headers": {"Message-ID": message.message_id},
+        }
+        if message.attachment is not None:
+            payload["attachments"] = [
+                {
+                    "filename": message.attachment.filename,
+                    "content": base64.b64encode(message.attachment.content).decode(
+                        "ascii"
+                    ),
+                }
+            ]
+        # The persisted send ID is independent of retries, recipient and PDF
+        # rendering. Hashing bounds the header length without exposing user data.
+        key = hashlib.sha256(message.message_id.encode("utf-8")).hexdigest()
+        try:
+            async with httpx.AsyncClient(
+                timeout=30, transport=self._transport, follow_redirects=False
+            ) as client:
+                response = await client.post(
+                    "https://api.resend.com/emails",
+                    headers={
+                        "Authorization": f"Bearer {self._api_key.get_secret_value()}",
+                        "Idempotency-Key": f"homean-report/{key}",
+                    },
+                    json=payload,
+                )
+        except (httpx.ConnectError, httpx.ConnectTimeout, httpx.PoolTimeout) as exc:
+            raise EmailDeliveryError(
+                "could not connect to Resend",
+                outcome=EmailDeliveryOutcome.DEFINITIVE_FAILURE,
+            ) from exc
+        except httpx.HTTPError as exc:
+            raise EmailDeliveryError(
+                "Resend send outcome is unknown",
+                outcome=EmailDeliveryOutcome.OUTCOME_UNKNOWN,
+            ) from exc
+        if not response.is_success:
+            # 409 may mean the same email was accepted or is still in flight.
+            # Keep uncertain attempts blocked even after Resend's 24h key TTL.
+            rejected = (
+                400 <= response.status_code < 500
+                and response.status_code not in (408, 409)
+            )
+            raise EmailDeliveryError(
+                f"Resend returned HTTP {response.status_code}",
+                outcome=(
+                    EmailDeliveryOutcome.DEFINITIVE_FAILURE
+                    if rejected
+                    else EmailDeliveryOutcome.OUTCOME_UNKNOWN
+                ),
+            )
+        try:
+            result = response.json()
+        except ValueError:
+            result = None
+        provider_id = result.get("id") if isinstance(result, dict) else None
+        if not isinstance(provider_id, str) or not provider_id.strip():
+            raise EmailDeliveryError(
+                "Resend accepted request without a valid message identifier",
+                outcome=EmailDeliveryOutcome.OUTCOME_UNKNOWN,
+            )
+        return provider_id
+
+
 class FakeEmailProvider(EmailProvider):
     def __init__(self) -> None:
         self.messages: list[OutboundEmail] = []
@@ -195,4 +291,6 @@ def create_email_provider(settings: Settings) -> EmailProvider:
         return ConsoleEmailProvider()
     if provider == "smtp":
         return SMTPEmailProvider(settings)
+    if provider == "resend":
+        return ResendEmailProvider(settings)
     raise ValueError(f"unsupported email provider: {settings.email_provider}")
