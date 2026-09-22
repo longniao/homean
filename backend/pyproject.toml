@@ -26,6 +26,7 @@ dependencies = [
     # Report photos are downscaled before being inlined. Available transitively
     # through WeasyPrint, but declared because the renderer imports it directly.
     "pillow>=12,<13",
+    "openai>=2,<3",
 ]
 
 [dependency-groups]

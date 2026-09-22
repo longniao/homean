@@ -26,6 +26,11 @@ class PipelineConfig(BaseSettings):
     observation_extraction_model: str = "claude-opus-4-8"
     report_generation_model: str = "claude-opus-4-8"
     deepgram_model: str = "nova-3"
+    llm_provider: Literal["anthropic", "openai"] = "anthropic"
+    openai_model: str = "gpt-5.4-mini"
+    openai_transcription_model: Literal["gpt-4o-transcribe-diarize"] = (
+        "gpt-4o-transcribe-diarize"
+    )
     output_language: Literal["en"] = "en"
     max_tokens: int = Field(default=16000, ge=1, le=64000)
     # A tag is normally tapped just before the agent starts a short thought.
@@ -41,7 +46,8 @@ class PipelineConfig(BaseSettings):
             PipelineStep.REPORT_GENERATION: self.report_generation_model,
         }
         try:
-            return models[step]
+            model = models[step]
+            return self.openai_model if self.llm_provider == "openai" else model
         except KeyError as exc:
             raise ValueError(f"step does not use an LLM model: {step}") from exc
 

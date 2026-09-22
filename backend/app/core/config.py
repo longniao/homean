@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     access_token_minutes: int = 15
     refresh_token_days: int = 30
     anthropic_api_key: SecretStr | None = None
+    openai_api_key: SecretStr | None = None
     deepgram_api_key: SecretStr | None = None
     transcription_provider: str = "deepgram"
     email_provider: str = "console"

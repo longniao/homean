@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 from deepgram import AsyncDeepgramClient
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.core.config import Settings
 from app.core.pipeline_config import PipelineConfig
@@ -13,10 +13,16 @@ class TranscriptionPiece(BaseModel):
     text: str = Field(min_length=1)
     start_ms: float = Field(ge=0)
     end_ms: float = Field(ge=0)
-    confidence: float = Field(ge=0, le=1)
-    # Provider-assigned speaker index. Stable within one recording only, and
-    # anonymous: it separates voices, it does not identify anyone.
+    confidence: float | None = Field(default=None, ge=0, le=1)
+    # Anonymous voice index scoped to a recording/provider chunk, never an
+    # identity. Separate chunks are not matched to the same person.
     speaker: int | None = Field(default=None, ge=0)
+
+    @model_validator(mode="after")
+    def validate_timestamps(self) -> "TranscriptionPiece":
+        if self.end_ms < self.start_ms:
+            raise ValueError("end_ms must not precede start_ms")
+        return self
 
 
 class TranscriptionProvider(ABC):
@@ -124,6 +130,15 @@ class FakeTranscriptionProvider(TranscriptionProvider):
 def create_transcription_provider(
     settings: Settings, pipeline_config: PipelineConfig
 ) -> TranscriptionProvider:
+    if settings.transcription_provider.lower() == "openai":
+        from app.pipeline.openai_transcription import OpenAITranscriptionProvider
+
+        return OpenAITranscriptionProvider(
+            settings.openai_api_key.get_secret_value()
+            if settings.openai_api_key
+            else "",
+            model=pipeline_config.openai_transcription_model,
+        )
     if settings.transcription_provider.lower() != "deepgram":
         raise ValueError(
             f"unsupported transcription provider: {settings.transcription_provider}"

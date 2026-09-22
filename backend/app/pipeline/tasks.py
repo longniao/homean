@@ -9,7 +9,7 @@ from app.core.config import get_settings
 from app.core.database_url import create_async_engine_for_url
 from app.core.pipeline_config import PipelineStep, get_pipeline_config
 from app.pipeline.celery_app import celery_app
-from app.pipeline.llm import AnthropicLLMClient
+from app.pipeline.llm import create_llm_client
 from app.pipeline.transcription import create_transcription_provider
 from app.services.pipeline import RealEstatePipelineService
 from app.storage import S3Client
@@ -23,18 +23,13 @@ async def _execute_step(
     pipeline_config = get_pipeline_config()
     engine = _create_pipeline_engine(settings.database_url)
     session_factory = async_sessionmaker(engine, expire_on_commit=False)
-    anthropic_key = (
-        settings.anthropic_api_key.get_secret_value()
-        if settings.anthropic_api_key is not None
-        else ""
-    )
     try:
         async with session_factory() as session:
             service = RealEstatePipelineService(
                 session=session,
                 storage=S3Client(settings),
                 transcription=create_transcription_provider(settings, pipeline_config),
-                llm=AnthropicLLMClient(anthropic_key),
+                llm=create_llm_client(settings, pipeline_config),
                 config=pipeline_config,
                 verticals=get_vertical_config_service(),
             )

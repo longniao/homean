@@ -487,8 +487,8 @@ class TranscriptSegment(UUIDTimestampMixin, Base):
     )
     text: Mapped[str] = mapped_column(Text, nullable=False)
     original_text: Mapped[str | None] = mapped_column(Text)
-    # Anonymous diarized voice index, stable within one recording. Null for
-    # segments transcribed before diarization was enabled.
+    # Anonymous voice index, scoped to a recording/provider chunk. Separate
+    # chunks are not identity-matched. Null when the provider omits attribution.
     speaker: Mapped[int | None] = mapped_column(nullable=True)
     timestamp_start: Mapped[float | None] = mapped_column(Float)
     timestamp_end: Mapped[float | None] = mapped_column(Float)

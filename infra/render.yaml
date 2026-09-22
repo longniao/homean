@@ -47,6 +47,14 @@ services:
         sync: false
       - key: DEEPGRAM_API_KEY
         sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: TRANSCRIPTION_PROVIDER
+        value: deepgram
+      - key: PIPELINE_LLM_PROVIDER
+        value: anthropic
+      - key: PIPELINE_OPENAI_MODEL
+        value: gpt-5.4-mini
       - key: JWT_SECRET
         generateValue: true
       - key: SENTRY_DSN
@@ -103,6 +111,14 @@ services:
         sync: false
       - key: DEEPGRAM_API_KEY
         sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: TRANSCRIPTION_PROVIDER
+        value: deepgram
+      - key: PIPELINE_LLM_PROVIDER
+        value: anthropic
+      - key: PIPELINE_OPENAI_MODEL
+        value: gpt-5.4-mini
       - key: JWT_SECRET
         fromService:
           type: web

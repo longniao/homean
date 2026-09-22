@@ -5,10 +5,12 @@
 
 ## P0：打通真实录音到报告
 
-- [ ] **确定 AI 服务账户及调用预算。**
-  - OpenAI API 可支持带说话人/时间戳的转写，再通过结构化输出生成报告；建议评估统一到 OpenAI。
-  - 当前代码仍使用 Deepgram + Anthropic，OpenAI 适配尚未实现。若选择迁移，我负责适配、长录音分片、证据链与回归测试，你准备 OpenAI API 账户、模型权限和预算即可。
-  - 若沿用当前方案，安全配置 Mac mini 的 `/Users/hepang/Git/homean/backend/.env` 中的 `DEEPGRAM_API_KEY`、`ANTHROPIC_API_KEY`。不要把密钥发到聊天或提交 Git。
+- [x] **支持 OpenAI，并保留可切换的 Deepgram / Anthropic。**
+  - 转写与报告可独立选择供应商，配置见 [AI 服务开关](Homean_AI_Providers.md)。
+- [ ] **准备 OpenAI API 凭据及调用预算。**
+  - 在 OpenAI API 账户中确认额度、转写模型和报告模型访问权限。
+  - 安全配置 Mac mini 的 `/Users/hepang/Git/homean/backend/.env` 中的 `OPENAI_API_KEY`，不要把密钥发到聊天或提交 Git。
+  - 使用 OpenAI 完整流程无需 Deepgram / Anthropic 密钥；以后选择混合或原有方案时，再配置相应凭据。
   - 告诉我“凭据已配置”和可接受的试验预算；我负责重启相关服务、验证模型访问、记录一次真实流水线结果。
 - [ ] **准备一段可以合法用于测试的英文录音。**
   - 优先由你自行录制 2–5 分钟虚构带看，含两个房间、一个不确定观察和一个跟进问题。
@@ -63,7 +65,7 @@
 
 ## 建议你先做的三件事
 
-1. 确定采用 OpenAI API 还是保留现有 AI 方案，并给出试验预算。
+1. 配置 `OPENAI_API_KEY`，并给出真实录音试验预算。
 2. 配置 Resend 密钥、验证发信域名，准备虚构英文录音和测试收件邮箱。
 3. 告诉我试用手机类型，以及先免费试用还是准备收费。
 

@@ -62,7 +62,10 @@ cd dashboard
 HOMEAN_API_URL=https://api.homean.com npm run cf:deploy
 ```
 
-Configure Deepgram and Anthropic credentials before real AI processing. Resend
+Choose the transcription and report providers and configure their credentials
+before real AI processing; see [AI provider switches](../../docs/Homean_AI_Providers.md).
+OpenAI transcription requires `/opt/homebrew/bin/ffmpeg` on the native worker.
+Resend
 is the selected email provider; see [Resend setup](../../docs/Homean_Resend_Setup.md).
 Stripe is a separate optional integration; console email does not deliver
 mail. No credentials are inherited from Kawu or Mainpay. Existing Kawu data and

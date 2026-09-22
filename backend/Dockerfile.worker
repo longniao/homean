@@ -8,6 +8,7 @@ ENV UV_COMPILE_BYTECODE=1 \
 RUN apt-get update \
     && apt-get install --no-install-recommends -y \
         fonts-dejavu-core \
+        ffmpeg \
         libharfbuzz-subset0 \
         libpango-1.0-0 \
         libpangoft2-1.0-0 \

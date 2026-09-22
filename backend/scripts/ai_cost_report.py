@@ -1,6 +1,8 @@
 """Summarize recorded Anthropic usage and estimated cost per visit.
 
 Rates are intentionally environment-configured because Anthropic pricing changes.
+OpenAI or mixed-provider visits have unknown cost here; never apply Claude rates
+to GPT tokens. Transcription charges are not included in this text-token estimate.
 The report contains IDs and usage only; it never prints transcript or contact data.
 Run from backend/: ``uv run python scripts/ai_cost_report.py``.
 """
@@ -61,6 +63,10 @@ async def collect(visit_id: uuid.UUID | None = None) -> list[VisitCost]:
                     Visit.workspace_id,
                     func.coalesce(func.sum(PipelineRun.tokens_in), 0),
                     func.coalesce(func.sum(PipelineRun.tokens_out), 0),
+                    func.bool_and(
+                        PipelineRun.model.like("claude-%")
+                        | ((PipelineRun.tokens_in + PipelineRun.tokens_out) == 0)
+                    ),
                 )
                 .join(Visit, Visit.id == PipelineRun.visit_id)
                 .group_by(PipelineRun.visit_id, Visit.workspace_id)
@@ -89,11 +95,17 @@ async def collect(visit_id: uuid.UUID | None = None) -> list[VisitCost]:
                             ),
                             6,
                         )
-                        if priced
+                        if priced and only_anthropic_tokens
                         else None
                     ),
                 )
-                for visit, workspace, tokens_in, tokens_out in rows.tuples()
+                for (
+                    visit,
+                    workspace,
+                    tokens_in,
+                    tokens_out,
+                    only_anthropic_tokens,
+                ) in rows.tuples()
             ]
     finally:
         await engine.dispose()
@@ -110,9 +122,9 @@ def main() -> None:
     result = asyncio.run(collect(args.visit_id))
     if any(item.estimated_cost_usd is None for item in result):
         print(
-            "warning: ANTHROPIC_INPUT_COST_PER_MILLION and "
-            "ANTHROPIC_OUTPUT_COST_PER_MILLION are unset, so cost is reported as "
-            "null rather than zero. Token counts below are still accurate.",
+            "warning: costs are null when Anthropic rates are unset or a visit "
+            "contains other LLM models. Transcription costs are excluded. "
+            "Token counts below are still accurate.",
             file=sys.stderr,
         )
     payload = [
