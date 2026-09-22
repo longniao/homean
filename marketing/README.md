@@ -34,6 +34,15 @@ provisioning.
 The Render Blueprint is an alternative deployment reference. The active public
 site uses Cloudflare; see `wrangler.jsonc` and the rollout record below.
 
+## Brand assets
+
+Public brand language lives in `lib/brand.ts`; dashboard copy is externalized in
+`../dashboard/messages/en.json`. The approved strategy is documented in
+[`Homean_Brand_Strategy_v1.md`](../docs/Homean_Brand_Strategy_v1.md).
+
+After editing `public/og.svg`, run `node scripts/render-social.mjs` from this
+directory to regenerate the matching marketing and dashboard share images.
+
 ## Checks
 
 ```sh

@@ -1,8 +1,8 @@
 {
   "Metadata": {
     "title": "Homean — AI showing reports",
-    "description": "Turn every real-estate showing into an evidence-backed client report.",
-    "imageAlt": "Homean — Every showing, remembered with evidence."
+    "description": "Every showing. A clearer picture. Homean’s early-beta workspace for buyer’s agents to review showing records and prepare client reports.",
+    "imageAlt": "Homean — Every showing. A clearer picture."
   },
   "Common": {
     "close": "Close",
@@ -30,9 +30,9 @@
     "sent_to_client": "Sent"
   },
   "Auth": {
-    "eyebrow": "Showing intelligence for buyer's agents",
-    "brandTitle": "Every showing, remembered with evidence.",
-    "brandBody": "Capture the walkthrough once. Homean turns it into a structured, client-ready report you can review with confidence.",
+    "eyebrow": "AI showing reports for buyer’s agents",
+    "brandTitle": "Every showing. A clearer picture.",
+    "brandBody": "Explore Homean’s early-beta workspace for clearer showing records and client reports. Review the details and keep your professional judgment at the center.",
     "privacy": "Private by default. Nothing is sent without your confirmation.",
     "welcomeBack": "Welcome back",
     "startTrial": "Start your workspace",
@@ -55,7 +55,7 @@
   "Home": {
     "eyebrow": "Your workspace",
     "title": "Showing reports",
-    "subtitle": "Review every walkthrough, follow the evidence, and deliver reports your clients can trust.",
+    "subtitle": "Review your showing records, keep sources connected, and prepare clear reports for your clients.",
     "newShowing": "New showing",
     "byClient": "By client",
     "byProperty": "By property",

@@ -1,8 +1,19 @@
+import { brand } from "./brand";
+
 export const about = {
-  title: "About Homean and our showing resources",
-  description: "Learn who Homean is for, how our free showing resources are prepared, what fictional examples mean, and which product features are available in the early beta.",
+  title: "A clearer picture, for the buyer’s side.",
+  description: "Meet Homean: AI showing reports for buyer’s agents. Learn about our mission, vision, approach to clear records, editorial standards and early-beta availability.",
   eyebrow: "Homean / Purpose & approach",
-  intro: "Homean is an early-beta showing-report tool for real estate buyer’s agents. Our public resources help agents and buyers keep observations, preferences and unanswered questions separate after a home tour.",
+  intro: "A home showing leaves a lot to remember: what stood out, what raised questions, and what needs a closer look. Homean is being built to help buyer’s agents turn those details into clear reports their clients can return to.",
+  directionLabel: "What guides Homean",
+  direction: [
+    { label: "Our purpose", statement: brand.purpose, detail: "A useful record gives agents and buyers a stronger starting point for their next conversation." },
+    { label: "Our vision", statement: brand.vision, detail: "We want buyers to understand their options, the trade-offs, and the questions still worth asking." },
+    { label: "Our mission", statement: brand.mission, detail: "Our focus today is the showing: capturing context, reviewing observations, and preparing a useful client report." },
+  ],
+  promiseLabel: "Our promise",
+  promise: brand.promise,
+  promiseText: "We design around a clear record, connected sources, professional judgment, and privacy. AI organizes a draft; the agent reviews it and decides what is ready to share.",
   updated: "Updated",
   sections: [
     { id: "purpose", title: "A record for the buyer’s side", text: "A showing recap should help a buyer remember the visit and have a more useful next conversation. Homean’s intended workflow connects capture, source-linked observations, agent review and private delivery. It does not choose a home, publish customer reports as listings, or replace a professional assessment." },

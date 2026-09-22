@@ -1,4 +1,5 @@
 import { siteConfig } from "./config";
+import { brand } from "./brand";
 import { updatedAt } from "./public-pages";
 import type { Resource } from "./resources";
 
@@ -6,6 +7,7 @@ const url = (path: string) => new URL(path, siteConfig.siteUrl).toString();
 export const organization = {
   "@type": "Organization", "@id": url("/#organization"), name: "Homean",
   url: url("/"), email: siteConfig.contactEmail,
+  slogan: brand.slogan,
   description: "An early-beta showing-report tool for buyer’s agents, with free public showing templates and home comparison resources.",
 };
 export const siteIdentity = {

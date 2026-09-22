@@ -1,3 +1,10 @@
+.brand-direction { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 36px; margin-block: 20px 56px; }
+.brand-direction-item { border-top: 1px solid var(--line-strong); padding-top: 24px; }
+.brand-direction h2, .brand-promise h2 { font-family: var(--display); font-size: clamp(1.6rem, 2.4vw, 2.15rem); line-height: 1.2; letter-spacing: -.02em; text-wrap: balance; }
+.brand-direction-item > p:last-child, .brand-promise > p:last-child { color: var(--ink-2); margin-top: 18px; line-height: 1.7; }
+.brand-promise { padding: 36px; background: #eff1f5; border-radius: 8px; margin-bottom: 40px; }
+.brand-promise > p:last-child { max-width: 75ch; }
+@media(max-width: 800px) { .brand-direction { grid-template-columns: 1fr; gap: 28px; } .brand-promise { padding: 26px; } }
 .resource-index { padding-block: 80px; }
 .resource-index h1, .resource-index h2, .resource-next h2 { font-family: var(--display); font-size: clamp(2rem,4vw,3rem); line-height: 1.08; letter-spacing: -.025em; }
 .resource-lead { max-width: 70ch; margin-block: 22px; color: var(--ink-2); font-size: 1.1rem; line-height: 1.7; }

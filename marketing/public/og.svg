@@ -1,103 +1,27 @@
-<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <radialGradient id="bloom" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(655 40) rotate(92) scale(510 700)">
-      <stop stop-color="#4F46E5" stop-opacity="0.12"/>
-      <stop offset="1" stop-color="#F4F1E9" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="evidence" x1="0" y1="0" x2="1" y2="1">
-      <stop stop-color="#312E81"/>
-      <stop offset="1" stop-color="#1E1B4B"/>
-    </linearGradient>
-    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
-      <feDropShadow dx="0" dy="22" stdDeviation="24" flood-color="#17312C" flood-opacity="0.25"/>
-    </filter>
-    <pattern id="plan" width="64" height="64" patternUnits="userSpaceOnUse">
-      <path d="M64 0H0V64" stroke="#172824" stroke-opacity="0.055"/>
-    </pattern>
-  </defs>
-
-  <rect width="1200" height="630" fill="#F4F1E9"/>
-  <rect width="1200" height="630" fill="url(#bloom)"/>
-  <rect x="744" width="456" height="630" fill="#E7E3D9"/>
-  <rect x="744" width="456" height="630" fill="url(#plan)"/>
-  <path d="M744 0V630" stroke="#172824" stroke-opacity="0.12"/>
-
-  <g transform="translate(72 58)">
-    <rect width="38" height="38" rx="10" fill="#172824" stroke="#172824"/>
-    <path d="M11 23L21 13M19 27L29 17" stroke="#A5B4FC" stroke-width="2" stroke-linecap="round"/>
-    <text x="52" y="27" fill="#172824" font-family="Arial, sans-serif" font-size="24" font-weight="600">Homean</text>
-  </g>
-
-  <g transform="translate(72 182)">
-    <circle cx="4" cy="-5" r="4" fill="#F97316"/>
-    <text x="18" fill="#3730A3" font-family="Arial, sans-serif" font-size="14" font-weight="700" letter-spacing="2.6">FOR BUYER’S AGENTS</text>
-    <text y="74" fill="#172824" font-family="Georgia, serif" font-size="67" font-weight="500" letter-spacing="-2.4">
-      <tspan x="0">Turn every showing</tspan>
-      <tspan x="0" dy="69">into a client report.</tspan>
-    </text>
-    <text y="244" fill="#53635E" font-family="Arial, sans-serif" font-size="22">
-      <tspan x="0">Capture once. Review the evidence.</tspan>
-      <tspan x="0" dy="34">Deliver with confidence.</tspan>
-    </text>
-    <g transform="translate(0 318)">
-      <rect width="244" height="48" rx="24" fill="#4F46E5"/>
-      <text x="22" y="30" fill="white" font-family="Arial, sans-serif" font-size="12" font-weight="700" letter-spacing="1">CREATE YOUR ACCOUNT</text>
-      <path d="M216 28L225 19M219 19H225V25" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-    </g>
-  </g>
-
-  <g transform="translate(790 72) rotate(1 165 245)" filter="url(#shadow)">
-    <rect width="336" height="492" rx="22" fill="#0D1117" stroke="#FFFFFF" stroke-opacity="0.16"/>
-    <text x="22" y="32" fill="#7F8794" font-family="Arial, sans-serif" font-size="9" font-weight="700" letter-spacing="1.4">FICTIONAL SAMPLE · 1840 ALDER LANE</text>
-    <line x1="22" y1="48" x2="314" y2="48" stroke="#FFFFFF" stroke-opacity="0.09"/>
-
-    <g transform="translate(18 66)">
-      <rect width="140" height="174" rx="12" fill="#050709" stroke="#FFFFFF" stroke-opacity="0.09"/>
-      <circle cx="17" cy="21" r="4" fill="#F97316"/>
-      <text x="29" y="24" fill="#F97316" font-family="Arial, sans-serif" font-size="8" font-weight="700" letter-spacing="1">CAPTURE</text>
-      <path d="M17 58H122" stroke="#FFFFFF" stroke-opacity="0.16"/>
-      <circle cx="42" cy="58" r="3" fill="#111827" stroke="#7F8794"/>
-      <circle cx="92" cy="58" r="6" fill="#F97316" stroke="#EEE8DC"/>
-      <text x="16" y="92" fill="#F1F5F9" font-family="Arial, sans-serif" font-size="20" font-weight="700">10:42:18</text>
-      <text x="16" y="118" fill="#A8ADB7" font-family="Georgia, serif" font-size="12" font-style="italic">
-        <tspan x="16">“South-facing window,</tspan>
-        <tspan x="16" dy="15">strong natural light.”</tspan>
-      </text>
-    </g>
-
-    <path d="M158 153H176" stroke="url(#evidence)" stroke-width="3"/>
-    <circle cx="158" cy="153" r="3" fill="#F97316"/>
-    <circle cx="176" cy="153" r="3" fill="#818CF8"/>
-
-    <g transform="translate(176 66)">
-      <rect width="142" height="174" rx="12" fill="url(#evidence)" stroke="#818CF8" stroke-opacity="0.45"/>
-      <text x="16" y="25" fill="#A5B4FC" font-family="Arial, sans-serif" font-size="8" font-weight="700" letter-spacing="1">EVIDENCE LINKED</text>
-      <text x="16" y="56" fill="#C7D2FE" font-family="Arial, sans-serif" font-size="8" font-weight="700" letter-spacing="1">LIGHT · KITCHEN</text>
-      <text x="16" y="82" fill="white" font-family="Georgia, serif" font-size="17">
-        <tspan x="16">Strong natural</tspan>
-        <tspan x="16" dy="20">light in the</tspan>
-        <tspan x="16" dy="20">kitchen.</tspan>
-      </text>
-      <circle cx="18" cy="148" r="3" fill="#F87171"/>
-      <text x="28" y="151" fill="#C7D2FE" font-family="Arial, sans-serif" font-size="7" font-weight="700" letter-spacing="0.6">PENDING REVIEW</text>
-    </g>
-
-    <g transform="translate(18 256)">
-      <rect width="300" height="198" rx="12" fill="#EEE8DC" stroke="#CFC7B8"/>
-      <text x="18" y="28" fill="#9A3412" font-family="Arial, sans-serif" font-size="8" font-weight="700" letter-spacing="1.2">CLIENT REPORT</text>
-      <path d="M18 39H58" stroke="#4338CA" stroke-width="2"/>
-      <text x="18" y="78" fill="#1D2927" font-family="Georgia, serif" font-size="24">Showing notes</text>
-      <text x="18" y="105" fill="#4F5D59" font-family="Georgia, serif" font-size="12">
-        <tspan x="18">A bright kitchen with generous</tspan>
-        <tspan x="18" dy="17">work surface and an updated feel.</tspan>
-      </text>
-      <rect x="200" y="22" width="80" height="96" rx="7" fill="#17342F"/>
-      <path d="M218 43H262V88H218V43Z" stroke="#EEE8DC" stroke-opacity="0.45" stroke-width="2"/>
-      <path d="M240 101C240 80 250 70 264 63M240 89C228 79 220 74 213 76" stroke="#EEE8DC" stroke-opacity="0.5" stroke-width="2"/>
-      <line x1="18" y1="151" x2="282" y2="151" stroke="#1D2927" stroke-opacity="0.12"/>
-      <text x="18" y="176" fill="#4338CA" font-family="Arial, sans-serif" font-size="8" font-weight="700" letter-spacing="1">PRIVATE · READY AFTER CONFIRMATION</text>
-    </g>
-  </g>
-
-  <text x="1130" y="596" fill="#5F7069" font-family="Arial, sans-serif" font-size="9" font-weight="700" letter-spacing="1.6" text-anchor="end">AI ORGANIZED · AGENT REVIEWED</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" fill="none">
+  <rect width="1200" height="630" fill="#F8F9FB"/>
+  <path d="M72 125H1128M72 545H1128" stroke="#D5D9E0"/>
+  <rect x="72" y="55" width="42" height="42" rx="5" fill="#20242C"/>
+  <text x="84" y="85" fill="white" font-family="Georgia, serif" font-size="29">H</text>
+  <text x="129" y="85" fill="#20242C" font-family="Helvetica, sans-serif" font-size="28" font-weight="600">Homean</text>
+  <text x="1128" y="82" text-anchor="end" fill="#596273" font-family="Helvetica, sans-serif" font-size="16">homean.com</text>
+  <text x="72" y="192" fill="#465D85" font-family="Helvetica, sans-serif" font-size="15" font-weight="600" letter-spacing="1.8">AI SHOWING REPORTS FOR BUYER’S AGENTS</text>
+  <text x="68" y="287" fill="#20242C" font-family="Georgia, serif" font-size="75" letter-spacing="-2">Every showing.</text>
+  <text x="68" y="377" fill="#20242C" font-family="Georgia, serif" font-size="75" letter-spacing="-2">A clearer picture.</text>
+  <text x="72" y="446" fill="#596273" font-family="Helvetica, sans-serif" font-size="21">Clear records. Connected sources.</text>
+  <text x="72" y="480" fill="#596273" font-family="Helvetica, sans-serif" font-size="21">Your professional judgment.</text>
+  <rect x="818" y="173" width="310" height="327" rx="8" fill="white" stroke="#D5D9E0"/>
+  <text x="845" y="208" fill="#596273" font-family="Helvetica, sans-serif" font-size="11" letter-spacing="1.8">THE SHOWING WORKFLOW</text>
+  <path d="M845 226H1101" stroke="#D5D9E0"/>
+  <text x="845" y="269" fill="#465D85" font-family="Georgia, serif" font-size="23">01</text>
+  <text x="890" y="267" fill="#20242C" font-family="Helvetica, sans-serif" font-size="20">Capture the context</text>
+  <path d="M855 285V311" stroke="#CBD3E1"/>
+  <text x="845" y="345" fill="#465D85" font-family="Georgia, serif" font-size="23">02</text>
+  <text x="890" y="343" fill="#20242C" font-family="Helvetica, sans-serif" font-size="20">Review the draft</text>
+  <path d="M855 361V387" stroke="#CBD3E1"/>
+  <text x="845" y="421" fill="#465D85" font-family="Georgia, serif" font-size="23">03</text>
+  <text x="890" y="419" fill="#20242C" font-family="Helvetica, sans-serif" font-size="20">Confirm and share</text>
+  <text x="845" y="470" fill="#596273" font-family="Helvetica, sans-serif" font-size="12">DESIGNED AROUND YOUR JUDGMENT</text>
+  <text x="72" y="585" fill="#596273" font-family="Helvetica, sans-serif" font-size="15">EARLY BETA · ENGLISH ONLY</text>
+  <text x="1128" y="585" text-anchor="end" fill="#596273" font-family="Helvetica, sans-serif" font-size="15">Built for the buyer’s side.</text>
 </svg>

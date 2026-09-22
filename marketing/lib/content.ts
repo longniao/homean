@@ -1,3 +1,5 @@
+import { brand } from "./brand";
+
 export type WorkflowStep = {
   number: string;
   title: string;
@@ -11,33 +13,32 @@ export type FaqItem = {
 };
 
 export const content = {
-  brandName: "Homean",
+  brandName: brand.name,
   metadata: {
     title: "AI Showing Reports & Home Comparisons for Buyer’s Agents | Homean",
     description: "Free showing report templates and a home comparison tool for buyer’s agents and buyers. Explore Homean’s early-beta, agent-reviewed AI report workflow.",
-    socialDescription: "Capture a showing once. Review the structured draft. Deliver a report you stand behind.",
-    socialAlt: "Homean showing records for buyer’s agents",
-    twitterDescription: "A private showing record for buyer’s agents.",
+    socialDescription: brand.socialDescription,
+    socialAlt: `Homean — ${brand.slogan}`,
+    twitterDescription: brand.socialDescription,
   },
   nav: {
     howItWorks: "How it works",
     resources: "Free resources",
-    about: "About & editorial approach",
+    about: "About Homean",
     forAgents: "For agents",
     trust: "Trust",
     signIn: "Sign in",
-    signup: "Create account",
+    signup: "Explore the beta",
     mainNavigation: "Main navigation",
     homeLink: "Homean home",
     homeHref: "#main-content",
   },
   accessibility: { skipToMain: "Skip to main content" },
   hero: {
-    eyebrow: "A showing record for buyer’s agents",
-    title: "Clear reports for every showing.",
-    description:
-      "Free showing templates and home comparisons, with an early-beta workspace for buyer’s agents. Keep the observations clear and your judgment at the center.",
-    primaryCta: "Create account",
+    eyebrow: brand.category,
+    title: brand.slogan,
+    description: brand.betaDescription,
+    primaryCta: "Explore the beta",
     secondaryCta: "Compare homes free",
     note: "Early beta · AI processing not yet generally available · English only",
     sideNote: ["FIELD NOTE", "01—24"],
@@ -84,7 +85,7 @@ export const content = {
   },
   productProof: {
     eyebrow: "Inside a showing record",
-    title: "Every detail has a source.",
+    title: "Keep observations connected to their sources.",
     description:
       "The sample below is fictional and illustrative. It shows the relationship between a timed capture, an observation, and a polished report—not a customer record.",
     sampleLabel: "Fictional sample · 1840 Alder Lane",
@@ -126,7 +127,7 @@ export const content = {
         description: "A structured report makes the next conversation easier to start and easier to remember.",
       },
     ],
-    signupLink: "Create your account",
+    signupLink: "Explore the beta",
   },
   trust: {
     eyebrow: "Product principles",
@@ -145,7 +146,7 @@ export const content = {
     title: "Explore a clearer showing workflow.",
     description:
       "Explore the beta dashboard and fictional examples. AI processing and mobile capture are still being validated before general availability.",
-    cta: "Create your account",
+    cta: "Explore the beta",
     note: "Account creation continues securely in the Homean dashboard.",
   },
   faq: {
@@ -175,10 +176,10 @@ export const content = {
     ] satisfies FaqItem[],
   },
   footer: {
-    line: "A private showing record for buyer’s agents.",
+    line: brand.slogan,
     availability: "Early beta · English only",
     privacy: "Private by default. Agent-reviewed before delivery.",
     copyright: "© 2026 Homean.",
-    signature: "Built for the field.",
+    signature: "Built for the buyer’s side.",
   },
 } as const;

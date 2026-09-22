@@ -14,7 +14,7 @@ describe("marketing home page", () => {
   it("offers self-service signup and an authenticated app link", () => {
     render(<HomePage />);
 
-    const signupLinks = screen.getAllByRole("link", { name: /create (your )?account/i });
+    const signupLinks = screen.getAllByRole("link", { name: /explore the beta/i });
     expect(signupLinks.length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: /sign in/i })[0]).toHaveAttribute("href", siteConfig.appUrl);
     for (const link of signupLinks) {
@@ -64,7 +64,7 @@ describe("marketing home page", () => {
   it("keeps social metadata on the supported PNG preview and gates indexing", () => {
     expect(metadata.robots).toEqual({ index: false, follow: false });
     expect(metadata.openGraph?.images).toEqual([
-      { url: "/og.png", width: 1200, height: 630, alt: "Homean showing records for buyer’s agents" },
+      { url: "/og.png", width: 1200, height: 630, alt: "Homean — Every showing. A clearer picture." },
     ]);
     expect(metadata.twitter?.images).toEqual(["/og.png"]);
   });

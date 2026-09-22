@@ -13,7 +13,7 @@ export function SiteHeader() {
         <Link href="/how-it-works/">{content.nav.howItWorks}</Link>
         <Link href="/#for-agents">{content.nav.forAgents}</Link>
         <Link href="/#trust">{content.nav.trust}</Link>
-      <Link href="/resources/">{content.nav.resources}</Link></nav>
+      <Link href="/resources/">{content.nav.resources}</Link><Link href="/about/">{content.nav.about}</Link></nav>
       <div className="header-actions">
         <a className="sign-in-link" href={siteConfig.appUrl}>{content.nav.signIn}</a>
         <a className="button button-small button-dark" href={siteConfig.signupUrl}>{content.nav.signup}</a>

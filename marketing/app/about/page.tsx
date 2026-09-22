@@ -18,6 +18,13 @@ export default function AboutPage() {
   return <><SiteHeader /><main id="main-content" className="resource-page section-shell">
     <StructuredData value={{ "@context": "https://schema.org", "@type": "AboutPage", name: about.title, url: `${siteConfig.siteUrl}/about/`, about: { "@id": organization["@id"] }, inLanguage: "en", dateModified: date }} />
     <header className="resource-heading"><p className="eyebrow">{about.eyebrow}</p><h1>{about.title}</h1><p className="resource-lead">{about.intro}</p><p className="resource-byline">{about.updated} <time dateTime={date}>{displayDate(date)}</time></p></header>
+    <section className="brand-direction" aria-label={about.directionLabel}>
+      {about.direction.map((item, index) => <article className="brand-direction-item" key={item.label}>
+        <p className="eyebrow"><span aria-hidden="true">0{index + 1} / </span>{item.label}</p>
+        <h2>{item.statement}</h2><p>{item.detail}</p>
+      </article>)}
+    </section>
+    <section className="brand-promise" aria-labelledby="brand-promise-title"><p className="eyebrow">{about.promiseLabel}</p><h2 id="brand-promise-title">{about.promise}</h2><p>{about.promiseText}</p></section>
     <aside className="beta-note"><h2>{about.availableTitle}</h2><p>{about.availableText}</p><div className="resource-actions"><Link className="text-link" href="/resources/">{about.resourcesLink} →</Link><Link className="text-link" href="/how-it-works/">{about.availabilityLink} →</Link></div></aside>
     <article className="resource-body">{about.sections.map(section => <section id={section.id} key={section.id}><h2>{section.title}</h2><p>{section.text}</p></section>)}<section><h2>{about.contactTitle}</h2><p>{about.contactText}</p><p className="resource-contact"><a href={contactMailto()}>{siteConfig.contactEmail}</a></p></section></article>
   </main></>;

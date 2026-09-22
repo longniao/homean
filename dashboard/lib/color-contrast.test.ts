@@ -49,7 +49,7 @@ describe("shared Homean palette contrast", () => {
     }
   });
 
-  it("keeps the shared slash mark visible on its dark tile", () => {
-    expect(contrastRatio("#a5b4fc", "#0d1117")).toBeGreaterThanOrEqual(4.5);
+  it("keeps the shared H mark visible on its dark tile", () => {
+    expect(contrastRatio("#ffffff", "#0d1117")).toBeGreaterThanOrEqual(4.5);
   });
 });
