@@ -67,6 +67,11 @@ uv run ruff check .
 uv run pytest
 ```
 
+Tests create a throwaway database per run through the admin connection
+`postgresql+asyncpg://homean:homean@127.0.0.1:55432/postgres`. If another project
+already occupies port 55432, point `TEST_DATABASE_ADMIN_URL` (and `TEST_REDIS_URL`)
+at a spare instance instead of changing the Compose file.
+
 ## Dashboard
 
 In a second terminal:

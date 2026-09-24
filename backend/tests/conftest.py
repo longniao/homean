@@ -85,7 +85,17 @@ async def database_url() -> AsyncIterator[str]:
     redis_url = os.environ.get("TEST_REDIS_URL", "redis://127.0.0.1:6379/0")
     rate_limit_key_prefix = _TEST_RATE_LIMIT_KEY_PREFIX
 
-    admin_connection = await asyncpg.connect(_asyncpg_dsn(admin_url))
+    try:
+        admin_connection = await asyncpg.connect(_asyncpg_dsn(admin_url))
+    except (OSError, asyncpg.PostgresError) as exc:
+        pytest.exit(
+            "Cannot reach the test PostgreSQL admin database "
+            f"({make_url(admin_url).render_as_string(hide_password=True)}): {exc}. "
+            "Start it with `docker compose -f infra/docker-compose.yml up -d postgres` "
+            "or point TEST_DATABASE_ADMIN_URL at a spare instance if port 55432 is "
+            "used by another project.",
+            returncode=2,
+        )
     try:
         await admin_connection.execute(f'CREATE DATABASE "{database_name}"')
     finally:
