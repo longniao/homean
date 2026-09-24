@@ -35,6 +35,31 @@ why instead of attempting a recording that cannot remain active in the backgroun
 
 Audio files are recorded directly into the app document directory. Photos and videos are copied from camera cache into the document directory before being queued. Each video is queued with the elapsed offset at which recording started. JWTs are stored in SecureStore; capture metadata, upload state, retry times, and voice-tag offsets are stored in SQLite.
 
+## Distribution builds (EAS)
+
+Pilot devices need an installable build; Expo Go cannot run the background
+recording plugins. `eas.json` defines three profiles, all pointed at
+`https://api.homean.com`:
+
+| Profile | Purpose | Install path |
+| --- | --- | --- |
+| `development` | Dev client for debugging on a physical device | Internal distribution link / ad-hoc |
+| `preview` | Release-mode build for pilot agents, no store review | Internal distribution link (iOS ad-hoc, Android APK) |
+| `production` | Store submission | TestFlight / Play Console |
+
+One-time setup by the Expo account owner: `npm install -g eas-cli`, `eas login`,
+then `eas init` inside `mobile/` to write the project id into `app.json`, and
+`eas credentials` to register the Apple team and pilot devices (`eas device:create`
+for iOS ad-hoc). After that:
+
+```sh
+npm run build:preview   # or build:dev / build:prod
+```
+
+The build page shows a QR code/link that pilot devices open to install. Physical-device
+acceptance (airplane mode, force-quit recovery, resync) is run on a `preview` build
+and recorded in the pilot checklist, gate 10.
+
 ## Sync semantics
 
 The durable queue creates the remote showing, presigns each media item, uploads it, calls `complete`, and only calls `finish` after every media item completes. An interrupted PUT resumes from its persisted step by safely retrying the same presigned PUT; the current backend does not expose multipart byte-range upload APIs.
