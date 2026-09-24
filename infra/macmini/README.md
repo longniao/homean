@@ -3,6 +3,8 @@
 Homean runs on `macmini` from `/Users/hepang/Git/homean/backend`, following
 Mainpay's native uv + supervisord + Cloudflare Tunnel deployment pattern.
 Dependencies use a separate `homean-production` Docker Compose project.
+MinIO images are pulled from `quay.io/minio`; Docker Hub stopped serving
+`minio/minio`, so a fresh pull of the old reference fails.
 
 | Service | Loopback address |
 | --- | --- |
@@ -71,4 +73,33 @@ Stripe is a separate optional integration; console email does not deliver
 mail. No credentials are inherited from Kawu or Mainpay. Existing Kawu data and
 uncommitted source remain untouched. Establish encrypted off-host database and
 media backups before accepting customer data; Docker volumes alone are not a
-backup.
+backup. The tooling for that lives in `backup/` and is described below.
+
+## Backups and restore drill
+
+`backup/backup.sh` takes an encrypted snapshot of PostgreSQL (`pg_dump` custom
+format) and the MinIO media volume, uploads it with rclone to an off-host
+remote, and prunes old snapshots. `backup/restore_drill.sh` restores the newest
+snapshot into the isolated `homean-restore-drill` Compose project, checks the
+Alembic revision, prints evidence-chain row counts, boots a throwaway API and
+requires `/ready` to pass. Neither script connects to production for the drill.
+
+Setup on the Mac mini, once:
+
+```bash
+brew install age rclone
+age-keygen -o ~/homean-backup-identity.txt   # keep the private key OFF the Mac mini too
+rclone config                                # create the off-host remote
+cp infra/macmini/backup/backup.env.example infra/macmini/backup/backup.env
+chmod 600 infra/macmini/backup/backup.env    # fill in BACKUP_REMOTE and BACKUP_AGE_RECIPIENT
+bash infra/macmini/backup/backup.sh          # first snapshot
+BACKUP_AGE_IDENTITY=~/homean-backup-identity.txt bash infra/macmini/backup/restore_drill.sh
+cp infra/macmini/backup/com.homean.backup.plist ~/Library/LaunchAgents/
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.homean.backup.plist
+```
+
+The launchd job runs daily at 03:30 local time and logs to
+`~/git/logs/homean_backup.*.log`. Repeat the restore drill after every
+migration that changes the evidence chain, and record the drill summary as
+evidence for checklist gate 4. Redis is intentionally not backed up: it holds
+only the transient Celery queue.

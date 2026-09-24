@@ -1,0 +1,36 @@
+# Isolated target for restore_drill.sh. Different project name, ports and
+# volumes from homean-production, so a drill can never touch live data.
+name: homean-restore-drill
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: homean
+      POSTGRES_USER: homean
+      POSTGRES_PASSWORD: drill-only
+    ports: ["127.0.0.1:55498:5432"]
+    volumes: ["postgres-data:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U homean -d homean"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+  redis:
+    image: redis:7-alpine
+    ports: ["127.0.0.1:6398:6379"]
+  minio:
+    image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
+    command: server /data --console-address :9001
+    environment:
+      MINIO_ROOT_USER: drill
+      MINIO_ROOT_PASSWORD: drill-only-secret
+    ports: ["127.0.0.1:9098:9000"]
+    volumes: ["media-data:/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "mc ready local || curl -sf http://127.0.0.1:9000/minio/health/live"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+volumes:
+  postgres-data:
+  media-data:

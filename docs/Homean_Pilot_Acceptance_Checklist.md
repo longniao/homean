@@ -86,10 +86,10 @@ in this document.
 - **Date (UTC):**
 - **Evidence location:**
 - **Checks:**
-  - [ ] Render daily backup / point-in-time recovery is enabled for the staging or pilot database as applicable.
+  - [ ] The daily `infra/macmini/backup/backup.sh` launchd job is installed and its latest snapshot exists on the off-host remote.
   - [ ] Backup retention is recorded.
   - [ ] A named restore owner and escalation contact are recorded above.
-  - [ ] A restore drill completed successfully into an isolated target.
+  - [ ] `infra/macmini/backup/restore_drill.sh` completed successfully into the isolated `homean-restore-drill` target and its summary is attached.
   - [ ] The drill restored representative workspace, visit, evidence-chain, report, and delivery-state data.
   - [ ] The restored application passed `/ready` and a read-only verification.
 - **Notes:**
