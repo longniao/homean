@@ -11,3 +11,6 @@ cloudflare-env.d.ts
 
 # Mac mini backup configuration (local only)
 infra/macmini/backup/backup.env
+
+# Local stack state (scripts/local_stack.sh)
+.local/

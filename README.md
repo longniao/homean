@@ -72,6 +72,9 @@ Tests create a throwaway database per run through the admin connection
 already occupies port 55432, point `TEST_DATABASE_ADMIN_URL` (and `TEST_REDIS_URL`)
 at a spare instance instead of changing the Compose file.
 
+For the full local workflow (test database, local stack for the phone app and dashboard,
+emulators, manual acceptance) see [docs/Homean_Local_Testing_Guide.md](docs/Homean_Local_Testing_Guide.md).
+
 ## Dashboard
 
 In a second terminal:
