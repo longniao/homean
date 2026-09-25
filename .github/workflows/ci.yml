@@ -108,7 +108,13 @@ jobs:
       - run: npm test
       - run: npm run typecheck
       - run: npm run lint
+      # The SDK version check compares against whatever patch Expo published
+      # today, so it would turn main red on every upstream release. Keep the
+      # other 20 checks blocking; run `npx expo install --check` before an
+      # EAS build to realign versions.
       - run: npx expo-doctor
+        env:
+          EXPO_DOCTOR_SKIP_DEPENDENCY_VERSION_CHECK: "1"
 
   e2e:
     name: End-to-end

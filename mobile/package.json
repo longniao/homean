@@ -3,7 +3,7 @@
   "version": "1.0.1",
   "main": "index.ts",
   "dependencies": {
-    "expo": "~57.0.24",
+    "expo": "~57.0.25",
     "expo-asset": "~57.0.18",
     "expo-audio": "~57.0.5",
     "expo-camera": "~57.0.5",
