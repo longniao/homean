@@ -30,6 +30,10 @@
 - [ ] **安排录音同意和报告说明的专业审核。**
   - 请审核人确认录音同意文本、报告用途限制、媒体保存/删除政策，给出最终批准文本及日期。
   - 当前 `real_estate.yaml` 的 `counsel_review_status` 仍为 `pending`；我负责落实批准版本，不能替审核人签收。
+- [ ] **创建 R2 API Token，完成媒体存储切换。**
+  - R2 桶 `homean-media` 和 CORS 已建好，代码和迁移脚本已就绪（`infra/macmini/r2/`）。
+  - 你需要在 Cloudflare 控制台 R2 → Manage API tokens 创建一个只对 `homean-media` 有 Object Read & Write 权限的 token，把 Access Key ID / Secret 放到 Mac mini 的 `backend/.env`，或授权我登录 Mac mini 执行切换。
+  - 切换步骤见 `infra/macmini/README.md` 的 Media storage on R2。
 - [ ] **确定备份目的地和保存周期。**
   - 备份与恢复演练脚本已就绪（`infra/macmini/backup/`，age 加密 + rclone 上传 + 隔离恢复演练），本地已验证。
   - 还需要你决定：rclone 目的地（如 Backblaze B2 / 另一台机器）、账户与预算、允许的数据存储地区、保留天数（默认 30 天）。

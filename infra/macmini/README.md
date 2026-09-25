@@ -17,11 +17,10 @@ Production secrets live only in `backend/.env` on the Mac mini (mode 0600).
 Use unique random PostgreSQL, S3, and JWT credentials. Set `POSTGRES_PASSWORD`,
 `DATABASE_URL`, `REDIS_URL`, all `S3_*` values, and `JWT_SECRET`. Configure
 `APP_ENV=production`, `DASHBOARD_ORIGIN=https://app.homean.com`,
-`PUBLIC_BASE_URL=https://api.homean.com`, and
-`S3_ENDPOINT_URL=https://media.homean.com` and
-`S3_INTERNAL_ENDPOINT_URL=http://127.0.0.1:9010`. The S3 endpoint must be reachable by
+`PUBLIC_BASE_URL=https://api.homean.com`, and the `S3_*` values for Cloudflare R2
+described under **Media storage on R2** below. The S3 endpoint must be reachable by
 browsers and phones because it is used in signed URLs. Buckets remain private;
-never add an anonymous read policy or publish the MinIO console.
+never add a public bucket policy.
 
 Add the following ingress rules before the shared tunnel's catch-all:
 
@@ -103,3 +102,38 @@ The launchd job runs daily at 03:30 local time and logs to
 migration that changes the evidence chain, and record the drill summary as
 evidence for checklist gate 4. Redis is intentionally not backed up: it holds
 only the transient Celery queue.
+
+## Media storage on R2
+
+Media (audio, photos, video, PDFs, logos) lives in the Cloudflare R2 bucket
+`homean-media` (account `9cb6c5c344477c40e7b141a668789813`, location hint WNAM).
+Its CORS rule is versioned in `r2/cors.json` and applied with
+`npx wrangler r2 bucket cors set homean-media --file infra/macmini/r2/cors.json`
+from `dashboard/`. Phones and browsers talk to R2 directly through presigned
+URLs, so the Mac mini no longer serves media and `media.homean.com` is not needed.
+
+Cut-over from the Mac mini's MinIO, in order:
+
+1. In the Cloudflare dashboard, R2 → Manage API tokens → create a token with
+   **Object Read & Write** scoped to `homean-media`. Note the Access Key ID, the
+   Secret Access Key and the S3 endpoint `https://<account-id>.r2.cloudflarestorage.com`.
+2. Copy every existing object while MinIO is still live (re-runnable, never deletes):
+   ```bash
+   cd ~/Git/homean
+   R2_ENDPOINT_URL=https://<account-id>.r2.cloudflarestorage.com \
+   R2_ACCESS_KEY=<key id> R2_SECRET_KEY=<secret> \
+   bash infra/macmini/r2/migrate_media_to_r2.sh
+   ```
+3. In `backend/.env` set `S3_ENDPOINT_URL` to the R2 endpoint, `S3_ACCESS_KEY` /
+   `S3_SECRET_KEY` to the token values, `S3_BUCKET=homean-media`, `S3_REGION=auto`,
+   and remove `S3_INTERNAL_ENDPOINT_URL`. Then `supervisorctl restart homean_api homean_worker`.
+4. Verify: `curl https://api.homean.com/ready` reports `s3: ok`; upload one photo
+   from the dashboard and open it back; run step 2 once more so anything captured
+   during the switch is copied.
+5. Retire MinIO on the Mac mini: remove the `media.homean.com` ingress rule from the
+   tunnel, then `docker compose -p homean-production stop minio`. Keep the volume
+   for 30 days before `docker compose -p homean-production rm -v minio`.
+
+The backup script's media step archives the MinIO volume and becomes redundant
+after step 5; the PostgreSQL step still matters. R2 itself is one provider, so a
+second bucket or another provider remains the encrypted backup target.

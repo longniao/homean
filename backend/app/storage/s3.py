@@ -3,10 +3,20 @@ from typing import Any
 
 import boto3
 from botocore.client import BaseClient
+from botocore.config import Config
 from botocore.exceptions import ClientError
 
 from app.core.config import Settings
 from app.storage.provider import StorageProvider, StoredObject, StoredObjectBody
+
+# Works against MinIO and Cloudflare R2. SigV4 is required by R2; the checksum
+# settings stop newer boto3 releases from sending CRC headers that some
+# S3-compatible stores reject, which nothing here relies on.
+_S3_CONFIG = Config(
+    signature_version="s3v4",
+    request_checksum_calculation="when_required",
+    response_checksum_validation="when_required",
+)
 
 
 class S3Client(StorageProvider):
@@ -18,6 +28,7 @@ class S3Client(StorageProvider):
             aws_access_key_id=settings.s3_access_key,
             aws_secret_access_key=settings.s3_secret_key.get_secret_value(),
             region_name=settings.s3_region,
+            config=_S3_CONFIG,
         )
 
         # Browser signatures must use the public hostname; server-side traffic can
@@ -30,6 +41,7 @@ class S3Client(StorageProvider):
                 aws_access_key_id=settings.s3_access_key,
                 aws_secret_access_key=settings.s3_secret_key.get_secret_value(),
                 region_name=settings.s3_region,
+                config=_S3_CONFIG,
             )
 
     async def check_ready(self) -> None:
