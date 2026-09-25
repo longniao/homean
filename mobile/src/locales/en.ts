@@ -6,6 +6,9 @@ export const en = {
   auth: {
     title: 'Welcome to Homean', subtitle: 'Sign in to capture your showing.', email: 'Email',
     password: 'Password', login: 'Sign in', invalid: 'Check your email and password.',
+    signup: 'Create account', signupSubtitle: 'Set up your private workspace.', passwordHint: 'At least 8 characters',
+    toSignup: 'New to Homean? Create an account', toLogin: 'Already have an account? Sign in',
+    emailTaken: 'An account with this email already exists. Sign in instead.',
   },
   home: {
     title: 'Homean Capture', start: 'Start Showing', recent: 'Recent showings',

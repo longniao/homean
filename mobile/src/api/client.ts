@@ -115,12 +115,16 @@ export class ApiClient {
     });
   }
 
-  async login(email: string, password: string): Promise<void> {
+  login(email: string, password: string): Promise<void> { return this.authenticate('login', email, password); }
+
+  signup(email: string, password: string): Promise<void> { return this.authenticate('signup', email, password); }
+
+  private async authenticate(path: 'login' | 'signup', email: string, password: string): Promise<void> {
     await this.logoutPending;
     deactivateSessionAccount();
     this.refreshPromise = null;
     const generation = sessionGeneration();
-    const response = await fetch(`${API_URL}/auth/login`, {
+    const response = await fetch(`${API_URL}/auth/${path}`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }),
     });
     if (!response.ok) throw new ApiError(response.status, await responseDetail(response));

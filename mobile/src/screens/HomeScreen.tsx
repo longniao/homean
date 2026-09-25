@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
-import { Alert, Modal, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Modal, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Card, PrimaryButton, SecondaryButton } from '../components/ui';
+import { Card, Field, PrimaryButton, SecondaryButton } from '../components/ui';
 import { colors } from '../theme';
 import type { Account, ConsentPolicy, Contact, LocalShowing, Property } from '../types';
 
@@ -49,17 +49,17 @@ export function HomeScreen(props: Props) {
       </Card>)}
     </ScrollView>
     <Modal visible={setup} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setSetup(false)}>
-      <ScrollView style={styles.modal} contentContainerStyle={styles.modalContent}>
+      <KeyboardAvoidingView behavior="padding" style={styles.modal}><ScrollView contentContainerStyle={styles.modalContent} keyboardShouldPersistTaps="handled">
         <View style={styles.header}><Text style={styles.title}>{t('setup.title')}</Text><Pressable onPress={() => setSetup(false)}><Text>{t('common.close')}</Text></Pressable></View>
-        <TextInput style={styles.input} placeholder={t('setup.search')} value={query} onChangeText={setQuery} />
+        <Field style={styles.input} placeholder={t('setup.search')} value={query} onChangeText={setQuery} />
         <Text style={styles.label}>{t('setup.client')}</Text><Choice selected={contactId === null} label={t('setup.noClient')} onPress={() => setContactId(null)} />
         {contacts.map((item) => <Choice key={item.id} selected={contactId === item.id} label={item.name} onPress={() => setContactId(item.id)} />)}
         <Text style={styles.label}>{t('setup.property')}</Text><Choice selected={subjectId === null && !address} label={t('setup.noProperty')} onPress={() => { setSubjectId(null); setAddress(''); }} />
         {properties.map((item) => <Choice key={item.id} selected={subjectId === item.id} label={`${item.displayName} · ${item.address}`} onPress={() => { setSubjectId(item.id); setAddress(''); }} />)}
-        <Text style={styles.label}>{t('setup.address')}</Text><TextInput style={styles.input} placeholder={t('setup.addressPlaceholder')} value={address} onChangeText={(value) => { setAddress(value); if (value) setSubjectId(null); }} />
+        <Text style={styles.label}>{t('setup.address')}</Text><Field style={styles.input} placeholder={t('setup.addressPlaceholder')} value={address} onChangeText={(value) => { setAddress(value); if (value) setSubjectId(null); }} />
         <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: consentAck }} onPress={() => setConsentAck((value) => !value)} style={styles.consent}><View style={[styles.checkbox, consentAck && styles.checkboxChecked]} /><Text style={styles.consentText}>{props.consent?.text ?? t('setup.consent')}</Text></Pressable>
         <PrimaryButton label={t('setup.begin')} onPress={begin} style={styles.begin} disabled={!consentAck} />
-      </ScrollView>
+      </ScrollView></KeyboardAvoidingView>
     </Modal>
   </View>;
 }
@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
   section: { marginHorizontal: 22, marginBottom: 10, color: colors.ink, fontSize: 19, fontWeight: '700' }, list: { paddingHorizontal: 22, paddingBottom: 40, gap: 12 }, empty: { color: colors.muted, textAlign: 'center', paddingTop: 40, lineHeight: 24 },
   showing: { gap: 12 }, row: { flexDirection: 'row', alignItems: 'center', gap: 12 }, grow: { flex: 1 }, showingTitle: { fontSize: 17, fontWeight: '700', color: colors.ink }, date: { color: colors.muted, marginTop: 4 },
   badge: { backgroundColor: colors.greenSoft, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 6 }, failed: { backgroundColor: colors.redSoft }, badgeText: { color: colors.ink, fontWeight: '600', fontSize: 12 }, error: { color: colors.red }, dropped: { color: colors.gold, lineHeight: 19 }, reportButton: { alignSelf: 'flex-start' },
-  modal: { flex: 1, backgroundColor: colors.cream }, modalContent: { paddingTop: 28, paddingBottom: 50 }, input: { backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border, borderRadius: 12, padding: 14, fontSize: 16, margin: 22, marginBottom: 8 }, consent: { flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 22, marginTop: 26 }, checkbox: { width: 22, height: 22, borderRadius: 5, borderWidth: 2, borderColor: colors.border, backgroundColor: colors.white }, checkboxChecked: { backgroundColor: colors.green, borderColor: colors.green }, consentText: { flex: 1, color: colors.ink, lineHeight: 20 },
+  modal: { flex: 1, backgroundColor: colors.cream }, modalContent: { paddingTop: 28, paddingBottom: 50 }, input: { margin: 22, marginBottom: 8 }, consent: { flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 22, marginTop: 26 }, checkbox: { width: 22, height: 22, borderRadius: 5, borderWidth: 2, borderColor: colors.border, backgroundColor: colors.white }, checkboxChecked: { backgroundColor: colors.green, borderColor: colors.green }, consentText: { flex: 1, color: colors.ink, lineHeight: 20 },
   label: { marginHorizontal: 22, marginTop: 22, marginBottom: 8, fontWeight: '700', color: colors.ink }, choice: { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 22, paddingVertical: 11 }, choiceSelected: { backgroundColor: colors.greenSoft, borderRadius: 10, paddingHorizontal: 10 },
   radio: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: colors.border }, radioSelected: { borderWidth: 6, borderColor: colors.green }, choiceText: { flex: 1, color: colors.ink }, begin: { margin: 22, marginTop: 34 },
 });

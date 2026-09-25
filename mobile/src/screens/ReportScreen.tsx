@@ -1,9 +1,9 @@
 import { assertSessionGeneration, sessionGeneration } from '../auth/sessionScope';
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Linking, Modal, Pressable, ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Linking, Modal, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
-import { Card, PrimaryButton, SecondaryButton } from '../components/ui';
+import { Card, Field, PrimaryButton, SecondaryButton } from '../components/ui';
 import { readShowingDetail, readVerticalConfig, writeShowingDetail, writeVerticalConfig } from '../storage/cache';
 import { colors } from '../theme';
 import type { ReportBullet, ReportContent, ShowingDetail, VerticalConfig } from '../types';
@@ -87,7 +87,7 @@ export function ReportScreen({ visitId, onBack }: { visitId: string; onBack: () 
       {!stale && detail.status === 'draft' && (canConfirm ? <PrimaryButton label={t('report.confirm')} onPress={() => { void confirm(); }} /> : <Card style={styles.desktop}><Text style={styles.desktopBody}>{detail.property ? t('report.desktopBody') : t('report.propertyRequired')}</Text><SecondaryButton label={t('report.desktop')} onPress={desktop} /></Card>)}
       {!stale && detail.status !== 'draft' && <PrimaryButton label={t('report.send')} onPress={() => { void send(); }} />}
     </ScrollView>
-    <Modal visible={Boolean(edit)} transparent animationType="fade" onRequestClose={() => setEdit(null)}><View style={styles.overlay}><Card style={styles.editor}><Text style={styles.sectionTitle}>{t('report.edit')}</Text><TextInput multiline value={edit?.value ?? ''} onChangeText={(value) => setEdit((current) => current ? { ...current, value } : null)} style={styles.input} /><PrimaryButton label={t('common.save')} onPress={() => { void saveBullet(); }} /><SecondaryButton label={t('common.cancel')} onPress={() => setEdit(null)} /></Card></View></Modal>
+    <Modal visible={Boolean(edit)} transparent animationType="fade" onRequestClose={() => setEdit(null)}><KeyboardAvoidingView behavior="padding" style={styles.overlay}><Card style={styles.editor}><Text style={styles.sectionTitle}>{t('report.edit')}</Text><Field multiline value={edit?.value ?? ''} onChangeText={(value) => setEdit((current) => current ? { ...current, value } : null)} style={styles.input} /><PrimaryButton label={t('common.save')} onPress={() => { void saveBullet(); }} /><SecondaryButton label={t('common.cancel')} onPress={() => setEdit(null)} /></Card></KeyboardAvoidingView></Modal>
   </View>;
 }
 
@@ -112,5 +112,5 @@ const styles = StyleSheet.create({
   roomTitle: { fontWeight: '800', color: colors.ink, textTransform: 'capitalize' }, category: { color: colors.gold, fontWeight: '800', textTransform: 'uppercase', fontSize: 11 }, observation: { color: colors.ink, lineHeight: 21 }, warning: { color: colors.red, fontWeight: '700' },
   sensitive: { backgroundColor: colors.redSoft, borderColor: colors.red }, delete: { alignSelf: 'flex-start' }, deleteText: { color: colors.red }, desktop: { backgroundColor: colors.greenSoft, gap: 12 }, desktopBody: { color: colors.ink, lineHeight: 21 },
   offline: { backgroundColor: colors.greenSoft }, offlineText: { color: colors.ink, lineHeight: 21 },
-  overlay: { flex: 1, backgroundColor: '#00000066', justifyContent: 'center', padding: 24 }, editor: { gap: 12 }, input: { minHeight: 120, borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 12, textAlignVertical: 'top' },
+  overlay: { flex: 1, backgroundColor: '#00000066', justifyContent: 'center', padding: 24 }, editor: { gap: 12 }, input: { minHeight: 120, borderRadius: 10, padding: 12, textAlignVertical: 'top' },
 });
