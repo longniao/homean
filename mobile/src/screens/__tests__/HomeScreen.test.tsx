@@ -1,8 +1,12 @@
 import '../../i18n';
 import { Alert } from 'react-native';
-import { fireEvent, render } from '@testing-library/react-native';
+import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import { ApiError } from '../../api/client';
 import { HomeScreen } from '../HomeScreen';
 import type { LocalShowing } from '../../types';
+
+jest.mock('expo-secure-store', () => ({ getItemAsync: jest.fn(), setItemAsync: jest.fn(), deleteItemAsync: jest.fn() }));
+jest.mock('expo-sqlite', () => ({ openDatabaseAsync: jest.fn(), deleteDatabaseAsync: jest.fn() }));
 
 describe('HomeScreen recording consent', () => {
   test('requires consent before starting and passes the acknowledgement', async () => {
@@ -12,6 +16,7 @@ describe('HomeScreen recording consent', () => {
         account={null}
         consent={null}
         contacts={[]}
+        onDeleteAccount={async () => undefined}
         onLogout={() => undefined}
         onOpenReport={() => undefined}
         onRefresh={() => undefined}
@@ -62,6 +67,7 @@ function renderHome(props: Partial<React.ComponentProps<typeof HomeScreen>> = {}
       account={null}
       consent={null}
       contacts={[]}
+      onDeleteAccount={async () => undefined}
       onLogout={() => undefined}
       onOpenReport={() => undefined}
       onRefresh={() => undefined}
@@ -142,5 +148,30 @@ describe('HomeScreen sign-out guard', () => {
     const actions = alert.mock.calls[0]![2] as { text: string; onPress?: () => void }[];
     actions.find((action) => action.text === 'Sign out')?.onPress?.();
     expect(onLogout).toHaveBeenCalled();
+  });
+});
+
+describe('HomeScreen account deletion', () => {
+  const baseProps = { account: null, consent: null, contacts: [], onLogout: () => undefined, onOpenReport: () => undefined, onRefresh: () => undefined, onStart: () => undefined, properties: [], refreshing: false, showings: [] };
+
+  test('asks for the password and only deletes once it is long enough', async () => {
+    const onDeleteAccount = jest.fn().mockResolvedValue(undefined);
+    const screen = await render(<HomeScreen {...baseProps} onDeleteAccount={onDeleteAccount} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Delete account' }));
+    const confirm = screen.getByRole('button', { name: 'Delete everything' });
+    expect(confirm.props.accessibilityState?.disabled).toBe(true);
+    await fireEvent.changeText(screen.getByLabelText('Confirm your password'), 'correct-horse-1');
+    await fireEvent.press(screen.getByRole('button', { name: 'Delete everything' }));
+    await waitFor(() => expect(onDeleteAccount).toHaveBeenCalledWith('correct-horse-1'));
+  });
+
+  test('explains a rejected password and keeps the sheet open', async () => {
+    const onDeleteAccount = jest.fn().mockRejectedValue(new ApiError(403, 'Password does not match'));
+    const screen = await render(<HomeScreen {...baseProps} onDeleteAccount={onDeleteAccount} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Delete account' }));
+    await fireEvent.changeText(screen.getByLabelText('Confirm your password'), 'wrong-password-1');
+    await fireEvent.press(screen.getByRole('button', { name: 'Delete everything' }));
+    expect(await screen.findByText('That password does not match.')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Delete everything' })).toBeTruthy();
   });
 });

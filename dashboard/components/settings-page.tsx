@@ -9,6 +9,7 @@ import {
   Palette,
   Phone,
   Save,
+  Trash2,
   UserRound,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -18,7 +19,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { ErrorState, LoadingState } from "@/components/page-state";
 import { useToast } from "@/components/toast-provider";
 import { Button } from "@/components/ui/button";
-import { api, type Branding } from "@/lib/api";
+import { ApiError, api, type Branding } from "@/lib/api";
 
 export function SettingsPage() {
   const t = useTranslations("Settings");
@@ -72,6 +73,20 @@ export function SettingsPage() {
       ]);
     },
     onError: (error) => toast.error(error.message),
+  });
+  const [deletePassword, setDeletePassword] = useState("");
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const deleteAccount = useMutation({
+    mutationFn: () => api.deleteAccount(deletePassword),
+    onSuccess: async () => {
+      queryClient.clear();
+      await fetch("/api/auth/logout", { method: "POST" });
+      window.location.assign("/login");
+    },
+    onError: (error) => {
+      setConfirmingDelete(false);
+      toast.error(error instanceof ApiError && error.status === 403 ? t("dangerWrongPassword") : t("dangerFailed"));
+    },
   });
   const billingAction = useMutation({
     mutationFn: async () => billing.data?.billing_action === "manage_billing" ? api.billing.portal() : api.billing.checkout(),
@@ -178,6 +193,28 @@ export function SettingsPage() {
             </div>
             <Button className="mt-5" disabled={saveBranding.isPending} type="submit">{saveBranding.isPending ? <LoaderCircle className="animate-spin" /> : <Save />} {t("saveBranding")}</Button>
           </form>
+
+          <section aria-labelledby="danger-title" className="panel border-red-200 p-5 sm:p-6">
+            <div className="mb-5 flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-xl bg-red-50 text-red-700"><Trash2 className="size-5" /></div>
+              <div><h2 className="font-serif text-xl font-semibold" id="danger-title">{t("dangerTitle")}</h2><p className="text-sm text-stone-500">{t("dangerBody")}</p></div>
+            </div>
+            {confirmingDelete ? (
+              <div className="rounded-xl border border-red-200 bg-red-50 p-4" role="alertdialog" aria-labelledby="danger-confirm-title">
+                <p className="font-semibold text-red-800" id="danger-confirm-title">{t("dangerConfirmTitle")}</p>
+                <p className="mt-1 text-sm text-red-700">{t("dangerConfirmBody")}</p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Button className="bg-red-700 text-white hover:bg-red-800" disabled={deleteAccount.isPending} onClick={() => deleteAccount.mutate()}>{deleteAccount.isPending ? <LoaderCircle className="animate-spin" /> : <Trash2 />} {t("dangerConfirmAction")}</Button>
+                  <Button disabled={deleteAccount.isPending} onClick={() => setConfirmingDelete(false)} variant="outline">{t("dangerCancel")}</Button>
+                </div>
+              </div>
+            ) : (
+              <form className="flex flex-col gap-3 sm:flex-row sm:items-end" onSubmit={(event: FormEvent) => { event.preventDefault(); setConfirmingDelete(true); }}>
+                <label className="flex-1 text-sm font-medium">{t("dangerPassword")}<input autoComplete="current-password" className="field mt-2" minLength={8} onChange={(event) => setDeletePassword(event.target.value)} required type="password" value={deletePassword} /></label>
+                <Button className="border-red-300 text-red-700 hover:bg-red-50" disabled={deletePassword.length < 8} type="submit" variant="outline"><Trash2 /> {t("dangerAction")}</Button>
+              </form>
+            )}
+          </section>
         </div>
 
         <aside className="xl:sticky xl:top-8 xl:self-start">

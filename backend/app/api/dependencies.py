@@ -160,6 +160,15 @@ async def get_current_context(
             claims.sub, claims.workspace_id
         )
         if membership is None:
+            # A deleted account carries a well-formed token but no user row.
+            # That is an authentication failure, not a hidden workspace, so
+            # clients drop their credentials instead of retrying a 404.
+            if await AuthRepository(session).get_user(claims.sub) is None:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Account no longer exists",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Not found"
             )

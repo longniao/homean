@@ -1,3 +1,4 @@
+from app.services.account import AccountDeletionService
 from app.services.auth import AuthService, TokenPair, TokenService
 from app.services.billing import (
     BillingProvider,
@@ -23,6 +24,7 @@ __all__ = [
     "CurrentContext",
     "MeResult",
     "MeService",
+    "AccountDeletionService",
     "RealEstateBrandingService",
     "RealEstateContactService",
     "RealEstateDeliveryService",

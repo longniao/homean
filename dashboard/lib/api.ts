@@ -326,6 +326,7 @@ export const api = {
   },
   me: () => request("/me", meSchema),
   updateMe: (body: { name: string | null }) => request("/me", meSchema, json("PATCH", body)),
+  deleteAccount: (password: string) => request("/me", z.null(), json("DELETE", { password })),
   contacts: {
     list: () => request("/contacts", z.array(contactSchema)),
     get: (id: string) => request(`/contacts/${id}`, contactSchema),

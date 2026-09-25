@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Modal, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { ApiError } from '../api/client';
 import { Card, Field, PrimaryButton, SecondaryButton } from '../components/ui';
 import { colors } from '../theme';
 import type { Account, ConsentPolicy, Contact, LocalShowing, Property } from '../types';
@@ -8,9 +9,15 @@ import type { Account, ConsentPolicy, Contact, LocalShowing, Property } from '..
 interface Props {
   showings: LocalShowing[]; contacts: Contact[]; properties: Property[]; refreshing: boolean;
   account: Account | null; consent: ConsentPolicy | null;
-  onRefresh: () => void; onLogout: () => void;
+  onRefresh: () => void; onLogout: () => void; onDeleteAccount: (password: string) => Promise<void>;
   onStart: (input: { contactId: string | null; subjectId: string | null; address: string | null; title: string; consentAck: boolean; consentTextVersion: string | null }) => void;
   onOpenReport: (remoteId: string) => void;
+}
+
+function describeDeleteError(error: unknown, t: (key: string) => string): string {
+  if (error instanceof ApiError) return error.status === 403 ? t('home.deleteWrongPassword') : t('home.deleteFailed');
+  if (error instanceof TypeError) return t('home.deleteOffline');
+  return t('home.deleteFailed');
 }
 
 export function HomeScreen(props: Props) {
@@ -28,6 +35,14 @@ export function HomeScreen(props: Props) {
       { text: t('common.cancel'), style: 'cancel' },
       { text: t('home.signOut'), style: 'destructive', onPress: props.onLogout },
     ]);
+  };
+  const [deleting, setDeleting] = useState(false); const [deletePassword, setDeletePassword] = useState(''); const [deleteBusy, setDeleteBusy] = useState(false); const [deleteError, setDeleteError] = useState<string | null>(null);
+  const closeDelete = () => { setDeleting(false); setDeletePassword(''); setDeleteError(null); };
+  const confirmDelete = async () => {
+    setDeleteBusy(true); setDeleteError(null);
+    try { await props.onDeleteAccount(deletePassword); }
+    catch (error) { setDeleteError(describeDeleteError(error, t)); }
+    finally { setDeleteBusy(false); }
   };
   const begin = () => {
     const property = props.properties.find((item) => item.id === subjectId);
@@ -47,7 +62,18 @@ export function HomeScreen(props: Props) {
         {!!item.rejectedMediaCount && <Text style={styles.dropped}>{t('sync.mediaDropped', { count: item.rejectedMediaCount })}</Text>}
         {item.remoteId && item.syncState === 'ready' && <SecondaryButton label={t('home.report')} onPress={() => props.onOpenReport(item.remoteId!)} style={styles.reportButton} />}
       </Card>)}
+      <Pressable accessibilityRole="button" onPress={() => setDeleting(true)} style={styles.deleteLink}><Text style={styles.deleteLinkText}>{t('home.deleteAccount')}</Text></Pressable>
     </ScrollView>
+    <Modal visible={deleting} animationType="slide" presentationStyle="pageSheet" onRequestClose={closeDelete}>
+      <KeyboardAvoidingView behavior="padding" style={styles.modal}><ScrollView contentContainerStyle={styles.modalContent} keyboardShouldPersistTaps="handled">
+        <View style={styles.header}><Text style={styles.title}>{t('home.deleteTitle')}</Text><Pressable onPress={closeDelete} disabled={deleteBusy}><Text>{t('common.cancel')}</Text></Pressable></View>
+        <Text style={styles.deleteBody}>{t('home.deleteBody')}</Text>
+        <Text style={styles.label}>{t('home.deletePassword')}</Text>
+        <Field accessibilityLabel={t('home.deletePassword')} secureTextEntry autoComplete="current-password" style={styles.input} value={deletePassword} onChangeText={setDeletePassword} />
+        {deleteError && <Text style={styles.deleteError}>{deleteError}</Text>}
+        <PrimaryButton label={t('home.deleteConfirm')} loading={deleteBusy} disabled={deletePassword.length < 8} onPress={() => { void confirmDelete(); }} style={styles.deleteButton} />
+      </ScrollView></KeyboardAvoidingView>
+    </Modal>
     <Modal visible={setup} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setSetup(false)}>
       <KeyboardAvoidingView behavior="padding" style={styles.modal}><ScrollView contentContainerStyle={styles.modalContent} keyboardShouldPersistTaps="handled">
         <View style={styles.header}><Text style={styles.title}>{t('setup.title')}</Text><Pressable onPress={() => setSetup(false)}><Text>{t('common.close')}</Text></Pressable></View>
@@ -75,6 +101,8 @@ const styles = StyleSheet.create({
   showing: { gap: 12 }, row: { flexDirection: 'row', alignItems: 'center', gap: 12 }, grow: { flex: 1 }, showingTitle: { fontSize: 17, fontWeight: '700', color: colors.ink }, date: { color: colors.muted, marginTop: 4 },
   badge: { backgroundColor: colors.greenSoft, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 6 }, failed: { backgroundColor: colors.redSoft }, badgeText: { color: colors.ink, fontWeight: '600', fontSize: 12 }, error: { color: colors.red }, dropped: { color: colors.gold, lineHeight: 19 }, reportButton: { alignSelf: 'flex-start' },
   modal: { flex: 1, backgroundColor: colors.cream }, modalContent: { paddingTop: 28, paddingBottom: 50 }, input: { margin: 22, marginBottom: 8 }, consent: { flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 22, marginTop: 26 }, checkbox: { width: 22, height: 22, borderRadius: 5, borderWidth: 2, borderColor: colors.border, backgroundColor: colors.white }, checkboxChecked: { backgroundColor: colors.green, borderColor: colors.green }, consentText: { flex: 1, color: colors.ink, lineHeight: 20 },
+  deleteLink: { alignSelf: 'center', marginTop: 34, marginBottom: 12, padding: 10 }, deleteLinkText: { color: colors.muted, textDecorationLine: 'underline' },
+  deleteBody: { marginHorizontal: 22, marginTop: 18, color: colors.ink, lineHeight: 21 }, deleteError: { marginHorizontal: 22, marginTop: 10, color: colors.red }, deleteButton: { marginHorizontal: 22, marginTop: 22, backgroundColor: colors.red },
   label: { marginHorizontal: 22, marginTop: 22, marginBottom: 8, fontWeight: '700', color: colors.ink }, choice: { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 22, paddingVertical: 11 }, choiceSelected: { backgroundColor: colors.greenSoft, borderRadius: 10, paddingHorizontal: 10 },
   radio: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: colors.border }, radioSelected: { borderWidth: 6, borderColor: colors.green }, choiceText: { flex: 1, color: colors.ink }, begin: { margin: 22, marginTop: 34 },
 });

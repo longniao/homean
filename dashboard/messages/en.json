@@ -390,6 +390,16 @@
     "previewLabel": "Live preview",
     "previewTitle": "Branded report preview",
     "previewLoading": "Rendering your report preview…",
-    "previewError": "The report preview could not be loaded."
+    "previewError": "The report preview could not be loaded.",
+    "dangerTitle": "Delete account",
+    "dangerBody": "Permanently deletes your account, workspace, every showing, recording, photo, report and share link. This cannot be undone.",
+    "dangerPassword": "Confirm your password",
+    "dangerAction": "Delete my account",
+    "dangerConfirmTitle": "Delete everything?",
+    "dangerConfirmBody": "Your reports will stop opening for clients immediately and nothing can be recovered afterwards.",
+    "dangerConfirmAction": "Yes, delete everything",
+    "dangerCancel": "Keep my account",
+    "dangerWrongPassword": "That password does not match.",
+    "dangerFailed": "The account could not be deleted. Please try again."
   }
 }

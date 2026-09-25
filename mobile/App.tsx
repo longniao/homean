@@ -11,7 +11,7 @@ import { LoginScreen } from './src/screens/LoginScreen';
 import { RecordingScreen } from './src/screens/RecordingScreen';
 import { ReportScreen } from './src/screens/ReportScreen';
 import { clearCache, readDirectory, readVerticalConfig, writeDirectory, writeVerticalConfig } from './src/storage/cache';
-import { captureRepository, repositoryForAccount } from './src/storage/database';
+import { captureRepository, deleteAccountDatabase, repositoryForAccount } from './src/storage/database';
 import { SyncEngine, syncStateFromProcessing } from './src/sync/engine';
 import type { Account, ConsentPolicy, Contact, LocalShowing, Property, ShowingSummary } from './src/types';
 
@@ -117,7 +117,7 @@ export default function App() {
   if (!authenticated) return <><LoginScreen onAuthenticated={() => { setAccount(currentSessionAccount()); setAuthenticated(true); setLocalShowings([]); setScreen({ name: 'home' }); void refresh(); }} /><StatusBar style="dark" /></>;
   if (screen.name === 'recording') return <><RecordingScreen showing={screen.showing} recovered={screen.recovered} onFinished={() => { setScreen({ name: 'home' }); void refresh(); }} /><StatusBar style="dark" /></>;
   if (screen.name === 'report') return <><ReportScreen visitId={screen.visitId} onBack={() => setScreen({ name: 'home' })} /><StatusBar style="dark" /></>;
-  return <><HomeScreen showings={recent} contacts={contacts} properties={properties} account={account} consent={consent} refreshing={refreshing} onRefresh={() => { void refresh(); }} onLogout={() => { void clearCache(); void api.logout(); setLocalShowings([]); setScreen({ name: 'home' }); setAccount(null); setContacts([]); setProperties([]); setRemoteShowings([]); setConsent(null); setAuthenticated(false); }} onOpenReport={(visitId) => setScreen({ name: 'report', visitId })} onStart={(input) => { void (async () => { const generation = sessionGeneration(); const showing = await captureRepository.createShowing(input); if (sessionGeneration() !== generation) return; setLocalShowings((items) => [showing, ...items]); setScreen({ name: 'recording', showing, recovered: false }); })(); }} /><StatusBar style="dark" /></>;
+  return <><HomeScreen showings={recent} contacts={contacts} properties={properties} account={account} consent={consent} refreshing={refreshing} onRefresh={() => { void refresh(); }} onDeleteAccount={async (password) => { const owner = currentSessionAccount(); await api.deleteAccount(password); await deleteAccountDatabase(owner).catch(() => undefined); void clearCache(); setLocalShowings([]); setScreen({ name: 'home' }); setAccount(null); setContacts([]); setProperties([]); setRemoteShowings([]); setConsent(null); setAuthenticated(false); }} onLogout={() => { void clearCache(); void api.logout(); setLocalShowings([]); setScreen({ name: 'home' }); setAccount(null); setContacts([]); setProperties([]); setRemoteShowings([]); setConsent(null); setAuthenticated(false); }} onOpenReport={(visitId) => setScreen({ name: 'report', visitId })} onStart={(input) => { void (async () => { const generation = sessionGeneration(); const showing = await captureRepository.createShowing(input); if (sessionGeneration() !== generation) return; setLocalShowings((items) => [showing, ...items]); setScreen({ name: 'recording', showing, recovered: false }); })(); }} /><StatusBar style="dark" /></>;
 }
 
 const styles = StyleSheet.create({ boot: { flex: 1, backgroundColor: '#F5F3EA' } });

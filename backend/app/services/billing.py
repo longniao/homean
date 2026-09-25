@@ -46,6 +46,11 @@ class BillingProvider(ABC):
     ) -> dict[str, object]:
         """Verify and decode a Stripe webhook payload."""
 
+    @abstractmethod
+    async def cancel_subscription(self, subscription_id: str) -> None:
+        """Cancel immediately. An already-cancelled or unknown id is not an error."""
+
+    @abstractmethod
     async def get_subscription(self, subscription_id: str) -> dict[str, object] | None:
         """Return authoritative subscription state when the provider supports it."""
         del subscription_id
@@ -147,6 +152,20 @@ class StripeBillingProvider(BillingProvider):
     async def get_subscription(self, subscription_id: str) -> dict[str, object] | None:
         return await self._get(f"subscriptions/{subscription_id}")
 
+    async def cancel_subscription(self, subscription_id: str) -> None:
+        secret = self._settings.stripe_secret_key
+        if secret is None:
+            raise BillingUnavailableError("Stripe billing is not configured")
+        async with httpx.AsyncClient(timeout=15) as client:
+            response = await client.delete(
+                f"{self._settings.stripe_api_base_url.rstrip('/')}/subscriptions/{subscription_id}",
+                auth=(secret.get_secret_value(), ""),
+            )
+        if response.status_code == 404:
+            return
+        if response.status_code >= 400:
+            raise BillingUnavailableError("Stripe billing request failed")
+
     def verify_webhook(
         self, payload: bytes, signature: str | None
     ) -> dict[str, object]:
@@ -201,6 +220,7 @@ class FakeBillingProvider(BillingProvider):
         self.portal_urls: list[str] = []
         self.events: list[dict[str, object]] = []
         self.subscription_details: dict[str, dict[str, object]] = {}
+        self.cancelled_subscriptions: list[str] = []
 
     async def create_checkout_session(self, **kwargs: object) -> str:
         self.checkout_requests.append(kwargs)
@@ -215,6 +235,9 @@ class FakeBillingProvider(BillingProvider):
 
     async def get_subscription(self, subscription_id: str) -> dict[str, object] | None:
         return self.subscription_details.get(subscription_id)
+
+    async def cancel_subscription(self, subscription_id: str) -> None:
+        self.cancelled_subscriptions.append(subscription_id)
 
     def verify_webhook(
         self, payload: bytes, signature: str | None

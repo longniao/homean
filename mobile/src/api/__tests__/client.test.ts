@@ -217,3 +217,25 @@ test('login persists verified ownership together with the session credentials', 
   fetchMock.mockRestore();
   deactivateSessionAccount();
 });
+
+describe('ApiClient account deletion', () => {
+  test('deletes the account with the password and forgets the device credentials', async () => {
+    tokenStore.getTokens.mockResolvedValue({ accessToken: 'live', refreshToken: 'refresh-token', expiresAt: Date.now() + 60_000 });
+    tokenStore.clearTokens.mockClear();
+    const fetchMock = jest.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: true, status: 204, json: async () => null } as Response);
+
+    await new ApiClient().deleteAccount('correct-horse-1');
+
+    expect(fetchMock).toHaveBeenCalledWith('http://localhost:8000/me', expect.objectContaining({ method: 'DELETE', body: JSON.stringify({ password: 'correct-horse-1' }) }));
+    expect(tokenStore.clearTokens).toHaveBeenCalled();
+  });
+
+  test('keeps the device signed in when the password is rejected', async () => {
+    tokenStore.getTokens.mockResolvedValue({ accessToken: 'live', refreshToken: 'refresh-token', expiresAt: Date.now() + 60_000 });
+    tokenStore.clearTokens.mockClear();
+    jest.spyOn(globalThis, 'fetch').mockResolvedValue({ ok: false, status: 403, json: async () => ({ detail: 'Password does not match' }), text: async () => '' } as Response);
+
+    await expect(new ApiClient().deleteAccount('wrong-password-1')).rejects.toMatchObject({ status: 403 });
+    expect(tokenStore.clearTokens).not.toHaveBeenCalled();
+  });
+});

@@ -75,3 +75,53 @@ describe("Settings billing action", () => {
     await waitFor(() => expect(action).toHaveBeenCalledTimes(1));
   });
 });
+
+describe("Settings account deletion", () => {
+  function mockAccount() {
+    vi.spyOn(api, "me").mockResolvedValue(me);
+    vi.spyOn(api.branding, "get").mockResolvedValue(branding);
+    vi.spyOn(api.branding, "preview").mockResolvedValue("<html></html>");
+    vi.spyOn(api.billing, "get").mockResolvedValue({
+      workspace_id: uuid, plan: "trial", status: "trialing", active: true, billing_action: "subscribe",
+      can_checkout: true, can_portal: false, stripe_customer_attached: false,
+      trial_ends_at: null, current_period_end: null, cancel_at_period_end: false,
+    });
+  }
+
+  it("asks for the password, confirms, then deletes and signs out", async () => {
+    mockAccount();
+    const deleteAccount = vi.spyOn(api, "deleteAccount").mockResolvedValue(null);
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(null, { status: 204 }));
+    const assign = vi.fn();
+    vi.stubGlobal("location", { ...window.location, assign });
+
+    renderSettings();
+    const password = await screen.findByLabelText("Confirm your password");
+    const trigger = screen.getByRole("button", { name: "Delete my account" });
+    expect(trigger).toBeDisabled();
+    fireEvent.change(password, { target: { value: "correct-horse-battery" } });
+    fireEvent.click(trigger);
+    expect(deleteAccount).not.toHaveBeenCalled();
+
+    fireEvent.click(await screen.findByRole("button", { name: "Yes, delete everything" }));
+    await waitFor(() => expect(deleteAccount).toHaveBeenCalledWith("correct-horse-battery"));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/auth/logout", { method: "POST" }));
+    await waitFor(() => expect(assign).toHaveBeenCalledWith("/login"));
+    vi.unstubAllGlobals();
+  });
+
+  it("keeps the account and explains a wrong password", async () => {
+    mockAccount();
+    const { ApiError } = await import("@/lib/api");
+    vi.spyOn(api, "deleteAccount").mockRejectedValue(new ApiError(403, "Password does not match", null));
+    const fetchMock = vi.spyOn(globalThis, "fetch");
+
+    renderSettings();
+    fireEvent.change(await screen.findByLabelText("Confirm your password"), { target: { value: "wrong-password-1" } });
+    fireEvent.click(screen.getByRole("button", { name: "Delete my account" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Yes, delete everything" }));
+    expect(await screen.findByText("That password does not match.")).toBeTruthy();
+    expect(fetchMock).not.toHaveBeenCalledWith("/api/auth/logout", expect.anything());
+    expect(screen.getByRole("button", { name: "Delete my account" })).toBeTruthy();
+  });
+});

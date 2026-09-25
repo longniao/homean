@@ -272,6 +272,14 @@ export function accountDatabaseName(account: Pick<Account, 'userId' | 'workspace
   if (![account.userId, account.workspaceId].every((id) => /^[a-f0-9-]{36}$/i.test(id))) throw new Error('Invalid capture account');
   return `homean-capture-${account.workspaceId}-${account.userId}.db`;
 }
+/** Close and delete an account's capture database after the account itself is gone. */
+export async function deleteAccountDatabase(account: Pick<Account, 'userId' | 'workspaceId'>): Promise<void> {
+  const name = accountDatabaseName(account);
+  const open = databases.get(name);
+  databases.delete(name);
+  if (open) { try { await (await open).closeAsync(); } catch { /* already closed */ } }
+  await SQLite.deleteDatabaseAsync(name);
+}
 export function repositoryForAccount(account: Pick<Account, 'userId' | 'workspaceId'>): CaptureRepository {
   return new CaptureRepository(accountDatabaseName(account));
 }

@@ -48,3 +48,7 @@ class MeResponse(BaseModel):
 
 class MeUpdate(BaseModel):
     name: str | None = Field(default=None, max_length=200)
+
+
+class AccountDeleteRequest(BaseModel):
+    password: str = Field(min_length=8, max_length=128)

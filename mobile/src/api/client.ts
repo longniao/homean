@@ -141,6 +141,15 @@ export class ApiClient {
     }
   }
 
+  /** Permanently delete the signed-in account server-side, then forget it locally. */
+  async deleteAccount(password: string): Promise<void> {
+    await this.logoutPending;
+    await this.request('/me', { method: 'DELETE', body: JSON.stringify({ password }) });
+    deactivateSessionAccount();
+    this.refreshPromise = null;
+    await this.clearLocalCredentials();
+  }
+
   logout(): Promise<void> {
     deactivateSessionAccount();
     this.logoutPending = this.performLogout().finally(() => { this.logoutPending = null; });
