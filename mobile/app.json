@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Homean Capture",
-    "slug": "homean-capture",
+    "slug": "homean",
     "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -18,7 +18,16 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.homean.capture"
+      "package": "com.homean.capture",
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
+        "android.permission.FOREGROUND_SERVICE_MICROPHONE",
+        "android.permission.CAMERA"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -48,6 +57,12 @@
       ],
       "expo-asset"
     ],
-    "scheme": "homean"
+    "scheme": "homean",
+    "extra": {
+      "eas": {
+        "projectId": "45649cef-6aad-4685-9cf6-dbddf7462898"
+      }
+    },
+    "owner": "longniao"
   }
 }
