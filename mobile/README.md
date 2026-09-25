@@ -47,13 +47,24 @@ recording plugins. `eas.json` defines three profiles, all pointed at
 | `preview` | Release-mode build for pilot agents, no store review | Internal distribution link (iOS ad-hoc, Android APK) |
 | `production` | Store submission | TestFlight / Play Console |
 
-One-time setup by the Expo account owner: `npm install -g eas-cli`, `eas login`,
-then `eas init` inside `mobile/` to write the project id into `app.json`, and
-`eas credentials` to register the Apple team and pilot devices (`eas device:create`
-for iOS ad-hoc). After that:
+The EAS project is already linked (`extra.eas.projectId` in `app.json`). iOS still
+needs `eas credentials` once to register the Apple team and pilot devices
+(`eas device:create` for ad-hoc installs).
+
+**Build locally first.** The expo.dev account has a limited cloud-build quota, so
+iterate on this machine (Xcode, Android SDK and Java 17 are installed) and reserve
+cloud builds for the final pilot artifact:
 
 ```sh
-npm run build:preview   # or build:dev / build:prod
+npx expo run:android          # debug build onto the running emulator / USB device
+npx expo run:ios --device     # debug build onto a connected iPhone
+eas build --local --profile preview --platform android   # release APK, no quota used
+```
+
+Only when a shareable pilot artifact is needed:
+
+```sh
+npm run build:preview   # cloud build; or build:dev / build:prod
 ```
 
 The build page shows a QR code/link that pilot devices open to install. Physical-device
