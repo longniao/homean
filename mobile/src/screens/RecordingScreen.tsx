@@ -6,6 +6,8 @@ import { Directory, File, Paths } from 'expo-file-system';
 import { RecordingPresets, requestNotificationPermissionsAsync, requestRecordingPermissionsAsync, setAudioModeAsync, useAudioRecorder, useAudioRecorderState } from 'expo-audio';
 import { useTranslation } from 'react-i18next';
 import { RecordingControls } from '../components/RecordingControls';
+import { Toast, useToast } from '../components/Toast';
+import { captureFeedback } from '../recording/feedback';
 import { colors } from '../theme';
 import { initialRecordingState, recordingReducer } from '../recording/machine';
 import { requestCapturePermissions } from '../recording/permissions';
@@ -20,6 +22,8 @@ const VIDEO_MAX_BYTES = 180 * 1024 * 1024;
 export function RecordingScreen({ showing, recovered, onFinished }: { showing: LocalShowing; recovered: boolean; onFinished: () => void }) {
   const [captureRepository] = useState(() => repositoryForAccount(currentSessionAccount()));
   const { t } = useTranslation();
+  const toast = useToast();
+  const confirmCapture = (message: string) => { void captureFeedback(); toast.show(message); };
   const [state, dispatch] = useReducer(recordingReducer, recovered ? { ...initialRecordingState, phase: 'interrupted', elapsedMs: showing.elapsedMs, segmentStartedAtMs: showing.elapsedMs } : initialRecordingState);
   const recorder = useAudioRecorder({ ...RecordingPresets.HIGH_QUALITY, directory: 'document' }, (status) => {
     if (status.hasError || status.mediaServicesDidReset) dispatch({ type: 'INTERRUPTED', error: status.error ?? undefined });
@@ -125,7 +129,7 @@ export function RecordingScreen({ showing, recovered, onFinished }: { showing: L
     { text: t('common.cancel'), style: 'cancel' },
     { text: t('recording.endConfirm'), style: 'destructive', onPress: () => { void finishShowing(); } },
   ]);
-  const tag = () => { void captureRepository.addVoiceTag(showing.id, state.elapsedMs); Alert.alert(t('recording.tagged')); };
+  const tag = () => { void captureRepository.addVoiceTag(showing.id, state.elapsedMs); confirmCapture(t('recording.tagged')); };
   const openCamera = async (mode: 'photo' | 'video') => {
     if (!cameraPermission?.granted && !(await requestCameraPermission()).granted) { Alert.alert(t('recording.cameraPermission')); return; }
     setCameraMode(mode === 'photo' ? 'picture' : 'video'); setCameraReady(false); setCameraOpen(true);
@@ -135,7 +139,7 @@ export function RecordingScreen({ showing, recovered, onFinished }: { showing: L
     const directory = new Directory(Paths.document, 'showing-photos'); if (!directory.exists) directory.create({ idempotent: true, intermediates: true });
     const destination = new File(directory, `${showing.id}-${Date.now()}.jpg`); await new File(result.uri).copy(destination);
     await captureRepository.enqueueMedia({ showingId: showing.id, kind: 'photo', fileUri: destination.uri, contentType: 'image/jpeg', timestampOffsetMs: state.elapsedMs });
-    setCameraOpen(false); Alert.alert(t('recording.photoSaved'));
+    setCameraOpen(false); confirmCapture(t('recording.photoSaved'));
   };
   const saveVideo = async (uri: string, timestampOffsetMs: number) => {
     const sourceExtension = uri.match(/\.([a-z0-9]+)(?:\?.*)?$/i)?.[1]?.toLowerCase() ?? 'mp4';
@@ -144,7 +148,7 @@ export function RecordingScreen({ showing, recovered, onFinished }: { showing: L
     const directory = new Directory(Paths.document, 'showing-videos'); if (!directory.exists) directory.create({ idempotent: true, intermediates: true });
     const destination = new File(directory, `${showing.id}-${Date.now()}.${extension}`); await new File(uri).copy(destination);
     await captureRepository.enqueueMedia({ showingId: showing.id, kind: 'video', fileUri: destination.uri, contentType, timestampOffsetMs });
-    Alert.alert(t('recording.videoSaved'));
+    confirmCapture(t('recording.videoSaved'));
   };
   const startVideo = async () => {
     if (videoRecording || !camera.current || !cameraReady) return;
@@ -181,6 +185,7 @@ export function RecordingScreen({ showing, recovered, onFinished }: { showing: L
         <View style={styles.spacer} />
       </View>
     </Modal>
+    <Toast message={toast.message} />
   </View>;
 }
 
